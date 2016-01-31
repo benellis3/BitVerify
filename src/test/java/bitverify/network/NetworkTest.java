@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -27,14 +28,18 @@ public class NetworkTest {
 
     @Test
     public void NetworkTest() throws Exception {
-        ConnectionManager instance1 = new ConnectionManager(new ArrayList<String>(), 35000, 35001);
-        Thread.sleep(100);
-        ConnectionManager instance2 = new ConnectionManager(new ArrayList<String>() {{ add("localhost"); }}, 35001, 35000);
+        ConnectionManager instance1 = new ConnectionManager(new ArrayList<>(), 35000);
+        InetSocketAddress instance1Address = new InetSocketAddress("localhost", 35000);
+        ConnectionManager instance2 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{ add(instance1Address); }}, 35001);
+        InetSocketAddress instance2Address = new InetSocketAddress("localhost", 35001);
+        ConnectionManager instance3 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{ add(instance1Address); add(instance2Address); }}, 35002);
+
         Thread.sleep(100);
         String test = "Test Yay";
         instance1.broadcast(test);
+        instance2.broadcast(test);
         Thread.sleep(100);
-        assertEquals(test.trim(), outContent.toString().trim());
+        assertEquals(test + System.lineSeparator() + test + System.lineSeparator() + test + System.lineSeparator() + test, outContent.toString().trim());
 
     }
 }

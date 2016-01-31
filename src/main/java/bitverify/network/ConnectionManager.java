@@ -3,6 +3,7 @@ package bitverify.network;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +11,12 @@ public class ConnectionManager {
 
     List<PeerHandler> peers = new ArrayList<>();
 
-    public ConnectionManager(List<String> initialPeers, int listenPort, int connectPort) {
+    public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort) {
 
         // connect to each given peer
-        for (String peerAddress : initialPeers) {
+        for (InetSocketAddress peerAddress : initialPeers) {
             try {
-                Socket s = new Socket(peerAddress, connectPort);
+                Socket s = new Socket(peerAddress.getAddress(), peerAddress.getPort());
                 peers.add(new PeerHandler(s));
             } catch (IOException e) {
                 e.printStackTrace();
