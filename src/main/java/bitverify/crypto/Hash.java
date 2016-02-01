@@ -21,12 +21,12 @@ public class Hash {
 	}
 	
 	protected static byte[] toByteArray(String input){
-        byte[] bytes = new byte[input.length()];
-        for (int i = 0; i != bytes.length; i++){
-            bytes[i] = (byte)input.charAt(i);
-        }
-        return bytes;
-    }
+		byte[] bytes = new byte[input.length()];
+		for (int i = 0; i != bytes.length; i++){
+			bytes[i] = (byte)input.charAt(i);
+		}
+		return bytes;
+	}
 	
 	public static void main(String args[]){
 		
