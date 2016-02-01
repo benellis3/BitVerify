@@ -20,7 +20,7 @@ public class Miner {
 		String result;
 		
 		while (mining){
-			result = hashBytes(block);
+			result = hashString(hashBytes(block));
 			
 			if (result.startsWith(goal)){
 				//Successful mine
