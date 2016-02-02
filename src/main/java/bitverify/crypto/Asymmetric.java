@@ -103,7 +103,7 @@ public class Asymmetric {
 		return new AsymmetricCipherKeyPair(publicKey, privateKey);
 	}
 	
-	public static AsymmetricCipherKeyPair getKeyPairFromStringKeys(String publicKey, String privateKey) throws IOException{
+	public static AsymmetricCipherKeyPair getKeyPairFromStringKeys(String publicKey, String privateKey) throws StringKeyDecodingException{
 		return new AsymmetricCipherKeyPair(stringKeyToKey(publicKey), stringKeyToKey(privateKey));
 	}
 	
@@ -131,7 +131,7 @@ public class Asymmetric {
 		return (codePrefix + key_multiline + codePostfix);
 	}
 	
-	private static String cutStringKeyHeaders(String key) throws IOException{
+	private static String cutStringKeyHeaders(String key) throws StringKeyDecodingException{
 		int cutStart=0, cutEnd=0;
 		if (key.startsWith("-----BEGIN RSA PRIVATE KEY-----\n")){
 			cutStart = new String("-----BEGIN RSA PRIVATE KEY-----\n").length();
@@ -140,7 +140,7 @@ public class Asymmetric {
 			cutStart = new String("-----BEGIN RSA PUBLIC KEY-----\n").length();
 			cutEnd = new String("\n-----END RSA PUBLIC KEY-----").length();
 		} else {
-			throw new IOException("invalid key headers");
+			throw new StringKeyDecodingException("invalid key headers");
 		}
 		return key.substring(cutStart, key.length()-cutEnd);
 	}
@@ -155,15 +155,27 @@ public class Asymmetric {
 		return key_multiline.substring(0, key_multiline.length() - 1);
 	}
 	
-	public static AsymmetricKeyParameter stringKeyToKey(String key) throws IOException{
-		if (key.startsWith("-----BEGIN RSA PRIVATE KEY-----\n")){
-			return PrivateKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
-		} else if (key.startsWith("-----BEGIN RSA PUBLIC KEY-----\n")) {
-			return PublicKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
-		} else {
-			System.err.println(key.substring(0,10));
-			throw new IOException("invalid key headers");
+	public static AsymmetricKeyParameter stringKeyToKey(String key) throws StringKeyDecodingException{
+		try {
+			if (key.startsWith("-----BEGIN RSA PRIVATE KEY-----\n")){
+				return PrivateKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
+			} else if (key.startsWith("-----BEGIN RSA PUBLIC KEY-----\n")) {
+				return PublicKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
+			} else {
+				throw new StringKeyDecodingException("invalid key headers: " + key.substring(0,10) + "...");
+			}
+		} catch (IOException e){
+			throw new StringKeyDecodingException();
 		}
+	}
+	
+	public static boolean isValidStringKey(String key){
+		try {
+			stringKeyToKey(key);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
 	
 	public static void main(String args[]) throws InvalidCipherTextException, IOException{
