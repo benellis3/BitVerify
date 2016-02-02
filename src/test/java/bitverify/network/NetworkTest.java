@@ -30,16 +30,19 @@ public class NetworkTest {
     public void NetworkTest() throws Exception {
         ConnectionManager instance1 = new ConnectionManager(new ArrayList<>(), 35000);
         InetSocketAddress instance1Address = new InetSocketAddress("localhost", 35000);
-        ConnectionManager instance2 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{ add(instance1Address); }}, 35001);
+        ConnectionManager instance2 = new ConnectionManager(new ArrayList<InetSocketAddress>() {
+            { add(instance1Address); }}, 35001);
         InetSocketAddress instance2Address = new InetSocketAddress("localhost", 35001);
-        ConnectionManager instance3 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{ add(instance1Address); add(instance2Address); }}, 35002);
+        ConnectionManager instance3 = new ConnectionManager(new ArrayList<InetSocketAddress>() {
+            { add(instance1Address); add(instance2Address); }}, 35002);
 
         Thread.sleep(100);
         String test = "Test Yay";
         instance1.broadcast(test);
         instance2.broadcast(test);
         Thread.sleep(100);
-        assertEquals(test + System.lineSeparator() + test + System.lineSeparator() + test + System.lineSeparator() + test, outContent.toString().trim());
+        assertEquals(test + System.lineSeparator() + test + System.lineSeparator() + test + System.lineSeparator()
+                + test, outContent.toString().trim());
 
     }
 }
