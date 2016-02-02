@@ -17,10 +17,10 @@ public class PeerHandler {
         Thread outgoing = new Thread() {
             public void run() {
                 try {
-                    BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
+                    OutputStream bos = socket.getOutputStream();
                     while (true) {
                         Message msg = messageQueue.take();
-                        msg.writeTo(bos);
+                        msg.writeDelimitedTo(bos);
                     }
                 } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
@@ -35,7 +35,7 @@ public class PeerHandler {
                     Message message;
                     InputStream is = socket.getInputStream();
                     while (true) {
-                        message = Message.parseFrom(is);
+                        message = Message.parseDelimitedFrom(is);
                         System.out.println(message.getMsg());
                     }
                 } catch (IOException e) {
