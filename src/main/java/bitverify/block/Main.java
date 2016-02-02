@@ -29,7 +29,7 @@ public class Main {
         System.out.println(newBlock.getTimeStamp());
         System.out.println(newBlock.getEntries());
         System.out.println(newBlock.getTarget());
-        System.out.println(newBlock.getNonce()); //nonce is not correct. check what is going on
+        System.out.println(newBlock.getNonce()); 
         
         }
 

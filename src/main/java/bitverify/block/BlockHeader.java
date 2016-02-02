@@ -74,6 +74,7 @@ public class BlockHeader {
         bytebuff.put(Converter.stringToByteArray(timeStamp));
         bytebuff.put(Converter.intToByteArray(entries));
         bytebuff.put(Converter.intToByteArray(currentBitsTarget));
+        bytebuff.put(Converter.intToByteArray(nonce));
         
         return finalArray;
     }
