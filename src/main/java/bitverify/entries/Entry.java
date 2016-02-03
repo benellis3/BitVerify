@@ -2,6 +2,8 @@ package bitverify.entries;
 
 import java.io.IOException;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -11,15 +13,22 @@ import bitverify.crypto.DataSizeException;
 import bitverify.crypto.Hash;
 import bitverify.crypto.StringKeyDecodingException;
 
+@DatabaseTable
 public class Entry {
-	
+
+	@DatabaseField(id = true)
 	private long entryID;
+
+	@DatabaseField
 	private long entryTimeStamp;
 	private transient String entryHashSigned = "";
-	
+
+	@DatabaseField
 	private String uploaderID;
+	@DatabaseField
 	private String receiverID = ""; //optional
-	
+
+	// TODO: database storage - a byte[] of metadata would be convenient but we will discuss this
 	private transient Metadata metadata = null;
 	private Object encMetadata;
 	private String encryptedSymmetricKey = null;
@@ -30,7 +39,10 @@ public class Entry {
 		this.uploaderID = Asymmetric.keyToStringKey( uploaderKeyPair.getPublic() );
 		this.metadata = metadata;
 	}
-	
+
+	// no-argument constructor required for database framework
+	Entry() { }
+
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata) throws IOException{
 		_constructEntryCore(uploaderKeyPair, metadata);
 		
