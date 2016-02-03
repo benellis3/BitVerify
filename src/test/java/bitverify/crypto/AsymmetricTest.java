@@ -123,7 +123,7 @@ public class AsymmetricTest {
 		AsymmetricKeyParameter publicKey;
 		try {
 			publicKey = Asymmetric.stringKeyToKey(myPubKey);
-		} catch (IOException e1) {
+		} catch (StringKeyDecodingException e1) {
 			e1.printStackTrace();
 			fail();
 			return;
@@ -257,5 +257,38 @@ public class AsymmetricTest {
 			fail();
 		}
 	}
-
+	
+	@Test
+	public void testIsValidStringKey() {
+		//test hardcoded keys
+		assertTrue( Asymmetric.isValidStringKey(myPrivKey) );
+		assertTrue( Asymmetric.isValidStringKey(myPubKey) );
+		
+		//test newly generated keys
+		AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+		String newPrivKey, newPubKey;
+		try {
+			newPrivKey = Asymmetric.keyToStringKey(keyPair.getPrivate());
+			newPubKey = Asymmetric.keyToStringKey(keyPair.getPublic());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail();
+			return;
+		}
+		assertTrue( Asymmetric.isValidStringKey(newPrivKey) );
+		assertTrue( Asymmetric.isValidStringKey(newPubKey) );
+		
+		//test random gibberish
+		String input[] = {
+				"V2h5IHdvdWxkIHlvdSBkbyB0aGF0IHRvIG1lPw==",
+				"-----lollolasdasd",
+				"-----BEGIN RSA PRIVATE KEY-----\nasdasdjustkidding\n-----END RSA PRIVATE KEY-----",
+				"-----BEGIN RSA PUBLIC KEY-----\n nahforgetit then",
+		};
+		for (int i=0; i<input.length; i++){
+			assertFalse( Asymmetric.isValidStringKey(input[i]) );
+		}
+		
+	}
+	
 }
