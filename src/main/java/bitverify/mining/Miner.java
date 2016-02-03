@@ -1,8 +1,5 @@
-//This code is not yet in working order but is 'proof of work'
-
 package bitverify.mining;
 
-import bitverify.crypto;
 import java.lang.String;
 
 public class Miner {
@@ -20,24 +17,27 @@ public class Miner {
 		String result;
 		
 		while (mining){
-			result = hashString(hashBytes(block));
+			//result = hashString(hashBytes(block));
 			
-			if (result.startsWith(goal)){
+			//Increment nonce of header
+			
+			
+			//if (result.startsWith(goal)){
 				//Successful mine
-			}
+			//}
 		}
 	}
 	
-	public startMining(){
+	public void startMining(){
 		mining = true;
 		mineEntries();
 	}
 	
-	public stopMining(){
+	public void stopMining(){
 		mining = false;
 	}
 	
-	public updateGoal(int zeros){
+	public void updateGoal(int zeros){
 		goalZeros = zeros;
 		
 		goal = "";
