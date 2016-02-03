@@ -1,0 +1,7 @@
+
+option java_package = "bitverify.network.proto";
+option java_outer_classname = "MessageProto";
+
+message Message {
+    optional string msg = 1;
+}
