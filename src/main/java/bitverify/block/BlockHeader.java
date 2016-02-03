@@ -17,10 +17,11 @@ public class BlockHeader {
     private int nonce = 0;          //4 bytes
     
     
-    public BlockHeader(Block prevBlock){
-        timeStamp = createTimeStamp();                  
-        prevBlockHash = prevBlock.hashBlock();  
-        currentBitsTarget = 1;                  //need to read into how this is done over time and agreed upon by all
+    public BlockHeader(Block prevBlock, int entries){                 
+        prevBlockHash = prevBlock.hashBlock();
+        this.entries = entries;
+        currentBitsTarget = calculateTarget();                  //need to read into how this is done over time and agreed upon by all
+        
     }
     
     public BlockHeader(String prevHash, String time, int entries, int bitTarget, int nonce, Boolean resetTimer){
@@ -93,6 +94,7 @@ public class BlockHeader {
     }
     
     //fill in code to check the number of bits with the target number of bits after hashing the nonce value
+    //move this method to the Block module maybe to make it easier?
     public Boolean checkNonce(){
         Boolean check = 1>0;
         if(check){
@@ -102,11 +104,17 @@ public class BlockHeader {
         }
     }
     
+    static public int calculateTarget(){
+//        design this method after working with the databases and establishing how to calculate 
+//        the number of zeros required to correctly mine a block.
+        return (Integer) null;
+    }
+    
 
     static public String createTimeStamp(){
         Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy HH:mm:ss");
-        return sdf.format(cal.getTime());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy HH:mm:ss"); //do NOT change this serialization relies on this lenght
+        return sdf.format(cal.getTime());                                   //look into a way of possibly making this less brittle
     }
     
     
