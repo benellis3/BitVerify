@@ -12,7 +12,8 @@ public class Main {
         
         String hey = "hello what's going on with you today";
         String prevHash = Hash.hashString(hey);
-        String timeStamp = BlockHeader.getTime();
+        System.out.println(prevHash);
+        String timeStamp = BlockHeader.createTimeStamp();
         int entries = 1;
         int target = 4;
         int nonce = 12;

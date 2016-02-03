@@ -1,9 +1,13 @@
 package bitverify.block;
+
+import bitverify.crypto.Hash;
+
 //import bitverify.crypto;
 
 public class Block {
     public Integer blockSize;
     public BlockHeader header;
+    public BlockData data;
     
     
     public Block(Block PrevBlock){
@@ -20,7 +24,8 @@ public class Block {
     }
     
     public String hashBlock(){
-        return null;
+        byte[] serialized = this.serializeBlock();
+        return Hash.hashBytes(serialized);
     }
     
     public byte[] serializeBlock(){

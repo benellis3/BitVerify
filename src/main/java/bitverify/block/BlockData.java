@@ -1,5 +1,6 @@
 package bitverify.block;
 
+
 public class BlockData {
     
     public void isEncrypted(){

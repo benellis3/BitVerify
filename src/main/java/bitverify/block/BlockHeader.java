@@ -9,16 +9,16 @@ import java.util.List;
 
 public class BlockHeader {
     private static final int HEADER_SIZE = 95; 
-    private static final int[] lengths = {64,19,4,4,4};
+    private static final int[] lengths = {64,19,4,4,4}; //lengths of all the fields in the order that they're
     private String prevBlockHash;   //previous block hash is always 64 bytes  
-    private String timeStamp = getTime();       //defined as 19 character long
+    private String timeStamp = createTimeStamp();       //defined as 19 character long
     private int entries;            //4 bytes
     private int currentBitsTarget;  //4 bytes
     private int nonce = 0;          //4 bytes
     
     
     public BlockHeader(Block prevBlock){
-        timeStamp = getTime();                  
+        timeStamp = createTimeStamp();                  
         prevBlockHash = prevBlock.hashBlock();  
         currentBitsTarget = 1;                  //need to read into how this is done over time and agreed upon by all
     }
@@ -79,26 +79,12 @@ public class BlockHeader {
         return finalArray;
     }
     
-    public String getPrevBlockHash(){
-        return prevBlockHash;
-    }
-    
-    public int getEntries(){
-        return entries;
-    }
-    
-    public String getTimeStamp(){
-        return timeStamp;
-    }
-    
     public String restTimeStamp(){
         timeStamp = getTimeStamp();
         return timeStamp;
     }
     
-    public int getTarget(){
-        return currentBitsTarget;
-    }
+
     
 //    Speak with Alex about how this should be done to prevent concurrency issues.
     public Boolean incrementNonce(){
@@ -116,13 +102,33 @@ public class BlockHeader {
         }
     }
     
-    public int getNonce(){
-        return nonce;
-    }
-    
-    static public String getTime(){
+
+    static public String createTimeStamp(){
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy HH:mm:ss");
         return sdf.format(cal.getTime());
+    }
+    
+    
+//    GETTER METHODS
+    
+    public String getPrevBlockHash(){
+        return prevBlockHash;
+    }
+    
+    public int getEntries(){
+        return entries;
+    }
+    
+    public String getTimeStamp(){
+        return timeStamp;
+    }
+    
+    public int getTarget(){
+        return currentBitsTarget;
+    }
+    
+    public int getNonce(){
+        return nonce;
     }
 }
