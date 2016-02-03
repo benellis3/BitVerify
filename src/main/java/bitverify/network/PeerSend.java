@@ -3,25 +3,30 @@ package bitverify.network;
 import bitverify.network.proto.MessageProto.Message;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Sends a single message over a Socket
  */
 public class PeerSend implements Runnable {
-    private Message message;
+    private BlockingQueue<Message> messageQueue;
     private Socket s;
-
-    public PeerSend(Message msg, Socket socket) {
+    public PeerSend(BlockingQueue<Message> q,  Socket socket) {
         s = socket;
-        message = msg;
+        messageQueue = q;
     }
     @Override
     public void run() {
         try {
-            message.writeDelimitedTo(s.getOutputStream());
+            OutputStream os = s.getOutputStream();
+            while(true) {
+                Message message = messageQueue.take();
+                message.writeDelimitedTo(os);
+            }
         }
-        catch (IOException ie) {
+        catch (IOException | InterruptedException ie) {
             ie.printStackTrace();
         }
     }

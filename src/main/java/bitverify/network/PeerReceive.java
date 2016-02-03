@@ -13,6 +13,7 @@ public class PeerReceive implements Runnable {
     private Socket socket;
     public PeerReceive(Socket s) {
         socket = s;
+
     }
     @Override
     public void run() {
