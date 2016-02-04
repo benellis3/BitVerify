@@ -3,18 +3,20 @@ package bitverify.block;
 import bitverify.entries.*;
 import bitverify.crypto.Hash;
 
+import java.util.List;
+
 //import bitverify.crypto;
 
 public class Block {
     public Integer blockSize;
     public BlockHeader header;
-    public Entry entry;
+    public List<Entry> entries;
     
     
     
     
-    public Block(Block PrevBlock,Entry entry){
-        this.entry = entry;             //ask Laszlo to make a method or something to get the number of entries or just abandon these 
+    public Block(Block PrevBlock, List<Entry> entries){
+        this.entries = entries;             //ask Laszlo to make a method or something to get the number of entries or just abandon these
                                         //from the block header
         
         System.out.println("okay, block has been made.");

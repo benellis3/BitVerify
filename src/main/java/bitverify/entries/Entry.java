@@ -3,6 +3,7 @@ package bitverify.entries;
 import java.io.*;
 import java.security.Key;
 import java.security.KeyPair;
+import java.util.UUID;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
@@ -20,6 +21,9 @@ import bitverify.crypto.StringKeyDecodingException;
 public class Entry {
 
 	private transient String entryHashSigned = "";
+
+	@DatabaseField
+	private UUID entryID = UUID.randomUUID();
 
 	// we should store hashes and keys as byte arrays.
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
