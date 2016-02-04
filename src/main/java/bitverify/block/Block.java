@@ -1,5 +1,7 @@
 package bitverify.block;
 
+import java.nio.ByteBuffer;
+
 import bitverify.entries.*;
 import bitverify.crypto.Hash;
 
@@ -22,10 +24,8 @@ public class Block {
     }
     
     public Block(byte[] serialized){
-        int size = calculateSize();
-        byte[] totasize = new byte[size];
-//        byte[] serialeEntry = entry.serialize();      Ask if this can become a method or if there is any way 
-        
+        int headerSize = header.HEADER_SIZE;
+        int 
     }
     
     public Block(){
@@ -38,7 +38,16 @@ public class Block {
     }
     
     public byte[] serializeBlock(){
-        return null;
+        int size = calculateSize();
+        byte[] finalArray = new byte[size];
+        ByteBuffer byteBuffer = ByteBuffer.wrap(finalArray);
+//        byte[] serialeEntry = entry.serialize();      Ask if this can become a method or if there is any way
+        byte[]  headerSerial = header.serialize();
+        
+        byteBuffer.put(headerSerial);
+//        byteBuffer.put(serialEntry);
+        
+        return finalArray;
     }
     
     

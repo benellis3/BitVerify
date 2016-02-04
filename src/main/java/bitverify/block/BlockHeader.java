@@ -8,7 +8,7 @@ import java.util.Calendar;
 import java.util.List;
 
 public class BlockHeader {
-    private static final int HEADER_SIZE = 95; 
+    public static final int HEADER_SIZE = 95; 
     private static final int[] lengths = {64,19,4,4,4}; //lengths of all the fields in the order that they're
     private String prevBlockHash;   //previous block hash is always 64 bytes  
     private String timeStamp = createTimeStamp();       //defined as 19 character long
