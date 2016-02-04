@@ -1,13 +1,17 @@
 package bitverify.block;
 
+import bitverify.crypto.Hash;
+
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 
 public class BlockHeader {
+<<<<<<< HEAD
     public static final int HEADER_SIZE = 95; 
     private static final int[] lengths = {64,19,4,4,4}; //lengths of all the fields in the order that they're
     private String prevBlockHash;   //previous block hash is always 64 bytes  
@@ -22,69 +26,73 @@ public class BlockHeader {
         this.entries = entries;
         currentBitsTarget = calculateTarget();                  //need to read into how this is done over time and agreed upon by all
         
+=======
+    // N.B. hashes are 32 bytes long. Refer to constant Hash.HASH_LENGTH.
+    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    private byte[] prevHeaderHash;
+    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    private byte[] entriesHash;
+    @DatabaseField
+    private long timeStamp;
+    @DatabaseField
+    private int bitsTarget;
+    @DatabaseField
+    private int nonce = 0;
+    
+    
+    public BlockHeader(BlockHeader prevBlockHeader){
+        prevHeaderHash = prevBlockHeader.hash();
+        bitsTarget = calculateTarget();                  //need to read into how this is done over time and agreed upon by all
+>>>>>>> origin/master
     }
     
-    public BlockHeader(String prevHash, String time, int entries, int bitTarget, int nonce, Boolean resetTimer){
-        if(!resetTimer){
-            timeStamp = time;
-        }
-        
-        this.prevBlockHash = prevHash;
-        this.entries = entries;
-        this.currentBitsTarget = bitTarget;
+    public BlockHeader(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
+        this.prevHeaderHash = prevHash;
+        this.entriesHash = entriesHash;
+        this.timeStamp = timeStamp;
+        this.bitsTarget = bitsTarget;
         this.nonce = nonce;
-        
-        
     }
     
-    public static BlockHeader desearlize(byte[] buff){
-        int length =  buff.length;
-        List<byte[]> paramsList = new ArrayList<byte[]>();
-        if(length != HEADER_SIZE){
-//            throw some type of error
-            return null;
+    public static BlockHeader deserialize(InputStream in) throws IOException {
+        // DataInputStream allows us to read in primitives in binary form.
+        try (DataInputStream d = new DataInputStream(in)) {
+            // establish a pair of 32-byte buffers to read in our hashes as byte arrays
+            byte[] prevHeaderHash = new byte[Hash.HASH_LENGTH];
+            d.readFully(prevHeaderHash);
+            byte[] entriesHash = new byte[Hash.HASH_LENGTH];
+            d.readFully(entriesHash);
+            // instantiate while reading in the remaining fields - timestamp, bitsTarget , nonce
+            return new BlockHeader(prevHeaderHash, entriesHash, d.readLong(), d.readInt(), d.readInt());
         }
-        
-        int prevVal = 0;
-        int val = 0;
-        for(int i = 0; i<lengths.length; i++){
-            val += lengths[i];
-            byte[] param = Arrays.copyOfRange(buff, prevVal, val);
-            paramsList.add(param);
-            prevVal = val;
+    }
+    
+    public void serialize(OutputStream out) throws IOException {
+        // DataOutputStream allows us to write primitives in binary form.
+        try (DataOutputStream d = new DataOutputStream(out)) {
+            // write out each field in binary form, in declaration order.
+            d.write(prevHeaderHash);
+            d.write(entriesHash);
+            d.writeLong(timeStamp);
+            d.writeInt(bitsTarget);
+            d.writeInt(nonce);
         }
-        
-//        maybe think of a way to do this a little more cleanly
-        String prevHash = Converter.byteToString(paramsList.get(0));
-        String time = Converter.byteToString(paramsList.get(1));
-        int entries = Converter.byteToInt(paramsList.get(2));
-        int target = Converter.byteToInt(paramsList.get(3));
-        int nonce = Converter.byteToInt(paramsList.get(4));
-        
-        BlockHeader block = new BlockHeader(prevHash,time,entries,target,nonce,false);
-        
-        return block;
     }
-    
-    //wrap this in some sort of exception handler to prevent Unsupported Encoding Exceptions.
-    public byte[] serialize(){
-        byte[] finalArray = new byte[HEADER_SIZE];
-        ByteBuffer bytebuff = ByteBuffer.wrap(finalArray);
-        
-        bytebuff.put(Converter.stringToByteArray(prevBlockHash));
-        bytebuff.put(Converter.stringToByteArray(timeStamp));
-        bytebuff.put(Converter.intToByteArray(entries));
-        bytebuff.put(Converter.intToByteArray(currentBitsTarget));
-        bytebuff.put(Converter.intToByteArray(nonce));
-        
-        return finalArray;
+
+    /**
+     * Compute the hash of this block header.
+     */
+    private byte[] hash() {
+        ByteArrayOutputStream b = new ByteArrayOutputStream(Hash.HASH_LENGTH);
+        try {
+            serialize(b);
+        } catch (IOException e) {
+            // we are in control of creating the stream here so this will never happen, but just in case...
+            e.printStackTrace();
+        }
+        return Hash.hashBytes(b.toByteArray());
     }
-    
-    public String restTimeStamp(){
-        timeStamp = getTimeStamp();
-        return timeStamp;
-    }
-    
+
 
     
 //    Speak with Alex about how this should be done to prevent concurrency issues.
@@ -107,33 +115,25 @@ public class BlockHeader {
     static public int calculateTarget(){
 //        design this method after working with the databases and establishing how to calculate 
 //        the number of zeros required to correctly mine a block.
-        return (Integer) null;
+        return -1;
     }
     
 
-    static public String createTimeStamp(){
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/mm/yyyy HH:mm:ss"); //do NOT change this serialization relies on this lenght
-        return sdf.format(cal.getTime());                                   //look into a way of possibly making this less brittle
-    }
-    
     
 //    GETTER METHODS
     
-    public String getPrevBlockHash(){
-        return prevBlockHash;
+    public byte[] getPrevHeaderHash(){
+        return prevHeaderHash;
     }
-    
-    public int getEntries(){
-        return entries;
-    }
-    
-    public String getTimeStamp(){
+
+    public byte[] getEntriesHash() { return entriesHash; }
+
+    public long getTimeStamp(){
         return timeStamp;
     }
     
     public int getTarget(){
-        return currentBitsTarget;
+        return bitsTarget;
     }
     
     public int getNonce(){

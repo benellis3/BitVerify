@@ -1,7 +1,11 @@
 package bitverify.entries;
 
-import java.io.IOException;
+import java.io.*;
+import java.security.Key;
+import java.security.KeyPair;
+import java.util.UUID;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
@@ -16,26 +20,34 @@ import bitverify.crypto.StringKeyDecodingException;
 @DatabaseTable
 public class Entry {
 
-	@DatabaseField(id = true)
-	private long entryID;
-
-	@DatabaseField
-	private long entryTimeStamp;
 	private transient String entryHashSigned = "";
 
 	@DatabaseField
-	private String uploaderID;
+	private UUID entryID = UUID.randomUUID();
+
+	// we should store hashes and keys as byte arrays.
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] fileHash;
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] uploaderID;
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] receiverID; //optional
+
 	@DatabaseField
-	private String receiverID = ""; //optional
+	private long entryTimeStamp;
+
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] metadata;
 
 	// TODO: database storage - a byte[] of metadata would be convenient but we will discuss this
-	private transient Metadata metadata = null;
+	// private transient Metadata metadata = null;
 	private Object encMetadata;
 	private String encryptedSymmetricKey = null;
 	
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata) throws IOException{
-		entryID = 0; //TODO
-		entryTimeStamp = java.lang.System.currentTimeMillis();
+
+		entryTimeStamp = System.currentTimeMillis();
+		// TODO: fix for byte array field.
 		this.uploaderID = Asymmetric.keyToStringKey( uploaderKeyPair.getPublic() );
 		this.metadata = metadata;
 	}
@@ -50,9 +62,10 @@ public class Entry {
 		finalise(uploaderKeyPair);
 	}
 	
-	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata, String receiverID) throws IOException, StringKeyDecodingException{
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata, byte[] receiverID) throws IOException, StringKeyDecodingException{
 		_constructEntryCore(uploaderKeyPair, metadata);
-		
+
+		// TODO: fix for byte array field.
 		if (!Asymmetric.isValidStringKey(receiverID)){
 			throw new StringKeyDecodingException();
 		}
@@ -70,14 +83,59 @@ public class Entry {
 		metadata = null; //delete clear text metadata
 		hashAndSignEntry( uploaderKeyPair.getPrivate() );
 	}
-	
-	private String hashEntry(){
+
+
+	public static Entry deserialize(InputStream in) throws IOException {
+		// DataInputStream allows us to read in primitives in binary form.
+		try (DataInputStream d = new DataInputStream(in)) {
+			byte[] fileHash = new byte[Hash.HASH_LENGTH];
+			d.readFully(fileHash);
+
+			// TODO: ascertain key length
+			int KEY_LENGTH = 0;
+			byte[] uploaderID = new byte[KEY_LENGTH];
+			d.readFully(uploaderID);
+			byte[] receiverID = new byte[KEY_LENGTH];
+			d.readFully(receiverID);
+
+			long timeStamp = d.readLong();
+
+			int metadataLength = d.readInt();
+
+			byte[] metadata = new byte[metadataLength];
+			d.readFully(metadata);
+
+			// TODO: provide suitable constructor.
+			return new Entry(/* arguments from above */);
+		}
+	}
+
+	public void serialize(OutputStream out) throws IOException {
+		// DataOutputStream allows us to write primitives in binary form.
+		try (DataOutputStream d = new DataOutputStream(out)) {
+			// write out each field in binary form, in declaration order.
+			d.write(fileHash);
+			d.write(uploaderID);
+			d.write(receiverID);
+			d.writeLong(entryTimeStamp);
+			// write the length of the metadata, so we know where it ends.
+			d.writeInt(metadata.length);
+			d.write(metadata);
+		}
+	}
+
+
+	// TODO: I believe we will only ever hash a series of entries in a block, not an individual one.
+
+	private String hash(){
+
+
 		byte[] serialisedEntry;
 		//TODO implement serialisation for Entry
 		//Serialisation MUST NOT include entryHashSigned (or alternatively, treat it as "")
 		//see fields marked as transient
 		serialisedEntry = new byte[0];
-		
+
 		return Hash.hashBytes(serialisedEntry);
 	}
 	
