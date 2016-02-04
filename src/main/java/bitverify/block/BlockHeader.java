@@ -77,6 +77,7 @@ public class BlockHeader {
     }
 
     
+    
 //    Speak with Alex about how this should be done to prevent concurrency issues.
     public Boolean incrementNonce(){
         nonce += 1;
