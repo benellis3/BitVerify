@@ -6,13 +6,14 @@ import bitverify.block.Block;
 import bitverify.entries.Entry;
 
 //This will run in it's own thread
-public class Miner {
+public class Miner implements Runnable{
 	//Whether we are currently mining
 	private boolean mining;
 	
 	//The number of zeros at the start of the block hash
 	private int goalZeros;
 	private String goal;
+	//Will use 256 target, test if hash is less than this
 	
 	//The pool of entries
 	private Pool pool;
@@ -46,7 +47,8 @@ public class Miner {
 		}
 	}
 	
-	private void mineEntries(){
+	@Override
+	public void run(){
 		updateMiningBlock();
 
 		String result;
@@ -59,6 +61,8 @@ public class Miner {
 				
 				//Block lastBlockInChain = getLastBLockInChain();
 				//Block blockMining = new Block(lastBlockInChain);
+				
+				System.out.println("Success");
 				
 				mining = false;
 			}
@@ -73,7 +77,7 @@ public class Miner {
 	public void startMining(){
 		mining = true;
 		System.out.println("test");
-		mineEntries();
+		run();
 	}
 	
 	//This gets called when a new block has been successfully mined elsewhere
@@ -90,6 +94,11 @@ public class Miner {
 		for (int x = 0; x < goalZeros; x++){
 			goal = goal + "0";
 		}
+	}
+	
+	public static void main(String[] args){
+		Miner m = new Miner();
+		m.startMining();
 	}
 	
 }
