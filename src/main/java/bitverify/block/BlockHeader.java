@@ -76,7 +76,7 @@ public class BlockHeader {
         return Hash.hashBytes(b.toByteArray());
     }
 
-
+    
     
 //    Speak with Alex about how this should be done to prevent concurrency issues.
     public Boolean incrementNonce(){
