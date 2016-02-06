@@ -20,5 +20,13 @@ public class Hash {
 	public static byte[] hashString(String data){
 		return hashBytes(data.getBytes(StandardCharsets.UTF_8));
 	}
+	
+	public static String hashBytesToString(byte[] data){
+		return Hex.toHexString(hashBytes(data));
+	}
+	
+	public static String hashStringToString(String data){
+		return Hex.toHexString(hashString(data));
+	}
 
 }
