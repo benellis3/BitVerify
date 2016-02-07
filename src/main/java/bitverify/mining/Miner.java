@@ -11,13 +11,6 @@ public class Miner implements Runnable{
 	//Whether we are currently mining
 	private boolean mining;
 	
-	//REMOVE THIS
-	//The number of zeros at the start of the block hash
-	private int goalZeros;
-	private String goal;
-	//Will use 256 target, test if hash is less than this
-	//REMOVE THIS
-	
 	private int packedTarget;
 	private final int byteOffset = 3;
 	
@@ -60,7 +53,6 @@ public class Miner implements Runnable{
 		
 		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
-		
 		
 		if (lessThan){
 			return true;
@@ -116,16 +108,6 @@ public class Miner implements Runnable{
 	public void stopMining(){
 		mining = false;
 		//Return entries to pool that aren't in the new block
-	}
-	
-	public void updateGoal(int zeros){
-		goalZeros = zeros;
-		
-		goal = "";
-		
-		for (int x = 0; x < goalZeros; x++){
-			goal = goal + "0";
-		}
 	}
 	
 	public static void main(String[] args){
