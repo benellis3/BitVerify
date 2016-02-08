@@ -17,6 +17,8 @@ public class Block {
     public BlockHeader header;
     public List<Entry> entries;
     public int target;
+//    store the prevHeaderHash because this allows us to recreate a new header whenever entries are added without
+//    storing the entire previous block since the prevHeaderHash is needed to create the header
     public byte[] prevHeaderHash;
     
     public Block(Block prevBlock,int target){
@@ -30,7 +32,7 @@ public class Block {
         entries = entryList;
         createHeader();
     }
-//    make sure that after this method is used, you call the derivative methods and don't just used stored values
+    
     public void addSingleEntry(Entry entry){
         entries.add(entry);
         createHeader();
