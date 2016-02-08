@@ -3,6 +3,7 @@ package bitverify;
 import java.util.Scanner;
 
 import bitverify.mining.Miner;
+import bitverify.network.ConnectionManager;
 
 public class Node {
 	private String[] mOptions = {"Start mining", "Add entry", "Search entries", "See statistics", "Exit"};
@@ -10,6 +11,8 @@ public class Node {
 	
 	private Scanner mScanner;
 	private Miner mMiner;
+	
+	private ConnectionManager mConnectionManager;
 	
 	public Node(String[] args) {
 		handleArgs(args);
@@ -108,7 +111,8 @@ public class Node {
 	}
 	
 	private void setupNetwork() {
-		
+		System.out.println("Setting up network...");
+		mConnectionManager = new ConnectionManager();
 	}
 
 }
