@@ -33,6 +33,11 @@ public class DataStore {
         return entryDao.queryForEq("fileHash", fileHash);
     }
 
+    public List<Entry> getUnconfirmedEntries() throws SQLException {
+        return entryDao.queryForEq("blockID", null);
+        // TODO: ammend entry class to contain a blockID of the parent block.
+    }
+
     public void insertEntry(Entry e) throws SQLException {
         entryDao.create(e);
     }
@@ -46,7 +51,8 @@ public class DataStore {
     }
 
 
-     
+    // get most recent block (at end of chain)
+    // get nth predecessor block from a given block
 
     // TODO: implement similar methods for Blocks, and any other functions we require.
 }
