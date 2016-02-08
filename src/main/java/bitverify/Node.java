@@ -19,6 +19,7 @@ public class Node {
 		// If no args, we will just show default prompt to user
 		if (args.length == 0) {
 			mScanner = new Scanner(System.in);
+			setupNetwork();
 			userCLISetup();
 		}
 		else {
@@ -35,10 +36,11 @@ public class Node {
 		// Get the user input and run command if valid
 		System.out.println("Enter number to run command:");
 		String uInput = mScanner.nextLine();
+		boolean shouldContinue = true;
 		try {
 			int inputNum = Integer.parseInt(uInput);
 			String command = mOptions[inputNum - 1];
-			handleUserInput(command);
+			shouldContinue = handleUserInput(command);
 		} catch (NumberFormatException e) {
 			System.out.printf("'%s' is not a valid command. Enter a number instead.\n", uInput);
 		} catch (ArrayIndexOutOfBoundsException e2) {
@@ -46,10 +48,11 @@ public class Node {
 		}
 		
 		// Redisplay options to user after command has finished.
-		userCLISetup();
+		if (shouldContinue)
+			userCLISetup();
 	}
 	
-	private void handleUserInput(String command) {
+	private boolean handleUserInput(String command) {
 		command = command.toLowerCase();
 		if (command.equals("start mining"))
 			startMiner();
@@ -61,8 +64,11 @@ public class Node {
 			searchEntries();
 		else if (command.equals("see statistics"))
 			displayStatistics();
-		else if (command.equals("exit"))
+		else if (command.equals("exit")){
 			exitProgram();
+			return false;
+		}
+		return true;
 			
 	}
 	
@@ -98,6 +104,10 @@ public class Node {
 	}
 	
 	private void exitProgram() {
+		mMiner.stopMining();
+	}
+	
+	private void setupNetwork() {
 		
 	}
 
