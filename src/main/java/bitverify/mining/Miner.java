@@ -3,6 +3,9 @@ package bitverify.mining;
 import java.lang.String;
 import java.math.BigInteger;
 
+import com.squareup.otto.Bus;
+
+import bitverify.OttoExample.OttoEvent;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 
@@ -12,8 +15,26 @@ import bitverify.entries.Entry;
 //Ability to read pool entries from database to add to pool class
 //Ability to add entries to block and determine if block is full
 
-//This will run in it's own thread
+/**
+ * This class is responsible for performing the mining on a new block using unconfirmed entries.
+ * It also computes the difficulty for mining based on the recent blockchain history.
+ * @author Alex Day
+ */
 public class Miner implements Runnable{
+	private Bus eventBus;
+    
+	public class blockFoundEvent {
+        private Block successBlock;
+
+        public blockFoundEvent(Block b) {
+            successBlock = b;
+        }
+
+        public Block getBlock() {
+            return successBlock;
+        }
+    }
+	
 	//Whether we are currently mining
 	private boolean mining;
 	
@@ -28,13 +49,16 @@ public class Miner implements Runnable{
 	
 	private final int bitsInByte = 8;
 	
-	public Miner(){
+	public Miner(Bus eventBus){
 		pool = new Pool();
 		
 		blockMining = new Block();
 		
 		//Block lastBlockInChain = getLastBlockInChain();
 		//blockMining = new Block(lastBlockInChain);
+	       
+		this.eventBus = eventBus;
+
 	}
 	
 	public void setPackedTarget(int p){
@@ -108,6 +132,8 @@ public class Miner implements Runnable{
 			
 			//if (mineSuccess(result)){
 				//Broadcast block
+			
+				//eventBus.post(new blockFoundEvent(blockMining));
 				
 				//Block lastBlockInChain = getLastBLockInChain();
 				//Block blockMining = new Block(lastBlockInChain);
