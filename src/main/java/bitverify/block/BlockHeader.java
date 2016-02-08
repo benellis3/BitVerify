@@ -24,9 +24,9 @@ public class BlockHeader {
     private int nonce = 0;
     
     
-    public BlockHeader(BlockHeader prevBlockHeader){
+    public BlockHeader(BlockHeader prevBlockHeader,int target){
         prevHeaderHash = prevBlockHeader.hash();
-        bitsTarget = calculateTarget();                  //need to read into how this is done over time and agreed upon by all
+        bitsTarget = target;                  //need to read into how this is done over time and agreed upon by all
     }
     
     public BlockHeader(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
@@ -86,6 +86,7 @@ public class BlockHeader {
     
     //fill in code to check the number of bits with the target number of bits after hashing the nonce value
     //move this method to the Block module maybe to make it easier?
+//    TODO: 
     public Boolean checkNonce(){
         Boolean check = 1>0;
         if(check){
@@ -95,10 +96,31 @@ public class BlockHeader {
         }
     }
     
-    static public int calculateTarget(){
-//        design this method after working with the databases and establishing how to calculate 
-//        the number of zeros required to correctly mine a block.
-        return -1;
+    public Boolean verifyHeaders(ArrayList<BlockHeader> headerList){
+//        TODO: iterate through the headers and make sure the hashes agree 
+        int listLen = headerList.size();
+        Boolean isValid = true;
+        if(headerList.isEmpty()){
+//            TODO: throw some type of exception
+        }else if(listLen == 1){
+            return isValid;
+        }else{
+            BlockHeader prevBlock = headerList.get(0);
+            BlockHeader currentBlock;
+            byte[] prevBlockHash = prevBlock.hash();
+            byte[] currentBlockPrevHash;
+            for(int i = 1; i < listLen; i++){
+                currentBlock = headerList.get(i);
+                currentBlockPrevHash = currentBlock.getPrevHeaderHash();
+                if(currentBlockPrevHash != prevBlockHash){
+                    isValid = false;
+                }
+                
+                prevBlock = currentBlock;
+                prevBlockHash = prevBlock.hash();
+            }
+        }
+        return isValid;
     }
     
 
