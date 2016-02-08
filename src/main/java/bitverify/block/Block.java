@@ -30,6 +30,10 @@ public class Block {
         
     }
     
+    public void addEntry(Entry entry){
+//    TODO: update the block header to include this new entry    
+    }
+    
     public Block(){
         System.out.println("okay, block has been made.");
     }
@@ -40,6 +44,7 @@ public class Block {
     }
     
     public byte[] serializeBlock(){
+//        TODO: look at entry and how it is serialized and add this to the block header to make a new serialization
         return null;
     }
     
