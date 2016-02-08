@@ -43,19 +43,17 @@ public class EntryTest {
 			return;
 		}		
 		//serialize
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] entry1Bytes;
 		try {
-			entry1.serialize(out);
+			entry1Bytes = entry1.serialize();
 		} catch (IOException e) {
 			fail();
 			return;
 		}
-		byte[] entry1Bytes = out.toByteArray();
 		//deserialize
-		ByteArrayInputStream in = new ByteArrayInputStream(entry1Bytes);
 		Entry entry1B;
 		try {
-			entry1B = Entry.deserialize(in);
+			entry1B = Entry.deserialize(entry1Bytes);
 		} catch (IOException e) {
 			fail();
 			return;
@@ -92,19 +90,17 @@ public class EntryTest {
 			return;
 		}		
 		//serialize
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] entry2Bytes;
 		try {
-			entry2.serialize(out);
+			entry2Bytes = entry2.serialize();
 		} catch (IOException e) {
 			fail();
 			return;
 		}
-		byte[] entry1Bytes = out.toByteArray();
 		//deserialize
-		ByteArrayInputStream in = new ByteArrayInputStream(entry1Bytes);
 		Entry entry2B;
 		try {
-			entry2B = Entry.deserialize(in);
+			entry2B = Entry.deserialize(entry2Bytes);
 		} catch (IOException e) {
 			fail();
 			return;

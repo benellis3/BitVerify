@@ -4,6 +4,11 @@ import java.util.ArrayList;
 
 import bitverify.entries.Entry;
 
+/**
+ * This class is responsible for passing entries to the miner, it may soon be obsolete
+ * depending on how the database pool is used.
+ * @author Alex Day
+ */
 public class Pool {
 	private int maxEntries;
 	private ArrayList<Entry> entryPool;

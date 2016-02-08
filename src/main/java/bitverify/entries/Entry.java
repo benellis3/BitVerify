@@ -39,7 +39,7 @@ public class Entry {
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] metadataBytes = new byte[0];
 
-	private Metadata metadataObject = null; // TODO this should be stored in the DB as well
+	private Metadata metadataObject = null;
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] encryptedSymmetricKey = new byte[0];
 	
@@ -159,6 +159,11 @@ public class Entry {
 		}
 	}
 	
+	public static Entry deserialize(byte[] data) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(data);
+		return Entry.deserialize(in);
+	}
+	
 	private void _serialize(OutputStream out, boolean includeHash) throws IOException {
 		// DataOutputStream allows us to write primitives in binary form.
 		try (DataOutputStream d = new DataOutputStream(out)) {
@@ -191,6 +196,12 @@ public class Entry {
 	
 	public void serialize(OutputStream out) throws IOException {
 		_serialize(out, true);
+	}
+	
+	public byte[] serialize() throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		serialize(out);
+		return out.toByteArray();
 	}
 	
 	private void serializeForHashing(OutputStream out) throws IOException {

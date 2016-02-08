@@ -29,19 +29,17 @@ public class MetadataTest {
 	public void testSerialize() {
 		Metadata metadata = generateMetadata1();
 		//serialize
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] metadataBytes;
 		try {
-			metadata.serialize(out);
+			metadataBytes = metadata.serialize();
 		} catch (IOException e) {
 			fail();
 			return;
 		}
-		byte[] metadataBytes = out.toByteArray();
 		//deserialize
-		ByteArrayInputStream in = new ByteArrayInputStream(metadataBytes);
 		Metadata metadata2;
 		try {
-			metadata2 = Metadata.deserialize(in);
+			metadata2 = Metadata.deserialize(metadataBytes);
 		} catch (IOException e) {
 			fail();
 			return;
