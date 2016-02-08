@@ -6,15 +6,8 @@ import java.math.BigInteger;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
-import bitverify.OttoExample.OttoEvent;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
-
-//Functionality required:
-//Ability to query most recent block from chain/database (to get its timestamp)
-//Ability to jump back X blocks to get its timestamp
-//Ability to read pool entries from database to add to pool class
-//Ability to add entries to block and determine if block is full
 
 /**
  * This class is responsible for performing the mining on a new block using unconfirmed entries.
@@ -22,6 +15,7 @@ import bitverify.entries.Entry;
  * @author Alex Day
  */
 public class Miner implements Runnable{
+	//We create an event when a block is successfully mined and subscribe to new entry for mining events
 	private Bus eventBus;
     
 	public class BlockFoundEvent {
@@ -51,54 +45,109 @@ public class Miner implements Runnable{
 	//Whether we are currently mining
 	private boolean mining;
 	
+	//The mining target (the hash of the block must be less than the unpacked target)
 	private int packedTarget;
-	private final int byteOffset = 3;
-	
-	//The pool of entries
-	private Pool pool;
+	private final int byteOffset = 3;	//A constant used in unpacking the target
 	
 	//The block we are currently mining
 	private Block blockMining;
 	
+	//Simple constant for making calculations easier to read
 	private final int bitsInByte = 8;
 	
 	public Miner(Bus eventBus){
-		pool = new Pool();
-		
+		//Temporary block creation until we can pass the most recent block
 		blockMining = new Block();
 		
-		//Block lastBlockInChain = getLastBlockInChain();
-		//blockMining = new Block(lastBlockInChain);
-	       
+		newMiningBlock();
+	    
+		//Set up the event bus
 		this.eventBus = eventBus;
 		eventBus.register(this);
+		
+		//Add unconfirmed entries from the database to the block for mining
+		//List<Entry> pool = DataStore.getUnconfirmedEntries();
+		
+		//for (Entry e: pool){
+		//	blockMining.addEntry(e.getEntry());
+		//}
 
 	}
+	
+	//Determine whether the block's hash meets the target's requirements
+	public boolean mineSuccess(String hash){
+		String target = unpackTarget(packedTarget);
+		
+		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
+		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
+		
+		if (lessThan){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	//Perform mining in a separate thread
+	@Override
+	public void run(){
+		String result;
+		
+		mining = true;
+
+		while (mining){
+			//Currently fails because block serialisation returns null
+			result = blockMining.hashBlock();
+			
+			if (mineSuccess(result)){
+				//Pass successful block to application logic for broadcasting to the network
+				eventBus.post(new BlockFoundEvent(blockMining));
+				//Application logic should assign successful entries to their block in the database (so no longer in pool)
+				
+				newMiningBlock();
+			}
+			
+			//Increment the header's nonce to generate a new hash
+			blockMining.header.incrementNonce();
+		}
+	}
+	
+	public void newMiningBlock(){
+		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
+		//Block lastBlockInChain = getLastBlockInChain(); //from datastore method
+		//blockMining = new Block(lastBlockInChain);
+		
+		//int target = calculatePackedTarget();
+		//blockMining.setTarget(target);
+		//setPackedTarget(target);
+	}
+	
+	// Not needed anymore
+	//public void startMining(){
+	//	//Calculate new target (use most recent's one if not every Xth block)
+	//	mining = true;
+	//	run();
+	//}
+	
+	//This gets called when a new block has been successfully mined elsewhere
+	public void stopMining(){
+		mining = false;
+		//Application logic should ensure uncomfirmed entries in database that were in the new block are no longer uncomfirmed
+	}
+	
+	//Subscribe to new entry events on bus
+    @Subscribe
+    public void onNewEntryEvent(NewEntryEvent e) {
+    	//Add entry from pool to block we are mining
+        //blockMining.addEntry(e.getEntry());
+    }
 	
 	public void setPackedTarget(int p){
 		packedTarget = p;
 	}
 	
-	//To be called every X blocks
-	//Let X be 2016
-	//Let Y be 2 weeks
-	//Reject new blocks that don't adhere to this target
-	public int calculateNewPackedTarget(){
-		//Timestamp a = mostRecentBlock.timeStamp();
-		//Timestamp b = XBlocksBeforeMRB.timeStamp();
-		//TimeToMine c = a - b;
-		
-		//if (c < Y/4) c = Y/4;
-		//if (c > Y*4) c = Y*4;
-		
-		// newPackedTarget = (c/Y) * unpackTarget(packedTarget)
-		
-		// if (newPackedTarget > maxPossibleTarget) newPackedTarget = maxPossibleTarget
-		// if (newPackedTarget < minPossibleTarget) newPackedTarget = minPossibleTarget
-		
-		return 1;
-	}
-	
+	//Calculate the hexstring representation of the target from its packed form
 	public String unpackTarget(int p){
 		//packedTarget stored as
 		//	0xeemmmm
@@ -112,65 +161,42 @@ public class Miner implements Runnable{
 		return result.toString(16);
 	}
 	
-	public boolean mineSuccess(String hash){
-		String target = unpackTarget(packedTarget);
+	//To be called every X blocks
+	//Let X be 1008 blocks
+	//Let Y be 1 week
+	//Reject new blocks that don't adhere to this target
+	public int calculatePackedTarget(){
+		//if ((noBlocks % 1008 == 0) && (noBlocks > 0)) {
+			//	Timestamp a = mostRecentBlock.timeStamp();
+			//	Timestamp b = XBlocksBeforeMRB.timeStamp();
+			//	TimeToMine c = a - b;
 		
-		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument
-		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
+			//if (c < Y/4) c = Y/4;
+			//if (c > Y*4) c = Y*4;
 		
-		if (lessThan){
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
-	//Subscribe to new entry events on bus
-    @Subscribe
-    public void onNewEntryEvent(NewEntryEvent e) {
-    	//Add entry from pool to block we are mining
-        //blockMining.addEntry(e.getEntry());
-    }
-	
-	@Override
-	public void run(){
-		String result;
-
-		while (mining){
-			//Currently fails because block serialisation returns null
-			result = blockMining.hashBlock();
+			//newTarget = (c/Y) * unpackTarget(packedTarget);
+		
+			//if (newTarget > maxPossibleTarget) newTarget = maxTarget;
+			//if (newTarget < minPossibleTarget) newTarget = minTarget;
+		
+			//To pack mantissa = shift right string length - 4, store number of shifts
+			//newPackedTarget is noShifts * 2^(2*bitsInByte) + mantissa
+		
+			//return pack(newTarget);
+		//else if(noBlocks == 0){
+		//	return 0x1;
+		//}
+		//else{
+		//	return mostRecentBlock.packedTarget();
+		//}
 			
-			if (mineSuccess(result)){
-				//Pass successful block to application logic for broadcasting to the network
-				eventBus.post(new BlockFoundEvent(blockMining));
-				
-				//Block lastBlockInChain = getLastBLockInChain();
-				//Block blockMining = new Block(lastBlockInChain);
-			}
-			
-			//Add new entries to block mining as they come in
-			//Will use a busEvent to handle this
-			
-			blockMining.header.incrementNonce();
-		}
+		//Remove this:
+		return 1;
 	}
 	
-	public void startMining(){
-		//Calculate new target (use most recent's one if not every Xth block)
-		mining = true;
-		run();
-	}
-	
-	//This gets called when a new block has been successfully mined elsewhere
-	public void stopMining(){
-		mining = false;
-		//Return entries to pool that aren't in the new block
-	}
-	
+	//For quick tests
 	public static void main(String[] args){
-		Miner m = new Miner(new Bus());
-		m.startMining();
+		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 	}
-	
 }

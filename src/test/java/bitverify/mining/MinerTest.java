@@ -4,11 +4,14 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import com.squareup.otto.Bus;
+import com.squareup.otto.ThreadEnforcer;
+
 public class MinerTest {
 
 	@Test
 	public void testMineSuccess() {
-		Miner m = new Miner();
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 		m.setPackedTarget(0x1f3b20fa);
 		//We have an unpacked target of 003b20fa00000000000000000000000000000000000000000000000000000000
@@ -36,7 +39,7 @@ public class MinerTest {
 	
 	@Test
 	public void testUnPack() {
-		Miner m = new Miner();
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 		int input[] = {
 				0x04111111,
