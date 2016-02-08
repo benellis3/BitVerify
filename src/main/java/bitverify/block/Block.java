@@ -36,7 +36,7 @@ public class Block {
     
     public String hashBlock(){
         byte[] serialized = this.serializeBlock();
-        return Hash.hashBytes(serialized);
+        return Hash.hashBytesToString(serialized);
     }
     
     public byte[] serializeBlock(){
