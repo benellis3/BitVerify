@@ -11,7 +11,7 @@ import org.junit.Test;
 
 public class AsymmetricTest {
 	
-	private static String myPrivKey =
+	public static String myPrivKey =
 			"-----BEGIN RSA PRIVATE KEY-----\n"+
 			"MIIJQAIBADANBgkqhkiG9w0BAQEFAASCCSowggkmAgEAAoICAQDC6FWG3AVN7Yqg\n"+
 			"L9d2ivUjL1IONZjYoYpStIC/yI9ZTPNcHiqBSiumZf/p59ZoD2KDOPHNSD/3D3t3\n"+
@@ -65,7 +65,7 @@ public class AsymmetricTest {
 			"EVTd9Zoj+jVVaYE5ENgugGMn+RM=\n"+
 			"-----END RSA PRIVATE KEY-----";
 	
-	private static String myPubKey =
+	public static String myPubKey =
 			"-----BEGIN RSA PUBLIC KEY-----\n"+
 			"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAwuhVhtwFTe2KoC/Xdor1\n"+
 			"Iy9SDjWY2KGKUrSAv8iPWUzzXB4qgUorpmX/6efWaA9igzjxzUg/9w97d1HxLr7+\n"+
@@ -123,7 +123,7 @@ public class AsymmetricTest {
 		AsymmetricKeyParameter publicKey;
 		try {
 			publicKey = Asymmetric.stringKeyToKey(myPubKey);
-		} catch (StringKeyDecodingException e1) {
+		} catch (KeyDecodingException e1) {
 			e1.printStackTrace();
 			fail();
 			return;
@@ -259,10 +259,10 @@ public class AsymmetricTest {
 	}
 	
 	@Test
-	public void testIsValidStringKey() {
+	public void testIsValidKey() {
 		//test hardcoded keys
-		assertTrue( Asymmetric.isValidStringKey(myPrivKey) );
-		assertTrue( Asymmetric.isValidStringKey(myPubKey) );
+		assertTrue( Asymmetric.isValidKey(myPrivKey) );
+		assertTrue( Asymmetric.isValidKey(myPubKey) );
 		
 		//test newly generated keys
 		AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
@@ -270,13 +270,13 @@ public class AsymmetricTest {
 		try {
 			newPrivKey = Asymmetric.keyToStringKey(keyPair.getPrivate());
 			newPubKey = Asymmetric.keyToStringKey(keyPair.getPublic());
-		} catch (IOException e) {
+		} catch (KeyDecodingException e) {
 			e.printStackTrace();
 			fail();
 			return;
 		}
-		assertTrue( Asymmetric.isValidStringKey(newPrivKey) );
-		assertTrue( Asymmetric.isValidStringKey(newPubKey) );
+		assertTrue( Asymmetric.isValidKey(newPrivKey) );
+		assertTrue( Asymmetric.isValidKey(newPubKey) );
 		
 		//test random gibberish
 		String input[] = {
@@ -286,7 +286,7 @@ public class AsymmetricTest {
 				"-----BEGIN RSA PUBLIC KEY-----\n nahforgetit then",
 		};
 		for (int i=0; i<input.length; i++){
-			assertFalse( Asymmetric.isValidStringKey(input[i]) );
+			assertFalse( Asymmetric.isValidKey(input[i]) );
 		}
 		
 	}
