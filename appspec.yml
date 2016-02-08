@@ -1,0 +1,15 @@
+version: 0.0
+os: linux
+hooks:
+  BeforeInstall:
+    - location: testing_scripts/install_dependencies
+      timeout: 300
+      runas: root
+    - location: testing_scripts/start_app
+      timeout: 300
+      runas: root
+  ApplicationStop:
+    - location: testing_scripts/stop_app
+      timeout: 300
+      runas: root
+
