@@ -1,5 +1,9 @@
 package bitverify.entries;
 
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -49,6 +53,11 @@ public class Metadata {
 		}
 	}
 	
+	public static Metadata deserialize(byte[] data) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(data);
+		return Metadata.deserialize(in);
+	}
+	
 	public void serialize(OutputStream out) throws IOException {
 		// DataOutputStream allows us to write primitives in binary form.
 		try (DataOutputStream d = new DataOutputStream(out)) {
@@ -67,6 +76,12 @@ public class Metadata {
 
 			d.flush();
 		}
+	}
+	
+	public byte[] serialize() throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		serialize(out);
+		return out.toByteArray();
 	}
 	
 	public String getDocHash(){
