@@ -24,9 +24,11 @@ public class BlockHeader {
     private int nonce = 0;
     
     
-    public BlockHeader(BlockHeader prevBlockHeader,int target){
-        prevHeaderHash = prevBlockHeader.hash();
-        bitsTarget = target;                  //need to read into how this is done over time and agreed upon by all
+    public BlockHeader(byte[] prevBlockHeaderHash,byte[] entriesHash, int target){
+        this.prevHeaderHash = prevBlockHeaderHash;
+        this.entriesHash = entriesHash;
+        this.timeStamp = System.currentTimeMillis();
+        this.bitsTarget = target;                  //need to read into how this is done over time and agreed upon by all
     }
     
     public BlockHeader(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
@@ -50,7 +52,13 @@ public class BlockHeader {
         }
     }
     
-    public void serialize(OutputStream out) throws IOException {
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        serialize(out);
+        return out.toByteArray();
+    }
+    
+    private void serialize(OutputStream out) throws IOException {
         // DataOutputStream allows us to write primitives in binary form.
         try (DataOutputStream d = new DataOutputStream(out)) {
             // write out each field in binary form, in declaration order.
@@ -65,7 +73,7 @@ public class BlockHeader {
     /**
      * Compute the hash of this block header.
      */
-    private byte[] hash() {
+    public byte[] hash() {
         ByteArrayOutputStream b = new ByteArrayOutputStream(Hash.HASH_LENGTH);
         try {
             serialize(b);
