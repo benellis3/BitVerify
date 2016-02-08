@@ -96,12 +96,12 @@ public class BlockHeader {
         }
     }
     
-    public Boolean verifyHeaders(ArrayList<BlockHeader> headerList){
-//        TODO: iterate through the headers and make sure the hashes agree 
+    public Boolean verifyHeaders(ArrayList<BlockHeader> headerList) throws Exception{
         int listLen = headerList.size();
         Boolean isValid = true;
         if(headerList.isEmpty()){
-//            TODO: throw some type of exception
+            Exception e = new IllegalStateException();
+            throw e;
         }else if(listLen == 1){
             return isValid;
         }else{
@@ -112,7 +112,7 @@ public class BlockHeader {
             for(int i = 1; i < listLen; i++){
                 currentBlock = headerList.get(i);
                 currentBlockPrevHash = currentBlock.getPrevHeaderHash();
-                if(currentBlockPrevHash != prevBlockHash){
+                if(!Arrays.equals(currentBlockPrevHash, prevBlockHash)){
                     isValid = false;
                 }
                 
