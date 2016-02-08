@@ -4,6 +4,7 @@ import java.lang.String;
 import java.math.BigInteger;
 
 import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
 
 import bitverify.OttoExample.OttoEvent;
 import bitverify.block.Block;
@@ -23,15 +24,27 @@ import bitverify.entries.Entry;
 public class Miner implements Runnable{
 	private Bus eventBus;
     
-	public class blockFoundEvent {
+	public class BlockFoundEvent {
         private Block successBlock;
 
-        public blockFoundEvent(Block b) {
+        public BlockFoundEvent(Block b) {
             successBlock = b;
         }
 
         public Block getBlock() {
             return successBlock;
+        }
+    }
+	
+	public class NewEntryEvent {
+        private Entry entry;
+
+        public NewEntryEvent(Entry e) {
+            entry = e;
+        }
+
+        public Entry getEntry() {
+            return entry;
         }
     }
 	
@@ -58,6 +71,7 @@ public class Miner implements Runnable{
 		//blockMining = new Block(lastBlockInChain);
 	       
 		this.eventBus = eventBus;
+		eventBus.register(this);
 
 	}
 	
@@ -111,42 +125,31 @@ public class Miner implements Runnable{
 			return false;
 		}
 	}
-	
-	private void updateMiningBlock(){
-		Entry e = pool.takeFromPool();
-
-		while (e != null){
-			//blockMining.addEntry(entry);
-		}
-	}
+	//Subscribe to new entry events on bus
+    @Subscribe
+    public void onNewEntryEvent(NewEntryEvent e) {
+    	//Add entry from pool to block we are mining
+        //blockMining.addEntry(e.getEntry());
+    }
 	
 	@Override
 	public void run(){
-		updateMiningBlock();
-			
-		//String result;
+		String result;
 
 		while (mining){
 			//Currently fails because block serialisation returns null
-			//result = blockMining.doubleHashBlock();
+			result = blockMining.hashBlock();
 			
-			//if (mineSuccess(result)){
-				//Broadcast block
-			
-				//eventBus.post(new blockFoundEvent(blockMining));
+			if (mineSuccess(result)){
+				//Pass successful block to application logic for broadcasting to the network
+				eventBus.post(new BlockFoundEvent(blockMining));
 				
 				//Block lastBlockInChain = getLastBLockInChain();
 				//Block blockMining = new Block(lastBlockInChain);
-				
-				//System.out.println("Success");
-				
-				//mining = false;
-			//}
+			}
 			
 			//Add new entries to block mining as they come in
-			//if (not blockMining.isFull()){
-				updateMiningBlock();
-			//}
+			//Will use a busEvent to handle this
 			
 			blockMining.header.incrementNonce();
 		}
@@ -164,11 +167,10 @@ public class Miner implements Runnable{
 		//Return entries to pool that aren't in the new block
 	}
 	
-	//public static void main(String[] args){
-	//	Miner m = new Miner();
-		//m.startMining();
+	public static void main(String[] args){
+		Miner m = new Miner(new Bus());
+		m.startMining();
 		
-	//	System.out.println(m.unpackTarget(0x2a3b20fa));
-	//}
+	}
 	
 }
