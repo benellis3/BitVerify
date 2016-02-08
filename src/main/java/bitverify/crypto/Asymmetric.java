@@ -14,6 +14,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -103,7 +104,7 @@ public class Asymmetric {
 		return new AsymmetricCipherKeyPair(publicKey, privateKey);
 	}
 	
-	public static AsymmetricCipherKeyPair getKeyPairFromStringKeys(String publicKey, String privateKey) throws StringKeyDecodingException{
+	public static AsymmetricCipherKeyPair getKeyPairFromStringKeys(String publicKey, String privateKey) throws KeyDecodingException{
 		return new AsymmetricCipherKeyPair(stringKeyToKey(publicKey), stringKeyToKey(privateKey));
 	}
 	
@@ -111,27 +112,31 @@ public class Asymmetric {
 	 * Convert AsymmetricKeyParameter to string in PKCS#8 format.
 	 * Returned string can be saved on disk with .der extension.
 	 */
-	public static String keyToStringKey(AsymmetricKeyParameter key) throws IOException{
+	public static String keyToStringKey(AsymmetricKeyParameter key) throws KeyDecodingException{
 		String codePrefix, codePostfix, key_multiline;
-		if (key.isPrivate()){
-			PrivateKeyInfo privKeyInfo = PrivateKeyInfoFactory.createPrivateKeyInfo(key);
-			byte[] key_bytes = privKeyInfo.getEncoded(); //to get PKCS#8
-			//byte[] key_bytes = privKeyInfo.parsePrivateKey().toASN1Primitive().getEncoded(); //to get PKCS#1
-			key_multiline = convertKeyToMultiLineFromBytes(key_bytes);
-			codePrefix = "-----BEGIN RSA PRIVATE KEY-----\n";
-			codePostfix = "\n-----END RSA PRIVATE KEY-----";
-		} else {
-			SubjectPublicKeyInfo pubKeyInfo = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(key);
-			byte[] key_bytes = pubKeyInfo.getEncoded(); //to get PKCS#8
-			//byte[] key_bytes = pubKeyInfo.parsePublicKey().toASN1Primitive().getEncoded(); //to get PKCS#1
-			key_multiline = convertKeyToMultiLineFromBytes(key_bytes);
-			codePrefix = "-----BEGIN RSA PUBLIC KEY-----\n"; 
-			codePostfix = "\n-----END RSA PUBLIC KEY-----";
+		try {
+			if (key.isPrivate()){
+				PrivateKeyInfo privKeyInfo = PrivateKeyInfoFactory.createPrivateKeyInfo(key);
+				byte[] key_bytes = privKeyInfo.getEncoded(); //to get PKCS#8
+				//byte[] key_bytes = privKeyInfo.parsePrivateKey().toASN1Primitive().getEncoded(); //to get PKCS#1
+				key_multiline = convertKeyToMultiLineFromBytes(key_bytes);
+				codePrefix = "-----BEGIN RSA PRIVATE KEY-----\n";
+				codePostfix = "\n-----END RSA PRIVATE KEY-----";
+			} else {
+				SubjectPublicKeyInfo pubKeyInfo = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(key);
+				byte[] key_bytes = pubKeyInfo.getEncoded(); //to get PKCS#8
+				//byte[] key_bytes = pubKeyInfo.parsePublicKey().toASN1Primitive().getEncoded(); //to get PKCS#1
+				key_multiline = convertKeyToMultiLineFromBytes(key_bytes);
+				codePrefix = "-----BEGIN RSA PUBLIC KEY-----\n"; 
+				codePostfix = "\n-----END RSA PUBLIC KEY-----";
+			}
+		} catch (IOException e){
+			throw new KeyDecodingException();
 		}
 		return (codePrefix + key_multiline + codePostfix);
 	}
 	
-	private static String cutStringKeyHeaders(String key) throws StringKeyDecodingException{
+	private static String cutStringKeyHeaders(String key) throws KeyDecodingException{
 		int cutStart=0, cutEnd=0;
 		if (key.startsWith("-----BEGIN RSA PRIVATE KEY-----\n")){
 			cutStart = new String("-----BEGIN RSA PRIVATE KEY-----\n").length();
@@ -140,7 +145,7 @@ public class Asymmetric {
 			cutStart = new String("-----BEGIN RSA PUBLIC KEY-----\n").length();
 			cutEnd = new String("\n-----END RSA PUBLIC KEY-----").length();
 		} else {
-			throw new StringKeyDecodingException("invalid key headers");
+			throw new KeyDecodingException("invalid key headers");
 		}
 		return key.substring(cutStart, key.length()-cutEnd);
 	}
@@ -155,21 +160,37 @@ public class Asymmetric {
 		return key_multiline.substring(0, key_multiline.length() - 1);
 	}
 	
-	public static AsymmetricKeyParameter stringKeyToKey(String key) throws StringKeyDecodingException{
+	public static AsymmetricKeyParameter stringKeyToKey(String key) throws KeyDecodingException{
 		try {
 			if (key.startsWith("-----BEGIN RSA PRIVATE KEY-----\n")){
 				return PrivateKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
 			} else if (key.startsWith("-----BEGIN RSA PUBLIC KEY-----\n")) {
 				return PublicKeyFactory.createKey(	Base64.decode(cutStringKeyHeaders(key)) );
 			} else {
-				throw new StringKeyDecodingException("invalid key headers: " + key.substring(0,10) + "...");
+				throw new KeyDecodingException("invalid key headers: " + key.substring(0,10) + "...");
 			}
 		} catch (IOException e){
-			throw new StringKeyDecodingException();
+			throw new KeyDecodingException();
 		}
 	}
 	
-	public static boolean isValidStringKey(String key){
+	public static byte[] stringKeyToByteKey(String key) {
+		return key.getBytes(StandardCharsets.UTF_8);
+	}
+	
+	public static String byteKeyToStringKey(byte[] key) {
+		return new String(key, StandardCharsets.UTF_8);
+	}
+	
+	public static byte[] keyToByteKey(AsymmetricKeyParameter key) throws KeyDecodingException{
+		return stringKeyToByteKey( keyToStringKey(key) );
+	}
+	
+	public static AsymmetricKeyParameter byteKeyToKey(byte[] key) throws KeyDecodingException{
+		return stringKeyToKey( byteKeyToStringKey(key) );
+	}
+	
+	public static boolean isValidKey(String key){
 		try {
 			stringKeyToKey(key);
 		} catch (Exception e) {
@@ -178,7 +199,16 @@ public class Asymmetric {
 		return true;
 	}
 	
-	public static void main(String args[]) throws InvalidCipherTextException, IOException{
+	public static boolean isValidKey(byte[] key){
+		try {
+			isValidKey( byteKeyToStringKey(key) );
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static void main(String args[]) throws KeyDecodingException{
 		AsymmetricCipherKeyPair keyPair = generateNewKeyPair();
 		System.out.println( keyToStringKey(keyPair.getPublic()) );
 	}

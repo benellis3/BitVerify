@@ -1,5 +1,11 @@
 package bitverify.entries;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class Metadata {
 
 	private String docHash;
@@ -20,6 +26,47 @@ public class Metadata {
 		this.docGeoLocation = docGeoLocation;
 		this.docTimeStamp = docTimeStamp;
 		this.tags = tags;
+	}
+	
+	public static Metadata deserialize(InputStream in) throws IOException {
+		// DataInputStream allows us to read in primitives in binary form.
+		try (DataInputStream d = new DataInputStream(in)) {
+			String docHash = d.readUTF();
+			String linkToDownloadFile = d.readUTF();
+			String docName = d.readUTF();
+			String docDescription = d.readUTF();
+			String docGeoLocation = d.readUTF();
+			String docTimeStamp = d.readUTF();
+			
+			int numTags = d.readInt();
+			String[] tags = new String[numTags];
+			for (int i=0; i<numTags; i++){
+				tags[i] = d.readUTF();
+			}
+
+			return new Metadata(docHash, linkToDownloadFile, docName, docDescription,
+					docGeoLocation, docTimeStamp, tags);
+		}
+	}
+	
+	public void serialize(OutputStream out) throws IOException {
+		// DataOutputStream allows us to write primitives in binary form.
+		try (DataOutputStream d = new DataOutputStream(out)) {
+			// write out each field in binary form, in declaration order.
+			d.writeUTF(docHash);
+			d.writeUTF(linkToDownloadFile);
+			d.writeUTF(docName);
+			d.writeUTF(docDescription);
+			d.writeUTF(docGeoLocation);
+			d.writeUTF(docTimeStamp);
+			
+			d.writeInt(tags.length);
+			for (String tag : tags) {
+				d.writeUTF(tag);
+			}
+
+			d.flush();
+		}
 	}
 	
 	public String getDocHash(){

@@ -24,7 +24,7 @@ public class SymmetricTest {
 					"acd2d84683a5f2b8cb23d04da164fe7fa8dc4ece2889ba2cf202d5db7b287a093a825524d9b0aef63e0f476b6af920dbb0b4c1b3c4b9a3f96b0e24d058eb4a7d6ecb4fb6ee3a41049e23344e543bfe9ef64e4d17ef83a05b5c0178d1eb9f1c917639f8a15a8d990fe213d0539757dc3f",
 					"6fd9b2f446c64a56ef264c426da9c86cb8a4de96b4dc5aeb8b099385776dc6ada780aab3133781e55bbb371a4d3afd184b60a441384466d3869d69f484bebdc4",
 			};
-			String key[] = {
+			String hexKey[] = {
 					"80000000000000000000000000000000",
 					"5057464a49333257474e505756414453",
 					"76657279207365637265742070617373",
@@ -33,13 +33,14 @@ public class SymmetricTest {
 			};
 			byte[] dataIn, dataOut;
 			for (int i=0; i<input.length; i++){
+				byte[] key = Hex.decode(hexKey[i]);
 				//encrypt in --> out
 				dataIn = Hex.decode(input[i]);
-				dataOut = Symmetric.encryptBytes(dataIn, key[i]);
+				dataOut = Symmetric.encryptBytes(dataIn, key);
 				assertEquals( output[i], Hex.toHexString(dataOut) );
 				//decrypt out --> in
 				dataIn = Hex.decode(output[i]);
-				dataOut = Symmetric.decryptBytes(dataIn, key[i]);
+				dataOut = Symmetric.decryptBytes(dataIn, key);
 				assertEquals( input[i], Hex.toHexString(dataOut) );
 			}
 		} catch (Exception e) {
@@ -50,12 +51,14 @@ public class SymmetricTest {
 
 	@Test
 	public void testGenerateHexKey() {
-		String hexKey1 = Symmetric.generateHexKey();
-		String hexKey2 = Symmetric.generateHexKey();
+		byte[] key1 = Symmetric.generateKey();
+		byte[] key2 = Symmetric.generateKey();
 		//test lengths
-		assertEquals( 256/4, hexKey1.length() );
-		assertEquals( 256/4, hexKey2.length() );
+		assertEquals( Symmetric.KEY_LENGTH_IN_BYTES, key1.length );
+		assertEquals( Symmetric.KEY_LENGTH_IN_BYTES, key2.length );
 		//test randomness (well ok, they might end up being the same)
+		String hexKey1 = Hex.toHexString(key1);
+		String hexKey2 = Hex.toHexString(key2);
 		assertFalse( hexKey1.equals(hexKey2) );
 		//test: encrypt then decrypt and get back original
 		String input[] = {
@@ -69,8 +72,8 @@ public class SymmetricTest {
 			byte[] dataIn, dataOut;
 			for (int i=0; i<input.length; i++){
 				dataIn = Hex.decode(input[i]);
-				dataOut = Symmetric.encryptBytes(dataIn, hexKey1);
-				dataOut = Symmetric.decryptBytes(dataOut, hexKey1);
+				dataOut = Symmetric.encryptBytes(dataIn, key1);
+				dataOut = Symmetric.decryptBytes(dataOut, key1);
 				assertEquals( input[i], Hex.toHexString(dataOut) );
 			}
 		} catch (Exception e) {

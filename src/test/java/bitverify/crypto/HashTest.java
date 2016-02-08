@@ -25,7 +25,7 @@ public class HashTest {
 				"7321348c8894678447b54c888fdbc4e4b825bf4d1eb0cfb27874286a23ea9fd2",
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], Hash.hashString(input[i]) );	
+			assertEquals( output[i], Hash.hashStringToString(input[i]) );	
 		}
 	}
 

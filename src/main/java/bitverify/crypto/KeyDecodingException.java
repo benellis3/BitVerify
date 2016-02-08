@@ -1,14 +1,14 @@
 package bitverify.crypto;
 
-public class StringKeyDecodingException extends Exception {
+public class KeyDecodingException extends Exception {
 	
 	private static final long serialVersionUID = 936738228240705550L;
 
-	public StringKeyDecodingException(String message) {
+	public KeyDecodingException(String message) {
         super(message);
     }
 	
-	public StringKeyDecodingException() {
+	public KeyDecodingException() {
         super();
     }
 	

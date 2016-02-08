@@ -16,13 +16,15 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class Symmetric {
 	
+	public static final int KEY_LENGTH_IN_BYTES = 256/8;
+	
 	private static BlockCipher engine = null;
 	private static PaddedBufferedBlockCipher cipher = null;
 	
-	private static byte[] _encryptBytes(boolean isEncrypting, byte data[], String hexKey) throws DataLengthException, InvalidCipherTextException{
+	private static byte[] _encryptBytes(boolean isEncrypting, byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
 		if (engine==null){ engine = new AESFastEngine(); }
 		if (cipher==null){ cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(engine), new PKCS7Padding()); }
-		CipherParameters keyParam = new KeyParameter(Hex.decode(hexKey));
+		CipherParameters keyParam = new KeyParameter(key);
 		cipher.init(isEncrypting, keyParam);
 		byte[] out = new byte[cipher.getOutputSize(data.length)];
 		int len = cipher.processBytes(data, 0, data.length, out, 0);
@@ -47,31 +49,31 @@ public class Symmetric {
 	 * @param hexKey - needs to be 128/192/256 bits in size,
 	 * 					so the hexKey.length should be 32/48/64
 	 */
-	public static byte[] encryptBytes(byte data[], String hexKey) throws DataLengthException, InvalidCipherTextException{
-		return _encryptBytes(true, data, hexKey);
+	public static byte[] encryptBytes(byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
+		return _encryptBytes(true, data, key);
 	}
 	
 	/**
 	 * @param hexKey - needs to be 128/192/256 bits in size,
 	 * 					so the hexKey.length should be 32/48/64
 	 */
-	public static byte[] decryptBytes(byte data[], String hexKey) throws DataLengthException, InvalidCipherTextException{
-		return _encryptBytes(false, data, hexKey);
+	public static byte[] decryptBytes(byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
+		return _encryptBytes(false, data, key);
 	}
 	
 	/**
-	 * @return a random 256 bit key to use with AES encryption in hex format
+	 * @return a random 256 bit key to use with AES encryption
 	 */
-	public static String generateHexKey(){
+	public static byte[] generateKey(){
 		SecureRandom randomNumberGenerator;
 		try {
 			randomNumberGenerator = SecureRandom.getInstance("SHA1PRNG");
 		} catch (NoSuchAlgorithmException e) {
 			randomNumberGenerator = new SecureRandom();
 		}
-		byte[] bytes = new byte[256 / 8];		
+		byte[] bytes = new byte[KEY_LENGTH_IN_BYTES];	
 		randomNumberGenerator.nextBytes(bytes);
-		return Hex.toHexString(bytes);
+		return bytes;
 	}
 	
 	public static void main(String args[]){
