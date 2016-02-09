@@ -1,7 +1,6 @@
 package bitverify.block;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-
 import bitverify.crypto.Hash;
 
 public class Main {
