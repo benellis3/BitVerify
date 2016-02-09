@@ -25,14 +25,11 @@ import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory;
 
 public class Asymmetric {
 	
-	private static RSAEngine engine = null;
-	private static OAEPEncoding cipher = null;
-	
 	private static final int RSAKeySize = 4096;
 	
 	private static byte[] _encryptBytes(boolean isEncrypting, byte[] data, AsymmetricKeyParameter key) throws InvalidCipherTextException{
-		if (engine==null){ engine = new RSAEngine(); }
-		if (cipher==null){ cipher = new OAEPEncoding(engine); }
+		RSAEngine engine = new RSAEngine();
+		OAEPEncoding cipher = new OAEPEncoding(engine);
 		cipher.init(isEncrypting, key);
 		return cipher.processBlock(data, 0, data.length);
 	}

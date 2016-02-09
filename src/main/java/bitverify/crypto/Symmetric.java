@@ -18,12 +18,9 @@ public class Symmetric {
 	
 	public static final int KEY_LENGTH_IN_BYTES = 256/8;
 	
-	private static BlockCipher engine = null;
-	private static PaddedBufferedBlockCipher cipher = null;
-	
 	private static byte[] _encryptBytes(boolean isEncrypting, byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
-		if (engine==null){ engine = new AESFastEngine(); }
-		if (cipher==null){ cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(engine), new PKCS7Padding()); }
+		BlockCipher engine = new AESFastEngine();
+		PaddedBufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(engine), new PKCS7Padding());
 		CipherParameters keyParam = new KeyParameter(key);
 		cipher.init(isEncrypting, keyParam);
 		byte[] out = new byte[cipher.getOutputSize(data.length)];

@@ -2,6 +2,8 @@ package bitverify.mining;
 
 import static org.junit.Assert.*;
 
+import java.sql.SQLException;
+
 import org.junit.Test;
 
 import com.squareup.otto.Bus;
@@ -9,8 +11,9 @@ import com.squareup.otto.ThreadEnforcer;
 
 public class MinerTest {
 
+	//Test whether hashes are successful when they should be
 	@Test
-	public void testMineSuccess() {
+	public void testMineSuccess() throws SQLException{
 		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 		m.setPackedTarget(0x1f3b20fa);
@@ -37,8 +40,9 @@ public class MinerTest {
 		}
 	}
 	
+	//Test whether mining targets are successfully unpacked from the integer representation
 	@Test
-	public void testUnPack() {
+	public void testUnPack() throws SQLException{
 		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 		int input[] = {
@@ -53,6 +57,26 @@ public class MinerTest {
 		};
 		for (int i=0; i<input.length; i++){
 			assertEquals( output[i], m.unpackTarget(input[i]) );	
+		}
+	}
+	
+	//Test whether mining targets are successfully packed into the integer representation
+	@Test
+	public void testPack() throws SQLException{
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
+		
+		int output[] = {
+				0x04111111,
+				0x083B12AB,
+				0x03000000,		//Accept this for 0 strings
+		};
+		String input[] = {
+				"11111100",
+				"3b12ab0000000000",
+				"0",
+		};
+		for (int i=0; i<input.length; i++){
+			assertEquals( output[i], m.packTarget(input[i]) );	
 		}
 	}
 
