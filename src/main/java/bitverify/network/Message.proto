@@ -3,7 +3,7 @@ option java_package = "bitverify.network.proto";
 option java_outer_classname = "MessageProto";
 
 message Message {
-    enum Type {GETBLOCK = 1; BLOCK = 2; ENTRY = 3; PEERS = 4; GETPEERS = 5;}
+    enum Type {GETBLOCK = 1; BLOCK = 2; ENTRY = 3; PEERS = 4; GETPEERS = 5; VERSION = 6; ACK = 7;}
 
     required Type type = 1;
 
@@ -12,8 +12,15 @@ message Message {
     optional EntryMessage entry = 4;
     optional Peers peers = 5;
     optional GetPeers getPeers = 6;
+    optional Version version = 7;
+    optional Ack ack = 8;
 }
-
+message Version {
+    required NetAddress listenPort = 1; // address and port on which the sender is listening
+}
+message Ack {
+    optional NetAddress addr = 1;
+}
 message GetBlock {
     // encodes current block so that the recipient knows which block to start at.
     // May be the genesis block.
@@ -38,5 +45,5 @@ message NetAddress {
 }
 
 message GetPeers {
-    optional NetAddress myAddress = 1; // optionally can include own address
+    required NetAddress myAddress = 1; // optionally can include own address
 }

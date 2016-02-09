@@ -75,33 +75,31 @@ public class NetworkTest {
     /**
      * This tests the ability of a pre-existing network to discover a new node.*
      */
-    /*@Test
+    @Test
     public void peerDiscoveryTest() throws Exception {
         // create initial network
         List<InetSocketAddress> addressList = new ArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
+        int cmp = 0;
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
             connectionList.add(new ConnectionManager(addressList, DISCOVERY_INITIAL_PORT + i, null,
                     new Bus(ThreadEnforcer.ANY)));
-            addressList.add(new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT + i));
+            InetSocketAddress sock = new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT + i);
+            addressList.add(sock);
+            cmp++;
         }
         // Allow connections to be established
         Thread.sleep(200);
-
         // Create a new Connection manager
         ConnectionManager conn = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
-            new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT);}}, DISCOVERY_INITIAL_PORT + NUM_CONNECTIONS,
+            add(new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT));}}, DISCOVERY_INITIAL_PORT + NUM_CONNECTIONS,
                 null, new Bus(ThreadEnforcer.ANY));
-        Thread.sleep(500);
-        Entry e = EntryTest.generateEntry2();
-        conn.broadcastEntry(e);
-        String cmp = "";
-        for(int i = 0; i < NUM_CONNECTIONS; i++) {
-            cmp += e.getMetadata().getDocDescription() + System.lineSeparator();
-        }
-        cmp += e.getMetadata().getDocDescription();
-        assertEquals(cmp, outContent.toString().trim());
-    }*/
+        Thread.sleep(1000);
+        conn.getPeers();
+        Thread.sleep(1000);
+        conn.printPeers();
+        assertEquals(cmp, conn.getNumPeers());
+    }
 }
 

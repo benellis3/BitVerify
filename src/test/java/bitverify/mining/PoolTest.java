@@ -40,7 +40,7 @@ public class PoolTest {
 				assertEquals( output[i], p.takeFromPool() );	
 			}
 			
-		} catch (IOException | KeyDecodingException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		} 
 		catch (KeyDecodingException e) {

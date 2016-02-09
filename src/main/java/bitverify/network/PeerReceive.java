@@ -105,7 +105,7 @@ public class PeerReceive implements Runnable {
         // create an event which can be handed off to the connection manager.
         NetAddress netAddress = getPeers.getMyAddress();
         InetSocketAddress addr = new InetSocketAddress(netAddress.getHostName(), netAddress.getPort());
-
+        eventBus.post(new GetPeersEvent(addr));
     }
 
     private void handlePeers(Message message) {
@@ -116,7 +116,7 @@ public class PeerReceive implements Runnable {
         for(NetAddress netAddress : netAddressList) {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
         }
-
+        eventBus.post(new PeersEvent(socketAddressList));
     }
 
     private void handleGetBlockMessage(Message message) {
