@@ -180,6 +180,7 @@ public class Miner implements Runnable{
 	public void stopMining(){
 		mining = false;
 		//Application logic should ensure uncomfirmed entries in database that were in the new block are no longer uncomfirmed
+		//When we start mining again, it will get the new unconfirmed entries from the database
 	}
 	
 	//Subscribe to new entry events on bus
