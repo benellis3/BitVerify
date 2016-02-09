@@ -19,8 +19,6 @@ public class Block {
     public BlockHeader header;
     public List<Entry> entries;
     public int target;
-//    store the prevHeaderHash because this allows us to recreate a new header whenever entries are added without
-//    storing the entire previous block since the prevHeaderHash is needed to create the header
     public byte[] prevHeaderHash;
     
     public Block(Block prevBlock,int target){
@@ -28,6 +26,20 @@ public class Block {
         this.entries = new ArrayList<Entry>();
         this.target = target;
         createHeader();
+    }
+    
+    private Block(byte[] prevHeaderHash,int target){
+        this.prevHeaderHash = prevHeaderHash;
+        this.target = target;
+        this.entries = new ArrayList<Entry>();
+        createHeader();
+    }
+    
+    public static Block simpleGenesisBlock(){
+        String mythology = "ARNOLD";
+        byte[] prevHeadHash = Hash.hashString(mythology);
+        Block resultBlock = new Block(prevHeadHash,7);
+        return resultBlock;
     }
     
     public static Boolean validateBlock(Block prevBlock, BlockHeader currentHeader, List<Entry> entries){
