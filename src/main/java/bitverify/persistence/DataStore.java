@@ -22,8 +22,9 @@ public class DataStore {
         entryDao = DaoManager.createDao(connectionSource, Entry.class);
     }
 
-    public Entry getEntry(UUID id) throws SQLException {
-        return entryDao.queryForId(id);
+    public int getNumberBlocks() throws SQLException{
+    	//Placeholder
+    	return 8;
     }
     
     public Block getMostRecentBlock() throws SQLException{
@@ -35,7 +36,11 @@ public class DataStore {
     	//Placeholder
     	return (new Block());
     }
-
+    
+    public Entry getEntry(UUID id) throws SQLException {
+        return entryDao.queryForId(id);
+    }
+    
     public Iterable<Entry> getEntries() throws SQLException {
         return entryDao;
     }
