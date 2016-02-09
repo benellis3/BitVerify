@@ -75,7 +75,7 @@ public class NetworkTest {
     /**
      * This tests the ability of a pre-existing network to discover a new node.*
      */
-    @Test
+    /*@Test
     public void peerDiscoveryTest() throws Exception {
         // create initial network
         List<InetSocketAddress> addressList = new ArrayList<>();
@@ -102,6 +102,6 @@ public class NetworkTest {
         }
         cmp += e.getMetadata().getDocDescription();
         assertEquals(cmp, outContent.toString().trim());
-    }
+    }*/
 }
 
