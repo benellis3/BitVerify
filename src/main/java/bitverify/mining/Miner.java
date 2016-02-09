@@ -111,9 +111,7 @@ public class Miner implements Runnable{
 		//Add unconfirmed entries from the database to the block for mining
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
-		for (Entry e: pool){
-			blockMining.addSingleEntry(e);
-		}
+		blockMining.setEntriesList(pool);
 
 	}
 	

@@ -29,7 +29,7 @@ public class DataStore {
     
     public Block getMostRecentBlock() throws SQLException{
     	//Placeholder
-    	return (new Block());
+    	return null;
     }
     
     //Not needed anyMore
