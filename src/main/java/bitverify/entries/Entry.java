@@ -25,6 +25,9 @@ public class Entry {
 	@DatabaseField
 	private UUID entryID = UUID.randomUUID();
 
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] blockID;
+
 	// we should store hashes and keys as byte arrays.
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] entryHashSigned;
