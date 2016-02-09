@@ -30,7 +30,7 @@ import bitverify.network.proto.MessageProto.Message;
 public class ConnectionManager {
     private ExecutorService es;
     private List<PeerHandler> peers;
-    private static final String PEER_URL = "0.0.0.0:4000"; // for testing
+    private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     
     public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort) throws IOException{
         peers = new ArrayList<>();
