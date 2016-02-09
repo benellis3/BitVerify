@@ -43,7 +43,7 @@ public class NetworkTest {
      * This allows a basic Entry message to be sent around the network. It does
      * <b> NOT </b> test the peer discovery part of the program.
      */
-    /*@Test
+    @Test
     public void LargerNetworkTest() throws Exception {
         List<InetSocketAddress> addressList = new ArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
@@ -70,7 +70,7 @@ public class NetworkTest {
         }
         cmp += e.getMetadata().getDocDescription();
         assertEquals(cmp, outContent.toString().trim());
-    }*/
+    }
 
     /**
      * This tests the ability of a pre-existing network to discover a new node.*
