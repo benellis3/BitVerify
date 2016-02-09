@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bouncycastle.util.Arrays;
+
 //import bitverify.crypto;
 
 public class Block {
@@ -26,6 +28,19 @@ public class Block {
         this.entries = new ArrayList<Entry>();
         this.target = target;
         createHeader();
+    }
+    
+    public static Boolean validateBlock(Block prevBlock, BlockHeader currentHeader, List<Entry> entries){
+//        pull target hash from proposed header since it's the only way to extract that information
+        int targetHash = currentHeader.getTarget();
+        Block createdBlock = new Block(prevBlock,targetHash);
+        createdBlock.setEntriesList(entries);
+        byte[] createdHeaderHash = createdBlock.header.hash();
+        byte[] actualHeaderHash = currentHeader.hash();
+        if(Arrays.areEqual(createdHeaderHash, actualHeaderHash)){
+            return true;
+        }
+        return false;
     }
     
     public void setEntriesList(List<Entry> entryList){

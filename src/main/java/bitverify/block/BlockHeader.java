@@ -107,7 +107,7 @@ public class BlockHeader {
         }
     }
     
-    public Boolean verifyHeaders(ArrayList<BlockHeader> headerList) throws Exception{
+    public static Boolean verifyHeaders(List<BlockHeader> headerList) throws Exception{
         int listLen = headerList.size();
         Boolean isValid = true;
         if(headerList.isEmpty()){
@@ -133,7 +133,6 @@ public class BlockHeader {
         }
         return isValid;
     }
-    
 
     
 //    GETTER METHODS
