@@ -29,12 +29,19 @@ public class DataStore {
     
     public Block getMostRecentBlock() throws SQLException{
     	//Placeholder
-    	return (new Block());
+    	return null;
     }
     
-    public Block getNthMostRecentBlock(int n) throws SQLException{
+    //Not needed anyMore
+    //public Block getNthMostRecentBlock(int n) throws SQLException{
     	//Placeholder
-    	return (new Block());
+    //	return (new Block());
+    //}
+    
+    public List<Block> getNMostRecentBlocks(int n) throws SQLException {
+        //Sorted with the recent block at the header of the block
+        //n = 2 means return the most recent block and the one before
+        return null;
     }
     
     public Entry getEntry(UUID id) throws SQLException {

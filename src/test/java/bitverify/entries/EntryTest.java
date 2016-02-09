@@ -13,21 +13,21 @@ import bitverify.crypto.AsymmetricTest;
 import bitverify.crypto.KeyDecodingException;
 
 public class EntryTest {
-	
-	private static AsymmetricCipherKeyPair uploaderKeyPair = Asymmetric.generateNewKeyPair();
-	
+		
 	public static Entry generateEntry1() throws KeyDecodingException, IOException{
+		AsymmetricCipherKeyPair uploaderKeyPair = 
+				Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
 		Metadata metadata = MetadataTest.generateMetadata1();
-		Entry entry;
-		entry = new Entry(uploaderKeyPair, metadata);
+		Entry entry = new Entry(uploaderKeyPair, metadata);
 		return entry;
 	}
 	
 	public static Entry generateEntry2() throws KeyDecodingException, IOException{
+		AsymmetricCipherKeyPair uploaderKeyPair = 
+				Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
 		Metadata metadata = MetadataTest.generateMetadata1();
-		Entry entry;
 		byte[] receiverID = Asymmetric.stringKeyToByteKey(AsymmetricTest.myPubKey);
-		entry = new Entry(uploaderKeyPair, metadata, receiverID);
+		Entry entry = new Entry(uploaderKeyPair, metadata, receiverID);
 		return entry;
 	}
 
