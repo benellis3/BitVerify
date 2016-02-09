@@ -53,12 +53,21 @@ public class Miner implements Runnable{
 	
 	//The mining target (the hash of the block must be less than the unpacked target)
 	private int packedTarget;
+	private final int initialTarget = 0x08800000;
+	//Ensure the target does not go outside the specified range
+	private final BigInteger minTarget = new BigInteger("1",16);
+	private final BigInteger maxTarget = new BigInteger("f",16).shiftLeft(255);
+	
+	//Minimum of 1
+	//Maximum of f << 255
+	
 	private final int byteOffset = 3;	//A constant used in unpacking the target
 	
 	//The number of blocks before we recalculate the difficulty
 	private int adjustTargetFrequency = 1008;
-	//The amount of time we want adjustTargetFrequency blocks to take to mine
-	//private long idealMiningTime = ;
+	//The amount of time we want adjustTargetFrequency blocks to take to mine, in milliseconds
+	//(one week)
+	private long idealMiningTime = 604800000;
 	
 	//The block we are currently mining
 	private Block blockMining;
@@ -103,9 +112,9 @@ public class Miner implements Runnable{
 		//Add unconfirmed entries from the database to the block for mining
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
-		//for (Entry e: pool){
-		//	blockMining.addEntry(e);
-		//}
+		for (Entry e: pool){
+			blockMining.addEntry(e);
+		}
 
 	}
 	
@@ -158,10 +167,12 @@ public class Miner implements Runnable{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget();
+		//////// WAITING ON BLOCK
 		//blockMining.setTarget(target);
 		//setPackedTarget(target);
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock(); //from datastore method
+		//////// WAITING ON BLOCK
 		//blockMining = new Block(lastBlockInChain, target);
 	}
 	
@@ -175,7 +186,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) {
     	//Add entry from pool to block we are mining
-        //blockMining.addEntry(e.getEntry());
+        blockMining.addEntry(e.getEntry());
     }
 	
 	public void setPackedTarget(int p){
@@ -184,9 +195,6 @@ public class Miner implements Runnable{
 	
 	//Calculate the packed representation of the target from the string
 	public int packTarget(String s){
-		//To pack mantissa = shift right string length - 4, store number of shifts
-		//newPackedTarget is noShifts * 2^(2*bitsInByte) + mantissa
-		
 		//Require that the string is the correct format and is represents an integer
 		
 		int sizeMantissa = 6;
@@ -215,34 +223,33 @@ public class Miner implements Runnable{
 		return result.toString(16);
 	}
 	
-	//To be called every X blocks
-	//Let X be 1008 blocks
-	//Let Y be 1 week
 	//Reject new blocks that don't adhere to this target
-	public int calculatePackedTarget(){
-		//if ((noBlocks % 1008 == 0) && (noBlocks > 0)) {
-			//	Timestamp a = mostRecentBlock.timeStamp();
-			//	Timestamp b = XBlocksBeforeMRB.timeStamp();
-			//	TimeToMine c = a - b;
+	public int calculatePackedTarget() throws SQLException{
+		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
+		if ((dataStore.getNumberBlocks() % adjustTargetFrequency == 0) && (dataStore.getNumberBlocks() > 0)) {
+			long mostRecentTime = dataStore.getMostRecentBlock().header.getTimeStamp();
+			long nAgoTime = dataStore.getNthMostRecentBlock(adjustTargetFrequency).header.getTimeStamp();
+			long difference = mostRecentTime - nAgoTime;
 		
-			//if (c < Y/4) c = Y/4;
-			//if (c > Y*4) c = Y*4;
+			//Limit exponential growth
+			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
+			if (difference > idealMiningTime*4) difference = idealMiningTime*4;
 		
-			//newTarget = (c/Y) * unpackTarget(packedTarget);
-		
-			//if (newTarget > maxPossibleTarget) newTarget = maxTarget;
-			//if (newTarget < minPossibleTarget) newTarget = minTarget;
-		
-			//return pack(newTarget);
-		//else if(noBlocks == 0){
-		//	return 0x1;
-		//}
-		//else{
-		//	return mostRecentBlock.packedTarget();
-		//}
+			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(packedTarget),16))).divide(BigInteger.valueOf(idealMiningTime));
 			
-		//Remove this:
-		return 1;
+			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
+			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
+		
+			return packTarget(newTarget.toString(16));
+		}
+		else if(dataStore.getNumberBlocks() == 0){
+			//Start with initial target
+			return initialTarget;
+		}
+		else{
+			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
+			return dataStore.getMostRecentBlock().header.getTarget();
+		}
 	}
 	
 	//For quick tests
