@@ -111,9 +111,7 @@ public class Miner implements Runnable{
 		//Add unconfirmed entries from the database to the block for mining
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
-		for (Entry e: pool){
-			blockMining.addSingleEntry(e);
-		}
+		blockMining.setEntriesList(pool);
 
 	}
 	
@@ -227,8 +225,10 @@ public class Miner implements Runnable{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		if ((dataStore.getNumberBlocks() % adjustTargetFrequency == 0) && (dataStore.getNumberBlocks() > 0)) {
 			//The next two lines should be executed atomically (i.e. the database should not change between them)
-			long mostRecentTime = dataStore.getMostRecentBlock().header.getTimeStamp();
-			long nAgoTime = dataStore.getNthMostRecentBlock(adjustTargetFrequency).header.getTimeStamp();
+			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
+
+			long mostRecentTime = nMostRecent.get(0).header.getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).header.getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 		
 			//Limit exponential growth
