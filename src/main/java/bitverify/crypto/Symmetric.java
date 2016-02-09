@@ -43,7 +43,7 @@ public class Symmetric {
 	}
 	
 	/**
-	 * @param hexKey - needs to be 128/192/256 bits in size,
+	 * @param key - needs to be 128/192/256 bits in size,
 	 * 					so the hexKey.length should be 32/48/64
 	 */
 	public static byte[] encryptBytes(byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
@@ -51,7 +51,7 @@ public class Symmetric {
 	}
 	
 	/**
-	 * @param hexKey - needs to be 128/192/256 bits in size,
+	 * @param key - needs to be 128/192/256 bits in size,
 	 * 					so the hexKey.length should be 32/48/64
 	 */
 	public static byte[] decryptBytes(byte data[], byte[] key) throws DataLengthException, InvalidCipherTextException{
