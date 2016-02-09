@@ -6,8 +6,6 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class BlockHeader {
@@ -24,9 +22,11 @@ public class BlockHeader {
     private int nonce = 0;
     
     
-    public BlockHeader(BlockHeader prevBlockHeader){
-        prevHeaderHash = prevBlockHeader.hash();
-        bitsTarget = calculateTarget();                  //need to read into how this is done over time and agreed upon by all
+    public BlockHeader(byte[] prevBlockHeaderHash,byte[] entriesHash, int target){
+        this.prevHeaderHash = prevBlockHeaderHash;
+        this.entriesHash = entriesHash;
+        this.timeStamp = System.currentTimeMillis();
+        this.bitsTarget = target;                  //need to read into how this is done over time and agreed upon by all
     }
     
     public BlockHeader(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
@@ -37,7 +37,12 @@ public class BlockHeader {
         this.nonce = nonce;
     }
     
-    public static BlockHeader deserialize(InputStream in) throws IOException {
+    public static BlockHeader deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        return BlockHeader.deserialize(in);
+    }
+    
+    private static BlockHeader deserialize(InputStream in) throws IOException {
         // DataInputStream allows us to read in primitives in binary form.
         try (DataInputStream d = new DataInputStream(in)) {
             // establish a pair of 32-byte buffers to read in our hashes as byte arrays
@@ -50,7 +55,13 @@ public class BlockHeader {
         }
     }
     
-    public void serialize(OutputStream out) throws IOException {
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        serialize(out);
+        return out.toByteArray();
+    }
+    
+    private void serialize(OutputStream out) throws IOException {
         // DataOutputStream allows us to write primitives in binary form.
         try (DataOutputStream d = new DataOutputStream(out)) {
             // write out each field in binary form, in declaration order.
@@ -65,7 +76,7 @@ public class BlockHeader {
     /**
      * Compute the hash of this block header.
      */
-    private byte[] hash() {
+    public byte[] hash() {
         ByteArrayOutputStream b = new ByteArrayOutputStream(Hash.HASH_LENGTH);
         try {
             serialize(b);
@@ -86,6 +97,7 @@ public class BlockHeader {
     
     //fill in code to check the number of bits with the target number of bits after hashing the nonce value
     //move this method to the Block module maybe to make it easier?
+//    TODO: 
     public Boolean checkNonce(){
         Boolean check = 1>0;
         if(check){
@@ -95,12 +107,32 @@ public class BlockHeader {
         }
     }
     
-    static public int calculateTarget(){
-//        design this method after working with the databases and establishing how to calculate 
-//        the number of zeros required to correctly mine a block.
-        return -1;
+    public static Boolean verifyHeaders(List<BlockHeader> headerList) throws Exception{
+        int listLen = headerList.size();
+        Boolean isValid = true;
+        if(headerList.isEmpty()){
+            Exception e = new IllegalStateException();
+            throw e;
+        }else if(listLen == 1){
+            return isValid;
+        }else{
+            BlockHeader prevBlock = headerList.get(0);
+            BlockHeader currentBlock;
+            byte[] prevBlockHash = prevBlock.hash();
+            byte[] currentBlockPrevHash;
+            for(int i = 1; i < listLen; i++){
+                currentBlock = headerList.get(i);
+                currentBlockPrevHash = currentBlock.getPrevHeaderHash();
+                if(!Arrays.equals(currentBlockPrevHash, prevBlockHash)){
+                    isValid = false;
+                }
+                
+                prevBlock = currentBlock;
+                prevBlockHash = prevBlock.hash();
+            }
+        }
+        return isValid;
     }
-    
 
     
 //    GETTER METHODS

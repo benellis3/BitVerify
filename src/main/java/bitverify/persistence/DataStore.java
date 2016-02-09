@@ -1,6 +1,7 @@
 package bitverify.persistence;
 
 
+import bitverify.block.Block;
 import bitverify.block.BlockHeader;
 import bitverify.entries.Entry;
 import com.j256.ormlite.dao.Dao;
@@ -21,10 +22,32 @@ public class DataStore {
         entryDao = DaoManager.createDao(connectionSource, Entry.class);
     }
 
+    public int getNumberBlocks() throws SQLException{
+    	//Placeholder
+    	return 8;
+    }
+    
+    public Block getMostRecentBlock() throws SQLException{
+    	//Placeholder
+    	return null;
+    }
+    
+    //Not needed anyMore
+    //public Block getNthMostRecentBlock(int n) throws SQLException{
+    	//Placeholder
+    //	return (new Block());
+    //}
+    
+    public List<Block> getNMostRecentBlocks(int n) throws SQLException {
+        //Sorted with the recent block at the header of the block
+        //n = 2 means return the most recent block and the one before
+        return null;
+    }
+    
     public Entry getEntry(UUID id) throws SQLException {
         return entryDao.queryForId(id);
     }
-
+    
     public Iterable<Entry> getEntries() throws SQLException {
         return entryDao;
     }
@@ -48,6 +71,10 @@ public class DataStore {
 
     public void deleteEntry(Entry e) throws SQLException {
         entryDao.delete(e);
+    }
+    
+    public void createBlock(Block b) throws SQLException {
+    	// Todo
     }
 
 

@@ -9,6 +9,7 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Test;
 
+import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
 import bitverify.entries.Metadata;
 
@@ -40,6 +41,9 @@ public class PoolTest {
 			}
 			
 		} catch (IOException | KeyDecodingException e) {
+			e.printStackTrace();
+		} 
+		catch (KeyDecodingException e) {
 			e.printStackTrace();
 		} 
 	}
