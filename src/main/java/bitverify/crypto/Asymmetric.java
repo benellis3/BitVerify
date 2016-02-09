@@ -207,6 +207,7 @@ public class Asymmetric {
 	
 	public static void main(String args[]) throws KeyDecodingException{
 		AsymmetricCipherKeyPair keyPair = generateNewKeyPair();
+		System.out.println( keyToStringKey(keyPair.getPrivate()) );
 		System.out.println( keyToStringKey(keyPair.getPublic()) );
 	}
 	

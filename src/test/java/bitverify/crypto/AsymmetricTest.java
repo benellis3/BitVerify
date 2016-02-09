@@ -81,6 +81,76 @@ public class AsymmetricTest {
 			"R7sAUuoLW2dVPBwKATW3agECAwEAAQ==\n"+
 			"-----END RSA PUBLIC KEY-----";
 
+	public static String myPrivKey2 =
+			"-----BEGIN RSA PRIVATE KEY-----\n"+
+			"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\n"+
+			"jTNP2l23FSIdv34FDpNABoocRzz3rg==\n"+
+			"-----END RSA PRIVATE KEY-----";
+	
+	public static String myPubKey2 =
+			"-----BEGIN RSA PUBLIC KEY-----\n"+
+			"MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvaZyL9xm12L+a5MdX5U5\n"+
+			"dfb1bVgpRpTAuiqFM01zjPRxnZPfBhLnKpxC89YB0tjqMyGVmaTCJODsvukbvcS6\n"+
+			"t0vrpMhj5nMdGel+PIueE+S3VlyUFrBbV+ElVN5dqvZfHphmubNWhWCoVF0iRhCx\n"+
+			"NP/bJ1eG1mtcIowV0YV4VqvRvYU+eA/Kz/AzxaI0hpJFLHQlJV6v1FR4PcUTx/oB\n"+
+			"cFkNgaws7ObM0V6dZuCCiJHZewMacvgJO9PFSDVDJPx5zl4rUKQTYvlcSvnfaLan\n"+
+			"kFMLtF84LsPoHWld22YMBHebUfZOD3mhp32d5uv/0DkPZPr6itR5/DBbtRVxk/rr\n"+
+			"B+Y3Z1jllBSXhVN/xnG0H4GIWhWgxJm1YFlHBgLXC+X66rxYTzy9axbYoqd5YXsJ\n"+
+			"PZxRao5Rjw7vB0cltPcNeAxzh/eU5TBVeTZ1aYJEw5GMjuQdVQWj0vEfDOUedv6O\n"+
+			"5aQc4Sd+76i1xi1XIwe4az/4UfFQMgh6dT3GuRKoE/5T+ePdwXAzWzXTNKLKoeaP\n"+
+			"Xh4e0N7FMxwXjUNAxrdJGhIhxLwnGH23X8Uw8ENHq5qIJqvAQWuvCPwzDZo3zpBu\n"+
+			"h0grOGeH1MGSCRGXqlMpnGXVF1HVt1y8ckyXA/iuHuRkwN8Z5U8xi68uzyZKOU4o\n"+
+			"6O4MlC/+iRrxspYuicE0n6ECAwEAAQ==\n"+
+			"-----END RSA PUBLIC KEY-----";
+	
 	@Test
 	public void testEncryptHexString() {
 		try {
@@ -263,6 +333,8 @@ public class AsymmetricTest {
 		//test hardcoded keys
 		assertTrue( Asymmetric.isValidKey(myPrivKey) );
 		assertTrue( Asymmetric.isValidKey(myPubKey) );
+		assertTrue( Asymmetric.isValidKey(myPrivKey2) );
+		assertTrue( Asymmetric.isValidKey(myPubKey2) );
 		
 		//test newly generated keys
 		AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
