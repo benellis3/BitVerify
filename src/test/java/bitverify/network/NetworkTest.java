@@ -1,5 +1,10 @@
 package bitverify.network;
 
+import bitverify.entries.Entry;
+import bitverify.entries.EntryTest;
+import bitverify.persistence.DataStore;
+import com.squareup.otto.Bus;
+import com.squareup.otto.ThreadEnforcer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,12 +20,17 @@ import static org.junit.Assert.*;
 public class NetworkTest {
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private PrintStream oldStdOut;
-    private static final int NUM_CONNECTIONS = 15;
+    // database not ready yet.
+    //private DataStore dataStore;
+    private static final int NUM_CONNECTIONS = 3;
     private static final int LARGE_INITIAL_PORT = 35000;
+    private static final int DISCOVERY_INITIAL_PORT = 11000;
     @Before
     public void setUpStreams() {
         oldStdOut = System.out;
         System.setOut(new PrintStream(outContent));
+        // Set up event bus
+        //dataStore = new DataStore();
     }
 
     @After
@@ -28,8 +38,10 @@ public class NetworkTest {
         System.setOut(oldStdOut);
     }
 
-    /*
-     * This is the same test as above but more general and can be done on a larger scale.
+    /**
+     * This test tests the basic sending functionality of the ConnectionManager.
+     * This allows a basic Entry message to be sent around the network. It does
+     * <b> NOT </b> test the peer discovery part of the program.
      */
     @Test
     public void LargerNetworkTest() throws Exception {
@@ -37,25 +49,57 @@ public class NetworkTest {
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
-                connectionList.add(new ConnectionManager(addressList, LARGE_INITIAL_PORT + i));
+                connectionList.add(new ConnectionManager(addressList, LARGE_INITIAL_PORT + i, null,
+                        new Bus(ThreadEnforcer.ANY)));
                 addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
         }
         // sleep to allow connections to be established
-        Thread.sleep(100);
-        String test = "TEST";
+        Thread.sleep(200);
+        // create a simple entry
+        Entry e = EntryTest.generateEntry1();
         for(ConnectionManager conn : connectionList) {
-            conn.broadcast(test);
+            conn.broadcastEntry(e);
         }
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         // create string of appropriate length to be the return.
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
         String cmp = "";
         for(int i = 0; i < NUM_STRINGS - 1; i++) {
-            cmp += test + System.lineSeparator();
+            cmp += e.getMetadata().getDocDescription() + System.lineSeparator();
         }
-        cmp += test;
+        cmp += e.getMetadata().getDocDescription();
         assertEquals(cmp, outContent.toString().trim());
+    }
+
+    /**
+     * This tests the ability of a pre-existing network to discover a new node.*
+     */
+    @Test
+    public void peerDiscoveryTest() throws Exception {
+        // create initial network
+        List<InetSocketAddress> addressList = new ArrayList<>();
+        List<ConnectionManager> connectionList = new ArrayList<>();
+        // create list of connectionManagers.
+        int cmp = 0;
+        for(int i = 0; i < NUM_CONNECTIONS; i++) {
+            connectionList.add(new ConnectionManager(addressList, DISCOVERY_INITIAL_PORT + i, null,
+                    new Bus(ThreadEnforcer.ANY)));
+            InetSocketAddress sock = new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT + i);
+            addressList.add(sock);
+            cmp++;
+        }
+        // Allow connections to be established
+        Thread.sleep(200);
+        // Create a new Connection manager
+        ConnectionManager conn = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
+            add(new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT));}}, DISCOVERY_INITIAL_PORT + NUM_CONNECTIONS,
+                null, new Bus(ThreadEnforcer.ANY));
+        Thread.sleep(1000);
+        conn.getPeers();
+        Thread.sleep(1000);
+        conn.printPeers();
+        assertEquals(cmp, conn.getNumPeers());
     }
 }
 

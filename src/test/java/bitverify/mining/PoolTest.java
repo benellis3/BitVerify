@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
+import bitverify.crypto.KeyDecodingException;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Test;

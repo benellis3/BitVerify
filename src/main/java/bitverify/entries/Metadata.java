@@ -1,6 +1,5 @@
 package bitverify.entries;
 
-import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
