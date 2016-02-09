@@ -1,5 +1,6 @@
 package bitverify.mining;
 
+import java.io.IOException;
 import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
@@ -7,6 +8,7 @@ import java.util.List;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+//import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
@@ -75,10 +77,10 @@ public class Miner implements Runnable{
 	//Simple constant for making calculations easier to read
 	private final int bitsInByte = 8;
 	
-	//Temporary Constructor for testing purposes
+	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
 	public Miner(Bus eventBus) throws SQLException{
 		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block();
+		blockMining = new Block(null,initialTarget);
 		
 		//newMiningBlock();
 	    
@@ -92,15 +94,12 @@ public class Miner implements Runnable{
 		//List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
 		//for (Entry e: pool){
-		//	blockMining.addEntry(e);
+		//	blockMining.addSingleEntry(e);
 		//}
 
 	}
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException{
-		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block();
-		
 		newMiningBlock();
 	    
 		//Set up the event bus
@@ -113,7 +112,7 @@ public class Miner implements Runnable{
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
 		for (Entry e: pool){
-			blockMining.addEntry(e);
+			blockMining.addSingleEntry(e);
 		}
 
 	}
@@ -141,25 +140,27 @@ public class Miner implements Runnable{
 		mining = true;
 
 		while (mining){
-			//Currently fails because block serialisation returns null
-			result = blockMining.hashBlock();
-			
-			if (mineSuccess(result)){
-				try{
-					//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
-					dataStore.createBlock(blockMining);
-					//Pass successful block to application logic for broadcasting to the network
-					eventBus.post(new BlockFoundEvent(blockMining));
-
-					newMiningBlock();
+			try{
+				result = blockMining.hashBlock();
+				
+				if (mineSuccess(result)){
+						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
+						dataStore.createBlock(blockMining);
+						//Pass successful block to application logic for broadcasting to the network
+						eventBus.post(new BlockFoundEvent(blockMining));
+	
+						newMiningBlock();
 				}
-				catch (SQLException e){
-					e.printStackTrace();
+				
+				//Increment the header's nonce to generate a new hash
+				blockMining.header.incrementNonce();
 				}
+			catch (SQLException e){
+				e.printStackTrace();
 			}
-			
-			//Increment the header's nonce to generate a new hash
-			blockMining.header.incrementNonce();
+			catch (IOException e){
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -167,13 +168,10 @@ public class Miner implements Runnable{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget();
-		//////// WAITING ON BLOCK
-		//blockMining.setTarget(target);
-		//setPackedTarget(target);
+		setPackedTarget(target);
 		
-		Block lastBlockInChain = dataStore.getMostRecentBlock(); //from datastore method
-		//////// WAITING ON BLOCK
-		//blockMining = new Block(lastBlockInChain, target);
+		Block lastBlockInChain = dataStore.getMostRecentBlock();
+		blockMining = new Block(lastBlockInChain, target);
 	}
 	
 	//This gets called when a new block has been successfully mined elsewhere
@@ -187,7 +185,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) {
     	//Add entry from pool to block we are mining
-        blockMining.addEntry(e.getEntry());
+        blockMining.addSingleEntry(e.getEntry());
     }
 	
 	public void setPackedTarget(int p){
@@ -255,7 +253,7 @@ public class Miner implements Runnable{
 	}
 	
 	//For quick tests
-	public static void main(String[] args){
+	public static void main(String[] args) throws SQLException{
 		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 	}
