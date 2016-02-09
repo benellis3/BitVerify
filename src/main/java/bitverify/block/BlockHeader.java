@@ -6,8 +6,6 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class BlockHeader {
@@ -39,7 +37,12 @@ public class BlockHeader {
         this.nonce = nonce;
     }
     
-    public static BlockHeader deserialize(InputStream in) throws IOException {
+    public static BlockHeader deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        return BlockHeader.deserialize(in);
+    }
+    
+    private static BlockHeader deserialize(InputStream in) throws IOException {
         // DataInputStream allows us to read in primitives in binary form.
         try (DataInputStream d = new DataInputStream(in)) {
             // establish a pair of 32-byte buffers to read in our hashes as byte arrays
