@@ -112,7 +112,8 @@ public class Node {
 	
 	private void setupNetwork() {
 		System.out.println("Setting up network...");
-		mConnectionManager = new ConnectionManager();
+		// Commented out for testing reasons.
+		//mConnectionManager = new ConnectionManager();
 	}
 
 }

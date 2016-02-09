@@ -74,12 +74,15 @@ public class PeerReceive implements Runnable {
             entry = Entry.deserialize(bytes);
             // check the validity of the entry
             if (entry.testEntryHashSignature()) {
-                dataStore.insertEntry(entry);
+                // commented out for testing purposes
+                //dataStore.insertEntry(entry);
                 // raise a NewEntryEvent on the event bus
                 eventBus.post(new NewEntryEvent(entry));
+
             }
         }
-        catch(IOException | SQLException ioe) {ioe.printStackTrace();}
+        catch(IOException ioe) {ioe.printStackTrace();}
+        //catch(IOException | SQLException ioe) {ioe.printStackTrace();}
     }
 
     private void handleBlockMessage(Message message) {
@@ -120,7 +123,7 @@ public class PeerReceive implements Runnable {
         GetBlock getBlockMessage = message.getGetBlock();
         // retrieve blocks from the database and put an event on the event bus
         // which allows the appropriate block next block to be sent in a message
-        
+
     }
 }
 

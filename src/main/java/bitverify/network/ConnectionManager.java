@@ -3,15 +3,13 @@ package bitverify.network;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +22,11 @@ import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
+import bitverify.network.proto.MessageProto.GetPeers;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedInputStream;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
@@ -43,10 +41,12 @@ public class ConnectionManager {
     private Bus bus;
     private List<PeerHandler> peers;
     private static final String PEER_URL = "0.0.0.0:4000"; // for testing
-    
+    private static int listenPort;
     public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
         peers = new ArrayList<>();
         this.bus = bus;
+        this.listenPort = listenPort;
+        bus.register(this);
         es = Executors.newCachedThreadPool();
         // connect to each given peer
         for (InetSocketAddress peerAddress : initialPeers) {
@@ -69,6 +69,25 @@ public class ConnectionManager {
                     }
                 }
         );
+        // Send a getPeers message to each of its initial peers
+        /*for(PeerHandler p : peers) {
+            GetPeers getPeers = GetPeers.newBuilder()
+                    .setMyAddress(NetAddress.newBuilder().setHostName("localhost").setPort(listenPort))
+                    .build();
+            Message message = Message.newBuilder().setType(Message.Type.GETPEERS)
+                    .setGetPeers(getPeers).build();
+            p.send(message);
+        }*/
+    }
+    public void getPeers() {
+        for(PeerHandler p : peers) {
+            GetPeers getPeers = GetPeers.newBuilder()
+                    .setMyAddress(NetAddress.newBuilder().setHostName("localhost").setPort(listenPort))
+                    .build();
+            Message message = Message.newBuilder().setType(Message.Type.GETPEERS)
+                    .setGetPeers(getPeers).build();
+            p.send(message);
+        }
     }
     /**
      * Send the given message to all connected peers.
@@ -87,7 +106,14 @@ public class ConnectionManager {
             peer.send(message);
         }
     }
-
+    /**
+     * For testing only
+     */
+    @Subscribe
+    public void onNewEntryEvent(NewEntryEvent nee) {
+        // prints the document description
+        System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
+    }
     /**
      * This method is responsible for adding the peers to the list of peers.
      * it achieves this by adding a runnable to the thread pool to avoid latency.

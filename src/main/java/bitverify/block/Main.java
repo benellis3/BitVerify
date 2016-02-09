@@ -11,26 +11,26 @@ public class Main {
         String output;
         
         String hey = "hello what's going on with you today";
-        String prevHash = Hash.hashString(hey);
-        System.out.println(prevHash);
-        String timeStamp = BlockHeader.createTimeStamp();
+        //String prevHash = Hash.hashString(hey);
+        //System.out.println(prevHash);
+        //String timeStamp = BlockHeader.createTimeStamp();
         int entries = 1;
         int target = 4;
         int nonce = 12;
         
-        BlockHeader initialBlock = new BlockHeader(prevHash,timeStamp,entries,target,nonce,false);
+        //BlockHeader initialBlock = new BlockHeader(prevHash,timeStamp,entries,target,nonce,false);
         
-        byte[] serial = initialBlock.serialize();
+        //byte[] serial = initialBlock.serialize();
         
-        System.out.println(serial);
+        //System.out.println(serial);
         
-        BlockHeader newBlock = BlockHeader.desearlize(serial);
+        //BlockHeader newBlock = BlockHeader.desearlize(serial);
         
-        System.out.println(newBlock.getPrevBlockHash());
-        System.out.println(newBlock.getTimeStamp());
-        System.out.println(newBlock.getEntries());
-        System.out.println(newBlock.getTarget());
-        System.out.println(newBlock.getNonce()); 
+        //System.out.println(newBlock.getPrevBlockHash());
+        //System.out.println(newBlock.getTimeStamp());
+        //System.out.println(newBlock.getEntries());
+        //System.out.println(newBlock.getTarget());
+        //System.out.println(newBlock.getNonce());
         
         }
 
