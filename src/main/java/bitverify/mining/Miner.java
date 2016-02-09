@@ -227,6 +227,7 @@ public class Miner implements Runnable{
 	public int calculatePackedTarget() throws SQLException{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		if ((dataStore.getNumberBlocks() % adjustTargetFrequency == 0) && (dataStore.getNumberBlocks() > 0)) {
+			//The next two lines should be executed atomically (i.e. the database should not change between them)
 			long mostRecentTime = dataStore.getMostRecentBlock().header.getTimeStamp();
 			long nAgoTime = dataStore.getNthMostRecentBlock(adjustTargetFrequency).header.getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
