@@ -25,6 +25,7 @@ public class BlockHeader {
     @DatabaseField
     private long height;
     
+    public BlockHeader() {}
     
     public BlockHeader(byte[] prevBlockHeaderHash,byte[] entriesHash, int target){
         this.prevHeaderHash = prevBlockHeaderHash;

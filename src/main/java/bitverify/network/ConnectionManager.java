@@ -37,7 +37,9 @@ public class ConnectionManager {
     private ConcurrentLinkedQueue<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private static int listenPort;
-    public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
+    public ConnectionManager(int listenPort, DataStore ds, Bus bus) throws IOException{
+    	List<InetSocketAddress> initialPeers = getInitialPeers(); // it works!
+    	
         peers = new ConcurrentLinkedQueue<>();
         this.bus = bus;
         this.listenPort = listenPort;
