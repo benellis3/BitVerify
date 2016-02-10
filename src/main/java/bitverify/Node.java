@@ -162,6 +162,8 @@ public class Node {
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
+			
+			mConnectionManager.broadcastEntry(entry);
 		} catch (KeyDecodingException | IOException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;

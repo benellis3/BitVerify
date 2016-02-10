@@ -49,7 +49,7 @@ public class UserInstance implements Serializable {
 				if (INSTANCE == null) {
 					try{
 						ObjectInputStream input = new ObjectInputStream(new FileInputStream("user_info.ser"));
-						UserInstance instance = (UserInstance)input.readObject();
+						INSTANCE = (UserInstance)input.readObject();
 					} catch(Exception e) {
 						INSTANCE = new UserInstance();
 						try {
