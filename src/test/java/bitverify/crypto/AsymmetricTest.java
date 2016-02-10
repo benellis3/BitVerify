@@ -2,8 +2,6 @@ package bitverify.crypto;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
-
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -317,7 +315,6 @@ public class AsymmetricTest {
 	@Test
 	public void testStringKeyToKey() {
 		try {
-			Asymmetric.stringKeyToKey(myPrivKey);
 			String myPrivKey2 = Asymmetric.keyToStringKey(Asymmetric.stringKeyToKey(myPrivKey));
 			String myPubKey2 = Asymmetric.keyToStringKey(Asymmetric.stringKeyToKey(myPubKey));
 			assertEquals( myPrivKey, myPrivKey2 );
