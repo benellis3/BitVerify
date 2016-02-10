@@ -75,10 +75,10 @@ public class Block {
         }
     }
     
-    public String hashBlock() throws IOException{
+    public byte[] hashBlock() throws IOException{
         byte[] serialized = this.serialize();
-        String hashedBlockOnce = Hash.hashBytesToString(serialized);
-        String hashedBlockTwice = Hash.hashStringToString(hashedBlockOnce);
+        byte[] hashedBlockOnce = Hash.hashBytes(serialized);
+        byte[] hashedBlockTwice = Hash.hashBytes(hashedBlockOnce);
         return hashedBlockTwice;
     }
     
