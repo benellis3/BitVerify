@@ -11,23 +11,35 @@ import java.io.Serializable;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 
 import bitverify.crypto.Asymmetric;
+import bitverify.crypto.KeyDecodingException;
 
 public class UserInstance implements Serializable {
 	private static UserInstance INSTANCE;
 	// Maybe store some keys here?
 	
-	// Would like some way to serialize this please
-	private AsymmetricCipherKeyPair mAsymmetricKeyPair;
+	private String privKey;
+	private String pubKey;
 	
 	private UserInstance() {
 		// How we define a user.
 		// TODO: Figure out how we actually define a user.
 		System.out.println("Generating a secure key pair.");
-		mAsymmetricKeyPair = Asymmetric.generateNewKeyPair();
+		try {
+			AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+			privKey = Asymmetric.keyToStringKey(keyPair.getPrivate());
+			pubKey = Asymmetric.keyToStringKey(keyPair.getPublic());
+		} catch (KeyDecodingException e) {
+			//TODO: need a better way of handling
+			System.out.println("Error generating key pair...");
+		}
 	}
 	
 	public AsymmetricCipherKeyPair getAsymmetricKeyPair() {
-		return mAsymmetricKeyPair;
+		try {
+			return Asymmetric.getKeyPairFromStringKeys(pubKey, privKey);
+		} catch (KeyDecodingException e) {
+			return null;
+		}
 	}
 	
 	public static UserInstance getInstance() {
