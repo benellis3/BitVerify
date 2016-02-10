@@ -10,22 +10,30 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
-import bitverify.OttoExample.OttoEvent;
 import bitverify.block.Block;
+import bitverify.crypto.KeyDecodingException;
+import bitverify.entries.Entry;
 import bitverify.entries.Metadata;
 import bitverify.mining.Miner;
 import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
+import bitverify.network.NewEntryEvent;
+import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseStore;
 
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
 
 public class Node {
 	private String[] mOptions = {"Start mining", "Add entry", "Search entries", "See statistics", "Exit"};
 	private int mMiningOptionNum = 0;
 	
 	private Scanner mScanner;
-	private Miner mMiner;
 	
+	private Miner mMiner;
 	private ConnectionManager mConnectionManager;
+	private DataStore mDatabase;
+	private UserInstance mUser;
 	
 	private Bus mEventBus;
 	
@@ -41,7 +49,9 @@ public class Node {
 			mScanner = new Scanner(System.in);
 			mEventBus = new Bus(ThreadEnforcer.ANY);
 			mEventBus.register(this);
-			//setupNetwork();
+			setupUser();
+			setupDatabase();
+			setupNetwork();
 			userCLISetup();
 		}
 		else {
@@ -146,9 +156,18 @@ public class Node {
 		}
 		String fileTimeStamp = getCurrentDatetime();
 		
-		// Construct metadata object for file
+		// Construct metadata and entry objects for file
 		Metadata data = new Metadata(hash, fileDownload, fileName, fileDescription, fileGeo, fileTimeStamp, tags);
-		// TODO broadcast to everyone
+		Entry entry;
+		try {
+			entry = new Entry(mUser.getAsymmetricKeyPair(), data);
+			// Notify the relevant authorities of this important incident
+			NewEntryEvent event = new NewEntryEvent(entry);
+			mEventBus.post(event);
+		} catch (KeyDecodingException | IOException e) {
+			System.out.println("Error generating entry. Try again...");
+			return;
+		} 
 	}
 	
 	private void searchEntries() {
@@ -164,13 +183,32 @@ public class Node {
 			mMiner.stopMining();
 	}
 	
+	private void setupUser() {
+		System.out.println("Setting up user...");
+		mUser = UserInstance.getInstance();
+	}
+	
 	private void setupNetwork() {
 		System.out.println("Setting up network...");
 		try {
-			mConnectionManager = new ConnectionManager(32903);
+			mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 		} catch (IOException e) {
 			System.out.println("Error setting up network. Will try again.");
 			setupNetwork();
+		}
+	}
+	
+	
+	private void setupDatabase() {
+		System.out.println("Setting up database...");
+		// create a connection source to an in-memory database
+        ConnectionSource connectionSource;
+		try {
+			connectionSource = new JdbcConnectionSource("jdbc:h2:mem:bitverify");
+			mDatabase = new DatabaseStore(connectionSource);
+		} catch (SQLException e) {
+			System.out.println("Error setting up database...");
+			exitProgram();
 		}
 	}
 	
@@ -178,6 +216,7 @@ public class Node {
     @Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {
     	Block block = e.getBlock();
+    	System.out.println(block);
     	//send to database
     	//send to network
     }

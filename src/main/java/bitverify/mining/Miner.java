@@ -12,6 +12,7 @@ import com.squareup.otto.Subscribe;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
+import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -33,18 +34,6 @@ public class Miner implements Runnable{
 
         public Block getBlock() {
             return successBlock;
-        }
-    }
-	
-	public class NewEntryEvent {
-        private Entry entry;
-
-        public NewEntryEvent(Entry e) {
-            entry = e;
-        }
-
-        public Entry getEntry() {
-            return entry;
         }
     }
 	
@@ -184,7 +173,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) {
     	//Add entry from pool to block we are mining
-        blockMining.addSingleEntry(e.getEntry());
+        blockMining.addSingleEntry(e.getNewEntry());
     }
 	
 	public void setPackedTarget(int p){
