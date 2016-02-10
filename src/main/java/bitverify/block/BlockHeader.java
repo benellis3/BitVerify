@@ -9,6 +9,8 @@ import java.io.*;
 import java.util.*;
 
 public class BlockHeader {
+    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    private byte[] blockID;
     // N.B. hashes are 32 bytes long. Refer to constant Hash.HASH_LENGTH.
     @DatabaseField(dataType = DataType.BYTE_ARRAY)
     private byte[] prevHeaderHash;
@@ -20,7 +22,10 @@ public class BlockHeader {
     private int bitsTarget;
     @DatabaseField
     private int nonce = 0;
+    @DatabaseField
+    private long height;
     
+    public BlockHeader() {}
     
     public BlockHeader(byte[] prevBlockHeaderHash,byte[] entriesHash, int target){
         this.prevHeaderHash = prevBlockHeaderHash;
@@ -136,7 +141,9 @@ public class BlockHeader {
 
     
 //    GETTER METHODS
-    
+
+    public byte[] getBlockID() { return blockID; }
+
     public byte[] getPrevHeaderHash(){
         return prevHeaderHash;
     }
@@ -146,11 +153,11 @@ public class BlockHeader {
     public long getTimeStamp(){
         return timeStamp;
     }
-    
+
     public int getTarget(){
         return bitsTarget;
     }
-    
+
     public int getNonce(){
         return nonce;
     }

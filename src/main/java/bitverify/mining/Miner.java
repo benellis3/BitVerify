@@ -12,7 +12,9 @@ import com.squareup.otto.Subscribe;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
+import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * This class is responsible for performing the mining on a new block using unconfirmed entries.
@@ -32,18 +34,6 @@ public class Miner implements Runnable{
 
         public Block getBlock() {
             return successBlock;
-        }
-    }
-	
-	public class NewEntryEvent {
-        private Entry entry;
-
-        public NewEntryEvent(Entry e) {
-            entry = e;
-        }
-
-        public Entry getEntry() {
-            return entry;
         }
     }
 	
@@ -139,7 +129,7 @@ public class Miner implements Runnable{
 
 		while (mining){
 			try{
-				result = blockMining.hashBlock();
+				result = Hex.toHexString(blockMining.hashBlock());
 				
 				if (mineSuccess(result)){
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
@@ -151,7 +141,7 @@ public class Miner implements Runnable{
 				}
 				
 				//Increment the header's nonce to generate a new hash
-				blockMining.header.incrementNonce();
+				blockMining.getHeader().incrementNonce();
 				}
 			catch (SQLException e){
 				e.printStackTrace();
@@ -183,7 +173,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) {
     	//Add entry from pool to block we are mining
-        blockMining.addSingleEntry(e.getEntry());
+        blockMining.addSingleEntry(e.getNewEntry());
     }
 	
 	public void setPackedTarget(int p){
@@ -223,12 +213,12 @@ public class Miner implements Runnable{
 	//Reject new blocks that don't adhere to this target
 	public int calculatePackedTarget() throws SQLException{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
-		if ((dataStore.getNumberBlocks() % adjustTargetFrequency == 0) && (dataStore.getNumberBlocks() > 0)) {
-			//The next two lines should be executed atomically (i.e. the database should not change between them)
+		long blocksCount = dataStore.getBlocksCount();
+		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
 			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
 
-			long mostRecentTime = nMostRecent.get(0).header.getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency).header.getTimeStamp();
+			long mostRecentTime = nMostRecent.get(0).getHeader().getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getHeader().getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 		
 			//Limit exponential growth
@@ -242,13 +232,13 @@ public class Miner implements Runnable{
 		
 			return packTarget(newTarget.toString(16));
 		}
-		else if(dataStore.getNumberBlocks() == 0){
+		else if(blocksCount == 0){
 			//Start with initial target
 			return initialTarget;
 		}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			return dataStore.getMostRecentBlock().header.getTarget();
+			return dataStore.getMostRecentBlock().getHeader().getTarget();
 		}
 	}
 	

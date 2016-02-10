@@ -12,27 +12,24 @@ import java.util.List;
 
 import org.bouncycastle.util.Arrays;
 
-//import bitverify.crypto;
-
 public class Block {
-    public Integer blockSize;
-    public BlockHeader header;
-    public List<Entry> entries;
-    public int target;
-    public byte[] prevHeaderHash;
+    private BlockHeader header;
+    private List<Entry> entries;
+
+    public Block(BlockHeader header, List<Entry> entries) {
+        this.header = header;
+        this.entries = entries;
+    }
     
     public Block(Block prevBlock,int target){
-        prevHeaderHash = prevBlock.header.hash();
+        byte[] prevHeaderHash = prevBlock.header.hash();
         this.entries = new ArrayList<Entry>();
-        this.target = target;
-        createHeader();
+        createHeader(prevHeaderHash, target);
     }
     
     private Block(byte[] prevHeaderHash,int target){
-        this.prevHeaderHash = prevHeaderHash;
-        this.target = target;
         this.entries = new ArrayList<Entry>();
-        createHeader();
+        createHeader(prevHeaderHash, target);
     }
     
     public static Block simpleGenesisBlock(){
@@ -64,12 +61,19 @@ public class Block {
         entries.add(entry);
         createHeader();
     }
+
+    /**
+     * Recreate the header, retrieving our previous header hash and target from the old header.
+     */
+    private void createHeader() {
+        createHeader(this.header.getPrevHeaderHash(), this.header.getTarget());
+    }
     
-    private void createHeader(){
+    private void createHeader(byte[] prevHeaderHash, int target){
         byte[] entriesSerial;
         try {
             entriesSerial = serializeEntries();
-            header = new BlockHeader(this.prevHeaderHash,entriesSerial,this.target);
+            header = new BlockHeader(prevHeaderHash,entriesSerial,target);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,14 +87,15 @@ public class Block {
     }
     
     public byte[] serialize() throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        serialize(out);
-        return out.toByteArray();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            serialize(out);
+            return out.toByteArray();
+        }
     }
     
     private byte[] serializeEntries() throws IOException{
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try(DataOutputStream d = new DataOutputStream(out)){
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             DataOutputStream d = new DataOutputStream(out)){
             for(Entry e : entries){
                 d.write(e.serialize());
             }
@@ -105,5 +110,9 @@ public class Block {
                 d.write(e.serialize());
             }
         }
+    }
+
+    public BlockHeader getHeader() {
+        return header;
     }
 }
