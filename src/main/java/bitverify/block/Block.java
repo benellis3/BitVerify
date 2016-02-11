@@ -18,6 +18,13 @@ import org.bouncycastle.util.Arrays;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 
+
+/**
+ * This class is responsible for creating a block in our chain. Given another block, it can create its own hashes based on
+ * these prior dependencies. There are also static methods to check the chain and create a block from a byte array.
+ * 
+ * @author Dominiquo Santistevan
+ */
 public class Block {
     @DatabaseField(dataType = DataType.BYTE_ARRAY)
     private byte[] blockID;
@@ -39,9 +46,18 @@ public class Block {
     private List<Entry> entries;
     private boolean verifiedEntries;
     
-    
+/**
+ * The empty constructor is required for the database.
+ */
     public Block(){}
     
+    /**
+     * 
+     * @param prevBlock A block object that is the last known mined block in the chain to which this block will be attached.
+     * @param target The integer value that mining calculates should be the number of zeros required to 'mine' this block.
+     * @param nonce The changing value that is the free parameter input value to our hash that must reach the target zeros. 
+     * @param entriesList List of Entry types that this block be the container for.  
+     */
     public Block(Block prevBlock,int target,int nonce, List<Entry> entriesList){
         this.prevBlockHash = prevBlock.hash();
         this.bitsTarget = target;
@@ -52,8 +68,20 @@ public class Block {
         this.blockID = this.hash();
     }
     
-//    constructor that is used when a block is deserialized 
-    public Block(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
+/**
+ * 
+ * This constructor will only be used by the deserialize method. That is why the timestamp is manually entered as well as
+ * the hashes for the block and entries. When using this method, the block is not verified until it is given a list of 
+ * entries that agrees with the initial hash that was deserialized. 
+ * 
+ * @param prevHash byte array storing the hash of the previous block to the block being deserialized.
+ * @param entriesHash byte array storing the hash of the entries list corresponding to this block.
+ * @param timeStamp time since epoch that was originally created by the miner.
+ * @param bitsTarget The integer value that mining calculates should be the number of zeros required to 'mine' this block.
+ * @param nonce The changing value that is the free parameter input value to our hash that must reach the target zeros. 
+ */
+        
+    private Block(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
         this.prevBlockHash = prevHash;
         this.entriesHash = entriesHash;
         this.timeStamp = timeStamp;
@@ -61,20 +89,31 @@ public class Block {
         this.nonce = nonce;
         this.verifiedEntries = false;
     }
-    
-//    TODO: make this constructor for the genesis block to use
-    private Block(byte[] prevHeaderHash,int target){
-        this.entries = new ArrayList<Entry>();
-//        createHeader(prevHeaderHash, target);
-    }
-    
+    /**
+     * 
+     * @return Static block that has no previous block. This will be the genesis block. 
+     */
     public static Block simpleGenesisBlock(){
         String mythology = "ARNOLD";
-        byte[] prevHeadHash = Hash.hashString(mythology);
-        Block resultBlock = new Block(prevHeadHash,5);
+        String itsComing = "You hear that, Mr. Anderson. That is the sound inevitability.";
+        byte[] prevHash = Hash.hashString(mythology);
+        byte[] entryHash = Hash.hashString(itsComing);
+        long timeStamp = System.currentTimeMillis();
+        int target = 3;
+        int nonce = 58;
+        Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
+        resultBlock.verifiedEntries = true;
         return resultBlock;
     }
     
+/**
+ * This method is used after a block is received and deserialized but the corresponding entries have yet to be recieved. 
+ * When a node receives, what is believed to be the correct entries, this method will set their values and also check
+ * to make sure they haven't been tampered with throughout the sending process. 
+ * 
+ * @param entryList List of entries that should correspond to the current block
+ * @return a boolean to indicate if the entered entries are the same as the ones indicated in the hash of the deserialized block.
+ */
     public boolean setEntriesList(List<Entry> entryList){
         entries = entryList;
         try {
@@ -91,12 +130,19 @@ public class Block {
         return false;
     }
     
+    /**
+     * adds one to the nonce value for the miner.
+     */
     public void incrementNonce(){
         nonce += 1;
     }
     
-    public Boolean checkNonce(){
-        Boolean check = 1>0;
+    /**
+     * 
+     * @return boolean to indicate whether the nonce solves the 'puzzle' at the given difficulty. 
+     */
+    public boolean checkNonce(){
+        boolean check = 1>0;
         if(check){
             return true;
         }else{
@@ -104,7 +150,13 @@ public class Block {
         }
     }
     
-    public static Boolean verifyChain(List<Block> blockList) throws Exception{
+    /**
+     * 
+     * @param blockList List of blocks that represents a subchain in the total blockchain therefore order should be preserved
+     * @return boolean to indicate whether the given subchain is valid or not
+     * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0. 
+     */
+    public static boolean verifyChain(List<Block> blockList) throws Exception{
         int listLen = blockList.size();
         if(blockList.isEmpty()){
             Exception e = new IllegalStateException();
@@ -129,6 +181,10 @@ public class Block {
         return true;
     }
     
+    /**
+     * Creates a array hash for the current block. 
+     * @return 32 byte array hash
+     */
     public byte[] hash() {
         ByteArrayOutputStream b = new ByteArrayOutputStream(Hash.HASH_LENGTH);
         try {
@@ -137,15 +193,23 @@ public class Block {
             // we are in control of creating the stream here so this will never happen, but just in case...
             e.printStackTrace();
         }
-        return Hash.hashBytes(b.toByteArray());
-//        TODO: hash twice
+        byte[] firstHash = Hash.hashBytes(b.toByteArray());
+        byte[] secondHash = Hash.hashBytes(firstHash);
+        return secondHash;
     }
     
+    /**
+     * 
+     * @param the byte array that should contain the data for a valid block.
+     * @return the unverified block corresponding to the given byte array
+     * @throws IOException if there is some data in the byte array that does not fit the format of the block serialization
+     */
     public static Block deserialize(byte[] data) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         return Block.deserialize(in);
     }
     
+
     private static Block deserialize(InputStream in) throws IOException {
         // DataInputStream allows us to read in primitives in binary form.
         try (DataInputStream d = new DataInputStream(in)) {
@@ -169,6 +233,11 @@ public class Block {
       }
     }
     
+    /**
+     * 
+     * @return byte array to be sent over the network and later unpacked
+     * @throws IOException 
+     */
     public byte[] serialize() throws IOException {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             serialize(out);
