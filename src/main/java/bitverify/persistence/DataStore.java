@@ -23,7 +23,7 @@ public interface DataStore {
     public void insertEntry(Entry e) throws SQLException;
     public void updateEntry(Entry e) throws SQLException;
     public void deleteEntry(Entry e) throws SQLException;
-    public void createBlock(Block b) throws SQLException;
+    public boolean insertBlock(Block b) throws SQLException;
 
 
     // get most recent block (at end of chain)

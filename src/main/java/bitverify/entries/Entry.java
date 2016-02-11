@@ -276,5 +276,8 @@ public class Entry {
 	public Metadata getMetadata(){
 		return metadataObject;
 	}
-	
+
+	public void setBlockID(byte[] blockID) {
+		this.blockID = blockID;
+	}
 }
