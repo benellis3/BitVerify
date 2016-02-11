@@ -142,9 +142,8 @@ public class Block {
     }
     
     public static Block deserialize(byte[] data) throws IOException {
-//        ByteArrayInputStream in = new ByteArrayInputStream(data);
-//        return BlockHeader.deserialize(in);
-        return new Block();
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        return Block.deserialize(in);
     }
     
     private static Block deserialize(InputStream in) throws IOException {
