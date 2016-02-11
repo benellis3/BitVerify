@@ -91,19 +91,6 @@ public class Block {
         return false;
     }
     
-    public static Boolean validateBlock(Block prevBlock, Block currentblock, List<Entry> entries){
-    //pull target hash from proposed header since it's the only way to extract that information
-//        int targetHash = currentHeader.getTarget();
-//        Block createdBlock = new Block(prevBlock,targetHash);
-//        createdBlock.setEntriesList(entries);
-//        byte[] createdHeaderHash = createdBlock.header.hash();
-//        byte[] actualHeaderHash = currentHeader.hash();
-//        if(Arrays.areEqual(createdHeaderHash, actualHeaderHash)){
-//            return true;
-//        }
-        return false;
-    }
-    
     public void incrementNonce(){
         nonce += 1;
     }
