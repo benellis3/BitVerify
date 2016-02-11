@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -34,7 +35,7 @@ public class ConnectionManager {
     private DataStore ds;
     private ExecutorService es;
     private Bus bus;
-    private ConcurrentLinkedQueue<PeerHandler> peers;
+    private Collection<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private static int listenPort;
     public ConnectionManager(int listenPort, DataStore ds, Bus bus) throws IOException{
