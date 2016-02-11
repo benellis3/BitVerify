@@ -147,24 +147,17 @@ public class Block {
         return new Block();
     }
     
-    private static void deserialize(InputStream in) throws IOException {
-//        // DataInputStream allows us to read in primitives in binary form.
-//        try (DataInputStream d = new DataInputStream(in)) {
-//            // establish a pair of 32-byte buffers to read in our hashes as byte arrays
-//            byte[] prevHeaderHash = new byte[Hash.HASH_LENGTH];
-//            d.readFully(prevHeaderHash);
-//            byte[] entriesHash = new byte[Hash.HASH_LENGTH];
-//            d.readFully(entriesHash);
-//            // instantiate while reading in the remaining fields - timestamp, bitsTarget , nonce
-//            return new BlockHeader(prevHeaderHash, entriesHash, d.readLong(), d.readInt(), d.readInt());
-//        }
-    }
-    
-    public byte[] serialize() throws IOException {
-      try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-          serialize(out);
-          return out.toByteArray();
-      }
+    private static Block deserialize(InputStream in) throws IOException {
+        // DataInputStream allows us to read in primitives in binary form.
+        try (DataInputStream d = new DataInputStream(in)) {
+            // establish a pair of 32-byte buffers to read in our hashes as byte arrays
+            byte[] previousBlockHash = new byte[Hash.HASH_LENGTH];
+            d.readFully(previousBlockHash);
+            byte[] entriesHash = new byte[Hash.HASH_LENGTH];
+            d.readFully(entriesHash);
+            // instantiate while reading in the remaining fields - timestamp, bitsTarget , nonce
+            return new Block(previousBlockHash, entriesHash, d.readLong(), d.readInt(), d.readInt());
+        }
     }
     
     private byte[] serializeEntries() throws IOException{
@@ -177,13 +170,21 @@ public class Block {
       }
     }
     
+    public byte[] serialize() throws IOException {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            serialize(out);
+            return out.toByteArray();
+        }
+      }
+    
     private void serialize(OutputStream out) throws IOException{
-//      try(DataOutputStream d = new DataOutputStream(out)){
-//          d.write(header.serialize());
-//          for(Entry e : entries){
-//              d.write(e.serialize());
-//          }
-//      }
+      try(DataOutputStream d = new DataOutputStream(out)){
+          d.write(prevBlockHash);
+          d.write(entriesHash);
+          d.writeLong(timeStamp);
+          d.writeInt(bitsTarget);
+          d.writeInt(nonce);
+      }
     }
     
     public void setHeight(long height){
