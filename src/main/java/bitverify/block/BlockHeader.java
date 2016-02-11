@@ -31,7 +31,7 @@ public class BlockHeader {
         this.prevHeaderHash = prevBlockHeaderHash;
         this.entriesHash = entriesHash;
         this.timeStamp = System.currentTimeMillis();
-        this.bitsTarget = target;                  //need to read into how this is done over time and agreed upon by all
+        this.bitsTarget = target;
     }
     
     public BlockHeader(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce){
@@ -114,12 +114,11 @@ public class BlockHeader {
     
     public static Boolean verifyHeaders(List<BlockHeader> headerList) throws Exception{
         int listLen = headerList.size();
-        Boolean isValid = true;
         if(headerList.isEmpty()){
             Exception e = new IllegalStateException();
             throw e;
         }else if(listLen == 1){
-            return isValid;
+            return true;
         }else{
             BlockHeader prevBlock = headerList.get(0);
             BlockHeader currentBlock;
@@ -129,14 +128,13 @@ public class BlockHeader {
                 currentBlock = headerList.get(i);
                 currentBlockPrevHash = currentBlock.getPrevHeaderHash();
                 if(!Arrays.equals(currentBlockPrevHash, prevBlockHash)){
-                    isValid = false;
+                    return false;
                 }
-                
                 prevBlock = currentBlock;
                 prevBlockHash = prevBlock.hash();
             }
         }
-        return isValid;
+        return true;
     }
 
     
