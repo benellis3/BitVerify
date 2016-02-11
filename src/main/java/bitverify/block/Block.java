@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.j256.ormlite.field.DataType;
@@ -298,5 +299,9 @@ public class Block {
 
     public int getNonce() {
         return nonce;
+    }
+
+    public List<Entry> getEntriesList() {
+        return Collections.unmodifiableList(entries);
     }
 }
