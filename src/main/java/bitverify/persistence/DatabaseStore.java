@@ -6,8 +6,10 @@ import bitverify.block.BlockHeader;
 import bitverify.entries.Entry;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -17,26 +19,37 @@ public class DatabaseStore implements DataStore {
 
     private ConnectionSource connectionSource;
     private Dao<Entry, UUID> entryDao;
-    private Dao<BlockHeader, byte[]> blockHeaderDao;
+    private Dao<Block, byte[]> blockDao;
 
-    private PreparedQuery<BlockHeader> mostRecentBlockHeaderQuery;
+    private PreparedQuery<Block> mostRecentBlockQuery;
 
-    public DatabaseStore(ConnectionSource cs) throws SQLException {
-        connectionSource = cs;
+    public DatabaseStore(String databasePath) throws SQLException {
+        connectionSource = new JdbcConnectionSource(databasePath);
         entryDao = DaoManager.createDao(connectionSource, Entry.class);
-        blockHeaderDao = DaoManager.createDao(connectionSource, BlockHeader.class);
+        blockDao = DaoManager.createDao(connectionSource, Block.class);
 
-        mostRecentBlockHeaderQuery = blockHeaderDao.queryBuilder().orderBy("height", false).orderBy("timeStamp", true).limit(1L).prepare();
+        initialSetup();
+
+        mostRecentBlockQuery = blockDao.queryBuilder().orderBy("height", false).orderBy("timeStamp", true).limit(1L).prepare();
+    }
+
+    private void initialSetup() throws SQLException {
+        // create tables
+        TableUtils.createTableIfNotExists(connectionSource, Entry.class);
+        TableUtils.createTableIfNotExists(connectionSource, BlockHeader.class);
+
+        // make sure genesis block is present
+        blockDao.createIfNotExists(Block.getGenesisBlock());
     }
 
     public long getBlocksCount() throws SQLException {
-    	return blockHeaderDao.countOf();
+        return blockDao.countOf();
     }
-    
+
     public Block getMostRecentBlock() throws SQLException {
-        BlockHeader bh = blockHeaderDao.queryForFirst(mostRecentBlockHeaderQuery);
-        List<Entry> entries = entryDao.queryForEq("blockID", bh.getBlockID());
-        return new Block(bh, entries);
+        Block b = blockDao.queryForFirst(mostRecentBlockQuery);
+        b.setEntriesList(entryDao.queryForEq("blockID", b.getBlockID()));
+        return b;
     }
 
     public List<Block> getNMostRecentBlocks(int n) throws SQLException {
@@ -46,7 +59,7 @@ public class DatabaseStore implements DataStore {
     }
 
     public void createBlock(Block b) throws SQLException {
-        blockHeaderDao.create(b.getHeader());
+        blockDao.create(b);
     }
 
     public Entry getEntry(UUID id) throws SQLException {
@@ -76,7 +89,4 @@ public class DatabaseStore implements DataStore {
     public void deleteEntry(Entry e) throws SQLException {
         entryDao.delete(e);
     }
-
-
-    // TODO: implement similar methods for Blocks, and any other functions we require.
 }
