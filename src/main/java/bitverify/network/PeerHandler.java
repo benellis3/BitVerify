@@ -121,16 +121,6 @@ public class PeerHandler {
         messageQueue.add(msg); // returns immediately.
     }
 
-    /**
-     * This implements the Request-Response Protocol for
-     * getting and receiving peers.
-     * @return A collection view of the InetSocketAddresses
-     * of some peers in the network.
-     */
-    public void getPeers() {
-        PeerProtocol p = new PeerProtocol(this, bus);
-        p.send();
-    }
     public class VersionReceiveHandler implements Callable<InetSocketAddress> {
         @Override
         public InetSocketAddress call() throws IOException {

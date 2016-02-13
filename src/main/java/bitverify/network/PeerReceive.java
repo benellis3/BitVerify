@@ -117,7 +117,7 @@ public class PeerReceive implements Runnable {
         for(NetAddress netAddress : netAddressList) {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
         }
-        eventBus.post(new PeersEvent(socketAddressList, PeersEvent.Level.PEERHANDLER));
+        eventBus.post(new PeersEvent(socketAddressList));
     }
 
     private void handleGetBlockMessage(Message message) {

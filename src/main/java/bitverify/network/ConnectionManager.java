@@ -23,7 +23,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.sun.istack.internal.NotNull;
 
 
 /**
@@ -90,16 +89,9 @@ public class ConnectionManager {
                     ie.printStackTrace();
                     continue;
                 }
-                // Get the initial peers to connect to.
-                GetPeers getPeers = GetPeers.newBuilder()
-                        .setMyAddress(NetAddress.newBuilder()
-                                .setHostName(p.getListenAddress().getHostName())
-                                .setPort(p.getListenAddress().getPort()))
-                        .build();
-                Message message = Message.newBuilder().setType(Message.Type.GETPEERS)
-                        .setGetPeers(getPeers).build();
-                p.send(message);
             }
+            PeerProtocol peerProtocol = new PeerProtocol(peers, es,bus,ds,listenPort);
+            peerProtocol.send();
         });
     }
     public ConnectionManager(int listenPort, DataStore ds, Bus bus) throws IOException{
@@ -163,9 +155,8 @@ public class ConnectionManager {
      * it achieves this by adding a runnable to the thread pool to avoid latency.
      * @param event the PeersEvent that was raised by the PeerReceive runnable
      */
-    @Subscribe
+    /*@Subscribe
     public void onPeersEvent(PeersEvent event) {
-        if(event.getLevel() == PeersEvent.Level.PEERHANDLER) return;
         Set<InetSocketAddress> addresses = event.getSocketAddresses();
         es.execute(() -> {
             for(InetSocketAddress addr : addresses) {
@@ -180,7 +171,7 @@ public class ConnectionManager {
                 }
             }
         });
-    }
+    }*/
     /**
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid
@@ -189,25 +180,25 @@ public class ConnectionManager {
      */
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
-        InetSocketAddress address = event.getSocketAddress();
-
         // extract the InetSocketAddresses from the Peers.
         // Up to the recipient to check that the received list does not contain
         // itself.
         es.execute(() -> {
+            InetSocketAddress address = event.getSocketAddress();
             List<NetAddress> addresses = new ArrayList<>();
             PeerHandler sender = null;
             for(PeerHandler p : peers) {
-                if(!p.getAddress().equals(address)) {
+                if(!p.getListenAddress().equals(address)) {
                     addresses.add(NetAddress.newBuilder()
                             .setHostName(p.getConnectedHost().getHostName())
                             .setPort(p.getConnectedPort()).build());
                 }
-                else sender = p;
+                else
+                    sender = p;
             }
             Peers peer = Peers.newBuilder().addAllAddress(addresses).build();
             Message msg = Message.newBuilder().setType(Message.Type.PEERS).setPeers(peer).build();
-            if(sender != null) sender.send(msg);
+            sender.send(msg);
         });
     }
 
