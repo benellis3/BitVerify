@@ -17,8 +17,9 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Created by benellis on 02/02/2016.
@@ -110,13 +111,13 @@ public class PeerReceive implements Runnable {
 
     private void handlePeers(Message message) {
         Peers peers = message.getPeers();
-        List<NetAddress> netAddressList = peers.getAddressList();
+        Collection<NetAddress> netAddressList = peers.getAddressList();
         // create a list of SocketInetAddresses from the netAddressList
-        List<InetSocketAddress> socketAddressList = new ArrayList<>();
+        Set<InetSocketAddress> socketAddressList = ConcurrentHashMap.newKeySet();
         for(NetAddress netAddress : netAddressList) {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
         }
-        eventBus.post(new PeersEvent(socketAddressList));
+        eventBus.post(new PeersEvent(socketAddressList, PeersEvent.Level.PEERHANDLER));
     }
 
     private void handleGetBlockMessage(Message message) {

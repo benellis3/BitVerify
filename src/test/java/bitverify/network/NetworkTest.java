@@ -14,6 +14,7 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.Assert.*;
 
@@ -22,7 +23,7 @@ public class NetworkTest {
     private PrintStream oldStdOut;
     // database not ready yet.
     //private DataStore dataStore;
-    private static final int NUM_CONNECTIONS = 3;
+    private static final int NUM_CONNECTIONS = 15;
     private static final int LARGE_INITIAL_PORT = 35000;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
     @Before
@@ -45,7 +46,7 @@ public class NetworkTest {
      */
     @Test
     public void LargerNetworkTest() throws Exception {
-        List<InetSocketAddress> addressList = new ArrayList<>();
+        List<InetSocketAddress> addressList = new CopyOnWriteArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
@@ -60,7 +61,7 @@ public class NetworkTest {
         for(ConnectionManager conn : connectionList) {
             conn.broadcastEntry(e);
         }
-        Thread.sleep(200);
+        Thread.sleep(300);
 
         // create string of appropriate length to be the return.
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
@@ -78,7 +79,7 @@ public class NetworkTest {
     @Test
     public void peerDiscoveryTest() throws Exception {
         // create initial network
-        List<InetSocketAddress> addressList = new ArrayList<>();
+        List<InetSocketAddress> addressList = new CopyOnWriteArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         int cmp = 0;
@@ -95,8 +96,6 @@ public class NetworkTest {
         ConnectionManager conn = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
             add(new InetSocketAddress("localhost", DISCOVERY_INITIAL_PORT));}}, DISCOVERY_INITIAL_PORT + NUM_CONNECTIONS,
                 null, new Bus(ThreadEnforcer.ANY));
-        Thread.sleep(1000);
-        conn.getPeers();
         Thread.sleep(1000);
         conn.printPeers();
         assertEquals(cmp, conn.getNumPeers());

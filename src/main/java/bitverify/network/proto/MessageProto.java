@@ -5585,7 +5585,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     boolean hasMyAddress();
@@ -5593,7 +5593,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     bitverify.network.proto.MessageProto.NetAddress getMyAddress();
@@ -5601,7 +5601,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder();
@@ -5692,7 +5692,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     public boolean hasMyAddress() {
@@ -5702,7 +5702,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
@@ -5712,7 +5712,7 @@ public final class MessageProto {
      * <code>required .NetAddress myAddress = 1;</code>
      *
      * <pre>
-     * optionally can include own address
+     * include own address
      * </pre>
      */
     public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
@@ -5965,7 +5965,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public boolean hasMyAddress() {
@@ -5975,7 +5975,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
@@ -5989,7 +5989,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public Builder setMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
@@ -6009,7 +6009,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public Builder setMyAddress(
@@ -6027,7 +6027,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public Builder mergeMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
@@ -6051,7 +6051,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public Builder clearMyAddress() {
@@ -6068,7 +6068,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public bitverify.network.proto.MessageProto.NetAddress.Builder getMyAddressBuilder() {
@@ -6080,7 +6080,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
@@ -6095,7 +6095,7 @@ public final class MessageProto {
        * <code>required .NetAddress myAddress = 1;</code>
        *
        * <pre>
-       * optionally can include own address
+       * include own address
        * </pre>
        */
       private com.google.protobuf.SingleFieldBuilder<

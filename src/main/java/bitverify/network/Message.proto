@@ -1,4 +1,4 @@
-
+syntax = "proto2";
 option java_package = "bitverify.network.proto";
 option java_outer_classname = "MessageProto";
 
@@ -45,5 +45,5 @@ message NetAddress {
 }
 
 message GetPeers {
-    required NetAddress myAddress = 1; // optionally can include own address
+    required NetAddress myAddress = 1; // include own address
 }
