@@ -55,13 +55,13 @@ public class NetworkTest {
                 addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
         }
         // sleep to allow connections to be established
-        Thread.sleep(200);
+        Thread.sleep(300);
         // create a simple entry
         Entry e = EntryTest.generateEntry1();
         for(ConnectionManager conn : connectionList) {
             conn.broadcastEntry(e);
         }
-        Thread.sleep(300);
+        Thread.sleep(400);
 
         // create string of appropriate length to be the return.
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);

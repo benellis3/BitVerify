@@ -37,35 +37,35 @@ public class ConnectionManager {
     private Bus bus;
     private Collection<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
-    private static int listenPort;
-
+    private InetSocketAddress myAddress;
     private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) {
         peers = ConcurrentHashMap.newKeySet();
         this.bus = bus;
-        this.listenPort = listenPort;
         bus.register(this);
         es = Executors.newCachedThreadPool();
         // Create new runnable to listen for new connections.
         es.execute(() -> {
                     try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
+                        myAddress = new InetSocketAddress(serverSocket.getInetAddress(), listenPort);
                         while (true) {
                             Socket s = serverSocket.accept();
                             // separate thread since it blocks waiting for messages.
                             es.execute(() -> {
                                 try {
                                     PeerHandler p = new PeerHandler(s, es, ds, bus);
-                                    if(!peers.contains(p)) peers.add(p);
+                                    peers.add(p);
                                 }
                                 catch(TimeoutException time) {
                                     // this means no response was received
-                                    LOGGER.log(Level.FINE, "No response received within the time limit");
+                                    System.out.println("No response received within the time limit");
                                 }
                                 catch(InterruptedException | ExecutionException ie) {
                                     ie.printStackTrace();
                                 }
                             });
                         }
-                    } catch (IOException ioe) {
+                    }
+                    catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
                 }
@@ -79,18 +79,16 @@ public class ConnectionManager {
             for (InetSocketAddress peerAddress : initialPeers) {
                 try {
                     p = new PeerHandler(peerAddress,listenPort,es, ds, bus);
-                    if(!peers.contains(p)) peers.add(p);
+                    peers.add(p);
                 }
                 catch(TimeoutException toe) {
-                    LOGGER.log(Level.FINE, "Failed to contact an initial peer");
-                    continue;
+                    System.out.println("Failed to contact an initial peer");
                 }
                 catch(InterruptedException | ExecutionException | IOException ie) {
                     ie.printStackTrace();
-                    continue;
                 }
             }
-            PeerProtocol peerProtocol = new PeerProtocol(peers, es,bus,ds,listenPort);
+            PeerProtocol peerProtocol = new PeerProtocol(peers, es,bus,ds,myAddress);
             peerProtocol.send();
         });
     }
