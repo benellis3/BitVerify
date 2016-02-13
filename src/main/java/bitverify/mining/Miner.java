@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-//import com.squareup.otto.ThreadEnforcer;
+import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
@@ -70,7 +70,7 @@ public class Miner implements Runnable{
 	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
 	public Miner(Bus eventBus) throws SQLException{
 		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block(null,initialTarget);
+		blockMining = new Block(Block.simpleGenesisBlock(),initialTarget);
 		
 		//newMiningBlock();
 	    
@@ -244,7 +244,7 @@ public class Miner implements Runnable{
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException{
-		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
 		
 	}
 }
