@@ -180,11 +180,17 @@ public class DatabaseStore implements DataStore {
                 return false;
 
             if (Arrays.equals(b.getPrevBlockHash(), latestBlock.getBlockID())) {
+
                 // extending the active blockchain
                 b.setHeight(latestBlock.getHeight() + 1);
                 blockDao.create(b);
-                setBlockEntriesConfirmed(b, true);
                 latestBlock = b;
+
+                setBlockEntriesConfirmed(b, true);
+                // now insert block-entry mappings into link table
+                for (Entry e : b.getEntriesList())
+                    blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+
 
             } else {
                 // see if this will be the new latest block
@@ -194,7 +200,11 @@ public class DatabaseStore implements DataStore {
                     // orphan block, so it will be inactive.
                     b.setHeight(-1);
                     blockDao.create(b);
+
                     setBlockEntriesConfirmed(b, false);
+                    // now insert block-entry mappings into link table
+                    for (Entry e : b.getEntriesList())
+                        blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
 
                 } else {
                     long oldHeight = latestBlock.getHeight();
@@ -247,10 +257,17 @@ public class DatabaseStore implements DataStore {
                         // finally activate the new block
                         setBlockEntriesConfirmed(b, true);
 
+                        // now insert block-entry mappings into link table
+                        for (Entry e : b.getEntriesList())
+                            blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+
                     } else {
                         // this block will be inactive
                         blockDao.create(b);
                         setBlockEntriesConfirmed(b, false);
+                        // now insert block-entry mappings into link table
+                        for (Entry e : b.getEntriesList())
+                            blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
                     }
                 }
             }
@@ -263,26 +280,16 @@ public class DatabaseStore implements DataStore {
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
      * If the entries are not yet in the database, they will be added.
-     * Assumes that the block was not a duplicate, so no entries are mapped to this block at the moment.
      * Not an atomic operation so should call this from a transaction.
      * @param block
      * @param confirmed
      * @throws SQLException
      */
     private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
-        List<Entry> entries = block.getEntriesList();
-        if (entries == null)
-            throw new IllegalArgumentException("Must initialise block entries before creating block in database");
-
-        // first create/update entries
-        for (Entry e : entries) {
+        // create/update entries
+        for (Entry e : block.getEntriesList()) {
             e.setConfirmed(confirmed);
             entryDao.createOrUpdate(e);
-        }
-
-        // now insert block-entry mappings into link table
-        for (Entry e : entries) {
-            blockEntryDao.create(new BlockEntry(block.getBlockID(), e.getEntryID()));
         }
     }
 
