@@ -17,7 +17,6 @@ import com.j256.ormlite.table.TableUtils;
 
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 public class DatabaseStore implements DataStore {
 
@@ -96,31 +95,9 @@ public class DatabaseStore implements DataStore {
         blockEntryQB.where().eq("block_id", new SelectArg());
 
         QueryBuilder<Entry, UUID> entryQB = entryDao.queryBuilder();
-        entryQB.where().in("entryID",  blockEntryQB);
+        entryQB.where().in("entryID", blockEntryQB);
         entriesForBlockQuery = entryQB.prepare();
     }
-
-    /**
-     * Get a property's value. Will return null if the property is not stored.
-     * @param key the property key
-     * @throws SQLException
-     */
-    private String getProperty(String key) throws SQLException {
-        return propertyDao.queryForId(key).getValue();
-    }
-
-    /**
-     * Set a property. Its key and value must be at most 255 characters long.
-     * @param key the property key
-     * @param value the property value
-     * @throws SQLException
-     */
-    private void setProperty(String key, String value) throws SQLException {
-        if (key.length() > 255 || value.length() > 255)
-            throw new IllegalArgumentException("Property key and value must be at most 255 characters long");
-        propertyDao.createOrUpdate(new Property(key, value));
-    }
-
 
     public long getBlocksCount() throws SQLException {
         return blockDao.countOf();
@@ -135,13 +112,6 @@ public class DatabaseStore implements DataStore {
         return entryDao.query(entriesForBlockQuery);
     }
 
-    /**
-     * Gets the N most recent blocks on what is regarded as the longest blockchain.
-     * Blocks returned only contain their headers, no entries.
-     * @param n
-     * @return
-     * @throws SQLException
-     */
     public List<Block> getNMostRecentBlocks(int n) throws SQLException {
         // Sorted with the recent block at (or near) the header of the block
         // n = 2 means return the most recent block and the one before
@@ -176,21 +146,17 @@ public class DatabaseStore implements DataStore {
         // TODO: check if we are unorphaning any blocks
 
         return t.callInTransaction(() -> {
-            if (blockExists(b.getBlockID()))
-                return false;
+            boolean blockIsNewLatest = false;
+            List<Block> blocksToActivate = new ArrayList<>();
+            List<Block> blocksToDeactivate = new ArrayList<>();
 
             if (Arrays.equals(b.getPrevBlockHash(), latestBlock.getBlockID())) {
 
                 // extending the active blockchain
                 b.setHeight(latestBlock.getHeight() + 1);
-                blockDao.create(b);
-                latestBlock = b;
 
-                setBlockEntriesConfirmed(b, true);
-                // now insert block-entry mappings into link table
-                for (Entry e : b.getEntriesList())
-                    blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
-
+                blockIsNewLatest = true;
+                blocksToActivate.add(b);
 
             } else {
                 // see if this will be the new latest block
@@ -199,12 +165,7 @@ public class DatabaseStore implements DataStore {
                 if (parent == null) {
                     // orphan block, so it will be inactive.
                     b.setHeight(-1);
-                    blockDao.create(b);
-
-                    setBlockEntriesConfirmed(b, false);
-                    // now insert block-entry mappings into link table
-                    for (Entry e : b.getEntriesList())
-                        blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+                    blocksToDeactivate.add(b);
 
                 } else {
                     long oldHeight = latestBlock.getHeight();
@@ -214,66 +175,78 @@ public class DatabaseStore implements DataStore {
                     b.setHeight(newHeight);
 
                     if (newHeight > oldHeight || (newHeight == oldHeight && b.getTimeStamp() < oldLatestBlock.getTimeStamp())) {
-                        // this is the new latest block
-                        blockDao.create(b);
-                        latestBlock = b;
+
+                        blockIsNewLatest = true;
+                        blocksToActivate.add(b);
 
                         // so determine which blocks to activate/deactivate
                         CloseableIterator<Block> blocksFromHighest = blockDao.queryBuilder().orderBy("height", false).iterator();
-
-                        List<Block> blocksToActivate = new ArrayList<>();
-                        List<Block> blocksToDeactivate = new ArrayList<>();
 
                         Block current = null;
                         byte[] prevBlockOnOldChain = oldLatestBlock.getBlockID();
                         byte[] prevBlockOnNewChain = b.getPrevBlockHash();
 
                         // stop when the parent on both chains is the same block (and so it will remain active)
-                        while (blocksFromHighest.hasNext() && !Arrays.equals(prevBlockOnNewChain, prevBlockOnOldChain)) {
+                        try {
+                            while (blocksFromHighest.hasNext() && !Arrays.equals(prevBlockOnNewChain, prevBlockOnOldChain)) {
 
-                            current = blocksFromHighest.next();
-                            // current could be:
-                            // 1. a block on the new active chain - activate it
-                            // 2. a block on the old active chain - deactivate it
-                            // 3. otherwise a block on another inactive chain that will remain inactive
+                                current = blocksFromHighest.next();
+                                // current could be:
+                                // 1. a block on the new active chain - activate it
+                                // 2. a block on the old active chain - deactivate it
+                                // 3. otherwise a block on another inactive chain that will remain inactive
 
-                            if (Arrays.equals(current.getBlockID(), prevBlockOnNewChain)) {
-                                prevBlockOnNewChain = current.getPrevBlockHash();
-                                blocksToActivate.add(current);
+                                if (Arrays.equals(current.getBlockID(), prevBlockOnNewChain)) {
+                                    prevBlockOnNewChain = current.getPrevBlockHash();
+                                    blocksToActivate.add(current);
 
-                            } else if (Arrays.equals(current.getBlockID(), prevBlockOnOldChain)) {
-                                prevBlockOnOldChain = current.getPrevBlockHash();
-                                blocksToDeactivate.add(current);
+                                } else if (Arrays.equals(current.getBlockID(), prevBlockOnOldChain)) {
+                                    prevBlockOnOldChain = current.getPrevBlockHash();
+                                    blocksToDeactivate.add(current);
+                                }
                             }
+                        } finally {
+                            // must be sure to close the iterator
+                            blocksFromHighest.close();
                         }
-
-                        // deactivate first, in case an entry will get reactivated.
-                        for (Block block : blocksToDeactivate)
-                            setBlockEntriesConfirmed(block, false);
-
-                        for (Block block : blocksToActivate)
-                            setBlockEntriesConfirmed(block, true);
-
-                        // finally activate the new block
-                        setBlockEntriesConfirmed(b, true);
-
-                        // now insert block-entry mappings into link table
-                        for (Entry e : b.getEntriesList())
-                            blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
 
                     } else {
                         // this block will be inactive
-                        blockDao.create(b);
-                        setBlockEntriesConfirmed(b, false);
-                        // now insert block-entry mappings into link table
-                        for (Entry e : b.getEntriesList())
-                            blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+                        blocksToDeactivate.add(b);
                     }
                 }
             }
 
-            // block was successfully inserted
-            return true;
+
+            try {
+                // always add block to database
+                blockDao.create(b);
+
+                if (blockIsNewLatest)
+                    latestBlock = b;
+
+                // deactivate first, in case an entry will get reactivated.
+                for (Block block : blocksToDeactivate)
+                    setBlockEntriesConfirmed(block, false);
+
+                for (Block block : blocksToActivate)
+                    setBlockEntriesConfirmed(block, true);
+
+                // now insert block-entry mappings into link table
+                for (Entry e : b.getEntriesList())
+                    blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+
+                // block was successfully inserted
+                return true;
+
+            } catch (SQLException e) {
+                // catch duplicate block error
+                final int DUPLICATE_ERROR = 23001;
+                if (e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR)
+                    return false;
+                else
+                    throw e;
+            }
         });
     }
 
@@ -281,9 +254,6 @@ public class DatabaseStore implements DataStore {
      * Sets all of the entries in this block as confirmed or unconfirmed.
      * If the entries are not yet in the database, they will be added.
      * Not an atomic operation so should call this from a transaction.
-     * @param block
-     * @param confirmed
-     * @throws SQLException
      */
     private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
         // create/update entries
@@ -293,17 +263,12 @@ public class DatabaseStore implements DataStore {
         }
     }
 
-    @Override
     public Block getBlock(byte[] blockID) throws SQLException {
         return blockDao.queryBuilder().limit(1L).where().eq("blockID", blockID).queryForFirst();
     }
 
     public Entry getEntry(UUID id) throws SQLException {
         return entryDao.queryForId(id);
-    }
-
-    public Iterable<Entry> getEntries() throws SQLException {
-        return entryDao;
     }
 
     public List<Entry> getEntries(byte[] fileHash) throws SQLException {
@@ -315,14 +280,20 @@ public class DatabaseStore implements DataStore {
     }
 
     public void insertEntry(Entry e) throws SQLException {
+        // by default, entry will be unconfirmed
         entryDao.create(e);
     }
 
-    public void updateEntry(Entry e) throws SQLException {
-        entryDao.update(e);
+
+    public String getProperty(String key) throws SQLException {
+        return propertyDao.queryForId(key).getValue();
     }
 
-    public void deleteEntry(Entry e) throws SQLException {
-        entryDao.delete(e);
+    public void setProperty(String key, String value) throws SQLException {
+        if (key.length() > 255 || value.length() > 255)
+            throw new IllegalArgumentException("Property key and value must be at most 255 characters long");
+        propertyDao.createOrUpdate(new Property(key, value));
     }
+
+
 }
