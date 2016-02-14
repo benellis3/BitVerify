@@ -38,22 +38,26 @@ public class ConnectionManager {
     private Collection<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private InetSocketAddress myAddress;
-    private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) {
+    // underscore courtesy of Laszlo Makk :p
+    private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
         peers = ConcurrentHashMap.newKeySet();
         this.bus = bus;
         bus.register(this);
         es = Executors.newCachedThreadPool();
         // Create new runnable to listen for new connections.
+        ServerSocket serverSocket;
+        serverSocket = new ServerSocket(listenPort);
+        myAddress = new InetSocketAddress(serverSocket.getInetAddress(), listenPort);
         es.execute(() -> {
-                    try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
-                        myAddress = new InetSocketAddress(serverSocket.getInetAddress(), listenPort);
+                    try {
                         while (true) {
                             Socket s = serverSocket.accept();
                             // separate thread since it blocks waiting for messages.
                             es.execute(() -> {
                                 try {
                                     PeerHandler p = new PeerHandler(s, es, ds, bus);
-                                    peers.add(p);
+                                    if(!p.getListenAddress().equals(myAddress))
+                                        peers.add(p);
                                 }
                                 catch(TimeoutException time) {
                                     // this means no response was received
@@ -75,18 +79,19 @@ public class ConnectionManager {
         // in a separate thread as the PeerHandler constructor will
         // block.
         es.execute(() -> {
-            PeerHandler p;
             for (InetSocketAddress peerAddress : initialPeers) {
-                try {
-                    p = new PeerHandler(peerAddress,listenPort,es, ds, bus);
-                    peers.add(p);
-                }
-                catch(TimeoutException toe) {
-                    System.out.println("Failed to contact an initial peer");
-                }
-                catch(InterruptedException | ExecutionException | IOException ie) {
-                    ie.printStackTrace();
-                }
+                es.execute(()-> {
+                    try {
+                        PeerHandler p = new PeerHandler(peerAddress,listenPort,es, ds, bus);
+                        peers.add(p);
+                    }
+                    catch(TimeoutException toe) {
+                        System.out.println("Failed to contact an initial peer");
+                    }
+                    catch(InterruptedException | ExecutionException | IOException ie) {
+                        ie.printStackTrace();
+                    }
+                });
             }
             PeerProtocol peerProtocol = new PeerProtocol(peers, es,bus,ds,myAddress);
             peerProtocol.send();
@@ -97,7 +102,7 @@ public class ConnectionManager {
         _initialise(initialPeers, listenPort, ds, bus);
     }
     // This is used primarily for testing
-    public ConnectionManager(List<InetSocketAddress> initialPeers,int listenPort, DataStore ds, Bus bus) {
+    public ConnectionManager(List<InetSocketAddress> initialPeers,int listenPort, DataStore ds, Bus bus) throws IOException{
         _initialise(initialPeers, listenPort, ds, bus);
     }
     /**
@@ -140,6 +145,7 @@ public class ConnectionManager {
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
+    protected Collection<PeerHandler> peers(){return peers;}
     /**
      * For testing only - not relevant to actual version
      */
@@ -148,28 +154,6 @@ public class ConnectionManager {
         // prints the document description
         System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
     }
-    /**
-     * This method is responsible for adding the peers to the list of peers.
-     * it achieves this by adding a runnable to the thread pool to avoid latency.
-     * @param event the PeersEvent that was raised by the PeerReceive runnable
-     */
-    /*@Subscribe
-    public void onPeersEvent(PeersEvent event) {
-        Set<InetSocketAddress> addresses = event.getSocketAddresses();
-        es.execute(() -> {
-            for(InetSocketAddress addr : addresses) {
-                try {
-                    peers.add(new PeerHandler(addr,listenPort, es, ds, bus));
-                }
-                catch(TimeoutException toe) {
-                    LOGGER.log(Level.FINE, "Timeout when responding to peers");
-                }
-                catch(IOException | ExecutionException | InterruptedException ioe) {
-                    ioe.printStackTrace();
-                }
-            }
-        });
-    }*/
     /**
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid

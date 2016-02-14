@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class PeerProtocol  {
     private ExecutorService es;
     private int listenPort;
     private InetAddress myAddress;
+    private ReentrantLock lock = new ReentrantLock();
     public PeerProtocol(Collection<PeerHandler> handler, ExecutorService es, Bus bus,
                         DataStore ds, InetSocketAddress address) {
         peers = handler;
@@ -73,8 +75,9 @@ public class PeerProtocol  {
                 if(!peerAddresses.contains(address)) {
                     es.execute(() -> {
                         try {
+                            PeerHandler p = new PeerHandler(address,listenPort, es, ds, bus);
                             if(address.getPort() != listenPort && address.getAddress() != myAddress)
-                                peers.add(new PeerHandler(address,listenPort, es, ds, bus));
+                                peers.add(p);// blocks
                         }
                         catch(TimeoutException to) {
                             System.out.println("Timeout when constructing new peer");

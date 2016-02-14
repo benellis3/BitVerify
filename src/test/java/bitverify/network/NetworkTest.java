@@ -8,13 +8,16 @@ import com.squareup.otto.ThreadEnforcer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.internal.runners.statements.Fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 
@@ -23,7 +26,7 @@ public class NetworkTest {
     private PrintStream oldStdOut;
     // database not ready yet.
     //private DataStore dataStore;
-    private static final int NUM_CONNECTIONS = 4;
+    private static final int NUM_CONNECTIONS = 20;
     private static final int LARGE_INITIAL_PORT = 35000;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
     @Before
@@ -39,6 +42,28 @@ public class NetworkTest {
         System.setOut(oldStdOut);
     }
 
+    @Test
+    public void PeerHandlerEqualsTest() throws Exception{
+        ConnectionManager conn = new ConnectionManager(new ArrayList<>(), LARGE_INITIAL_PORT, null,
+                new Bus(ThreadEnforcer.ANY));
+        ConnectionManager conn1 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
+            add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT));}},LARGE_INITIAL_PORT + 1,
+                null, new Bus(ThreadEnforcer.ANY));
+        Thread.sleep(300);
+        boolean success = false;
+        Collection<PeerHandler> connPeers = conn.peers();
+        for(PeerHandler p : connPeers) {
+            try {
+                if (p.equals(new PeerHandler(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + 1),
+                        LARGE_INITIAL_PORT, Executors.newFixedThreadPool(5), null, new Bus(ThreadEnforcer.ANY))))
+                    success = true; break;
+            }
+            catch(Exception e) {
+                fail("Timeout");
+            }
+        }
+        assertTrue(success);
+    }
     /**
      * This test tests the basic sending functionality of the ConnectionManager.
      * This allows a basic Entry message to be sent around the network. It does
@@ -61,7 +86,7 @@ public class NetworkTest {
         for(ConnectionManager conn : connectionList) {
             conn.broadcastEntry(e);
         }
-        Thread.sleep(400);
+        Thread.sleep(600);
 
         // create string of appropriate length to be the return.
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
