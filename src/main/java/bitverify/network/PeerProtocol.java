@@ -26,29 +26,29 @@ public class PeerProtocol  {
     private DataStore ds;
     private ExecutorService es;
     private int listenPort;
-    private InetAddress myAddress;
-    public PeerProtocol(Collection<PeerHandler> handler, ExecutorService es, Bus bus,
-                        DataStore ds, InetSocketAddress address) {
+
+    public PeerProtocol(Collection<PeerHandler> handler, ExecutorService es, Bus bus, DataStore ds, int listenPort) {
         peers = handler;
         state = State.IDLE;
         this.bus = bus;
-        this.listenPort = address.getPort();
-        this.myAddress = address.getAddress();
+        this.listenPort = listenPort;
+
         this.es = es;
         this.ds = ds;
         bus.register(this);
     }
+
     public void send() {
-        peers.forEach((p) -> {
-            MessageProto.GetPeers getPeers = MessageProto.GetPeers.newBuilder()
-                    .setMyAddress(MessageProto.NetAddress.newBuilder()
-                            .setHostName(p.getConnectedHost().getHostName())
-                            .setPort(listenPort))
+        peers.forEach(p -> {
+            MessageProto.GetPeers getPeers = MessageProto.GetPeers.newBuilder().build();
+            MessageProto.Message message = MessageProto.Message.newBuilder()
+                    .setType(MessageProto.Message.Type.GETPEERS)
+                    .setGetPeers(getPeers)
                     .build();
-            MessageProto.Message message = MessageProto.Message.newBuilder().setType(MessageProto.Message.Type.GETPEERS)
-                    .setGetPeers(getPeers).build();
             p.send(message);
             state = State.WAIT;
+            // register for peers event messages
+            bus.register(this);
             Timer timer = new Timer();
             // resend if no response has been received
             while (state != State.IDLE)
@@ -57,22 +57,24 @@ public class PeerProtocol  {
                     public void run() {
                         p.send(message);
                     }
-                }, (long) 3000);
+                }, 3000L);
 
         });
 
     }
-    public void unregister() {bus.unregister(this);}
+
     @Subscribe
     public void onPeersEvent(PeersEvent pe) {
+        bus.unregister(this);
         es.execute(() -> {
             state = State.IDLE;
-            Set<InetSocketAddress> addresses = pe.getSocketAddresses();
+            Set<InetSocketAddress> newAddresses = pe.getSocketAddresses();
             // get the InetSocketAddress collection from the peers
             Set<InetSocketAddress> peerAddresses = peers.parallelStream()
                     .map(PeerHandler::getListenAddress)
                     .collect(Collectors.toSet());
-            for(InetSocketAddress address : addresses) {
+
+            for(InetSocketAddress address : newAddresses) {
                 if(!peerAddresses.contains(address)) {
                     es.execute(() -> {
                         try {

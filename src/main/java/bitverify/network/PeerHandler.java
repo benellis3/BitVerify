@@ -50,7 +50,7 @@ public class PeerHandler {
         }
         // create new PeerSend Runnable with the right queue
         es.execute(new PeerSend(messageQueue, socket));
-        es.execute(new PeerReceive(socket, ds, bus));
+        es.execute(new PeerReceive(socket, ds, bus, listenAddress));
         // send ack message to denote that we have connected
         Ack ack = Ack.newBuilder().build();
         Message msg = Message.newBuilder().setType(Message.Type.ACK).setAck(ack).build();
@@ -60,7 +60,7 @@ public class PeerHandler {
      * This constructor should be used when connecting to a peer when starting up.
      * This constructor blocks waiting for the person we are connecting to to send an ACK message
      * @param address the InetSocketAddress to connect to
-     * @param listenPort the port that the host is listening on.
+     * @param listenPort the port that our host is listening on.
      * @param es the ExecutorService of the connection manager
      * @param ds the database access class
      * @param bus the application event bus
@@ -90,7 +90,7 @@ public class PeerHandler {
             fut.cancel(true);
         }
         // allow connections to be received.
-        es.execute(new PeerReceive(socket, ds, bus));
+        es.execute(new PeerReceive(socket, ds, bus, listenAddress));
     }
 
     @Override
@@ -106,12 +106,7 @@ public class PeerHandler {
                                                 socket.getPort());}
     public InetSocketAddress getLocalAddress() {return new InetSocketAddress(socket.getInetAddress(),
                                                 socket.getLocalPort());}
-    public int getConnectedPort(){
-        return listenAddress.getPort();
-    }
-    public InetAddress getConnectedHost(){
-        return listenAddress.getAddress();
-    }
+
     public InetSocketAddress getListenAddress() {return listenAddress;}
     /**
      * This sends a message and does not block.

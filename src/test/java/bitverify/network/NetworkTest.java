@@ -27,7 +27,7 @@ public class NetworkTest {
     // database not ready yet.
     //private DataStore dataStore;
     private static final int NUM_CONNECTIONS = 3;
-    private static final int LARGE_INITIAL_PORT = 35000;
+    private static final int LARGE_INITIAL_PORT = 32500;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
     @Before
     public void setUpStreams() {
@@ -75,7 +75,7 @@ public class NetworkTest {
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
-                connectionList.add(new ConnectionManager(addressList, LARGE_INITIAL_PORT + i, null,
+                connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i, null,
                         new Bus(ThreadEnforcer.ANY)));
                 addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
         }

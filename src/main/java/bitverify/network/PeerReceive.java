@@ -28,10 +28,12 @@ public class PeerReceive implements Runnable {
     private Socket socket;
     private DataStore dataStore;
     private Bus eventBus;
-    public PeerReceive(Socket s, DataStore ds, Bus bus) {
+    private InetSocketAddress peerListenAddress;
+    public PeerReceive(Socket s, DataStore ds, Bus bus, InetSocketAddress peerListenAddress) {
         socket = s;
         dataStore = ds;
         eventBus = bus;
+        this.peerListenAddress = peerListenAddress;
     }
     @Override
     public void run() {
@@ -102,11 +104,8 @@ public class PeerReceive implements Runnable {
 
     }
     private void handleGetPeers(Message message) {
-        GetPeers getPeers = message.getGetPeers();
         // create an event which can be handed off to the connection manager.
-        NetAddress netAddress = getPeers.getMyAddress();
-        InetSocketAddress addr = new InetSocketAddress(netAddress.getHostName(), netAddress.getPort());
-        eventBus.post(new GetPeersEvent(addr));
+        eventBus.post(new GetPeersEvent(peerListenAddress));
     }
 
     private void handlePeers(Message message) {

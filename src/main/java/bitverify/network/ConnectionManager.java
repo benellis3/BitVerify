@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import bitverify.entries.Entry;
+import bitverify.network.proto.MessageProto;
 import bitverify.persistence.DataStore;
 import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.NetAddress;
@@ -37,7 +38,7 @@ public class ConnectionManager {
     private Bus bus;
     private Collection<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
-    private InetSocketAddress myAddress;
+
     // underscore courtesy of Laszlo Makk :p
     private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
         peers = ConcurrentHashMap.newKeySet();
@@ -47,7 +48,7 @@ public class ConnectionManager {
         // Create new runnable to listen for new connections.
         ServerSocket serverSocket;
         serverSocket = new ServerSocket(listenPort);
-        myAddress = new InetSocketAddress(serverSocket.getInetAddress(), listenPort);
+
         es.execute(() -> {
                     try {
                         while (true) {
@@ -56,8 +57,7 @@ public class ConnectionManager {
                             es.execute(() -> {
                                 try {
                                     PeerHandler p = new PeerHandler(s, es, ds, bus);
-                                    if(!p.getListenAddress().equals(myAddress))
-                                        peers.add(p);
+                                    peers.add(p);
                                 }
                                 catch(TimeoutException time) {
                                     // this means no response was received
@@ -93,7 +93,7 @@ public class ConnectionManager {
                     }
                 });
             }
-            PeerProtocol peerProtocol = new PeerProtocol(peers, es,bus,ds,myAddress);
+            PeerProtocol peerProtocol = new PeerProtocol(peers, es, bus, ds, listenPort);
             peerProtocol.send();
         });
     }
@@ -112,11 +112,7 @@ public class ConnectionManager {
      */
     public void getPeers() {
         for(PeerHandler p : peers) {
-            GetPeers getPeers = GetPeers.newBuilder()
-                    .setMyAddress(NetAddress.newBuilder()
-                            .setHostName(p.getAddress().getHostName())
-                            .setPort(p.getLocalAddress().getPort()))
-                    .build();
+            GetPeers getPeers = GetPeers.newBuilder().build();
             Message message = Message.newBuilder().setType(Message.Type.GETPEERS)
                     .setGetPeers(getPeers).build();
             p.send(message);
@@ -164,22 +160,22 @@ public class ConnectionManager {
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
         // extract the InetSocketAddresses from the Peers.
-        // Up to the recipient to check that the received list does not contain
-        // itself.
         es.execute(() -> {
-            InetSocketAddress address = event.getSocketAddress();
-            List<NetAddress> addresses = new ArrayList<>();
+            InetSocketAddress addressFrom = event.getSocketAddress();
+            List<NetAddress> peerAddresses = new ArrayList<>();
             PeerHandler sender = null;
             for(PeerHandler p : peers) {
-                if(!p.getListenAddress().equals(address)) {
-                    addresses.add(NetAddress.newBuilder()
-                            .setHostName(p.getConnectedHost().getHostName())
-                            .setPort(p.getConnectedPort()).build());
-                }
-                else
+                InetSocketAddress peerListenAddress = p.getListenAddress();
+                if (p.getListenAddress().equals(addressFrom)) {
                     sender = p;
+                } else {
+                    peerAddresses.add(NetAddress.newBuilder()
+                            .setHostName(peerListenAddress.getHostName())
+                            .setPort(peerListenAddress.getPort())
+                            .build());
+                }
             }
-            Peers peer = Peers.newBuilder().addAllAddress(addresses).build();
+            Peers peer = Peers.newBuilder().addAllAddress(peerAddresses).build();
             Message msg = Message.newBuilder().setType(Message.Type.PEERS).setPeers(peer).build();
             sender.send(msg);
         });
