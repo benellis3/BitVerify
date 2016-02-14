@@ -102,7 +102,8 @@ public class ConnectionManager {
         _initialise(initialPeers, listenPort, ds, bus);
     }
     // This is used primarily for testing
-    public ConnectionManager(List<InetSocketAddress> initialPeers,int listenPort, DataStore ds, Bus bus) throws IOException{
+    public ConnectionManager(List<InetSocketAddress> initialPeers,int listenPort, DataStore ds, Bus bus)
+            throws IOException{
         _initialise(initialPeers, listenPort, ds, bus);
     }
     /**

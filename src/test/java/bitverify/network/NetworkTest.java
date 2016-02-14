@@ -26,7 +26,7 @@ public class NetworkTest {
     private PrintStream oldStdOut;
     // database not ready yet.
     //private DataStore dataStore;
-    private static final int NUM_CONNECTIONS = 20;
+    private static final int NUM_CONNECTIONS = 3;
     private static final int LARGE_INITIAL_PORT = 35000;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
     @Before
