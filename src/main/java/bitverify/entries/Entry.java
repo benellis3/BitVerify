@@ -45,7 +45,11 @@ public class Entry {
 	private Metadata metadataObject = null;
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] encryptedSymmetricKey = new byte[0];
-	
+
+	// Used by database to remember whether an entry is part of the active blockchain.
+	@DatabaseField
+	private boolean confirmed;
+
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata) throws KeyDecodingException{
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
@@ -279,5 +283,9 @@ public class Entry {
 
 	public void setBlockID(byte[] blockID) {
 		this.blockID = blockID;
+	}
+
+	public void setConfirmed(boolean confirmed) {
+		this.confirmed = confirmed;
 	}
 }

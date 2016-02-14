@@ -225,6 +225,9 @@ public class Block {
     }
 
     private byte[] serializeEntries() {
+        if (entries == null)
+            return null;
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (DataOutputStream d = new DataOutputStream(out)) {
             for (Entry e : entries) {
@@ -301,7 +304,18 @@ public class Block {
         return nonce;
     }
 
+    /**
+     * Gets a read-only list containing this block's entries.
+     * May be null if the entries have not yet been set.
+     */
     public List<Entry> getEntriesList() {
-        return Collections.unmodifiableList(entries);
+        return entries == null ? null : Collections.unmodifiableList(entries);
+    }
+
+    /**
+     * Determines whether the block's entries have been set yet. Otherwise it only contains the block header information.
+     */
+    public boolean areEntriesSet() {
+        return entries != null;
     }
 }
