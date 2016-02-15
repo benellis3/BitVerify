@@ -128,7 +128,7 @@ public class Miner implements Runnable{
 				
 				if (mineSuccess(result)){
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
-						dataStore.createBlock(blockMining);
+						dataStore.insertBlock(blockMining);
 						//Pass successful block to application logic for broadcasting to the network
 						eventBus.post(new BlockFoundEvent(blockMining));
 	
