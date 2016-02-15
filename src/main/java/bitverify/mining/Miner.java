@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.squareup.otto.Bus;
@@ -68,21 +69,21 @@ public class Miner implements Runnable{
 	private final int bitsInByte = 8;
 	
 	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
-	public Miner(Bus eventBus, String target) throws SQLException{
+	//public Miner(Bus eventBus, String target) throws SQLException{
 		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block(Block.simpleGenesisBlock(),initialTarget);
+		//blockMining = new Block(Block.getGenesisBlock(),initialTarget);
 		
 		//newMiningBlock();
 	    
 		//Set up the event bus
-		this.eventBus = eventBus;
-		eventBus.register(this);
+		//this.eventBus = eventBus;
+		//eventBus.register(this);
 		
 		//this.dataStore = dataStore;
 		
-		setPackedTarget(packTarget(target));
+	//	setPackedTarget(packTarget(target));
 
-	}
+	//}
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException{
 		newMiningBlock();
@@ -147,14 +148,15 @@ public class Miner implements Runnable{
 		}
 	}
 	
-	public void newMiningBlock() throws SQLException{
+	public void newMiningBlock() throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget();
 		setPackedTarget(target);
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
-		blockMining = new Block(lastBlockInChain, target);
+		
+		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, new ArrayList<Entry>());
 	}
 	
 	//This gets called when a new block has been successfully mined elsewhere
