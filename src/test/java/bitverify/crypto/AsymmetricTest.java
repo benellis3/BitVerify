@@ -2,12 +2,17 @@ package bitverify.crypto;
 
 import static org.junit.Assert.*;
 
+import java.nio.charset.StandardCharsets;
+
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 public class AsymmetricTest {
+	
+	private static final boolean LONG_TESTS = false;
 	
 	public static String myPrivKey =
 			"-----BEGIN RSA PRIVATE KEY-----\n"+
@@ -311,9 +316,26 @@ public class AsymmetricTest {
 			fail();
 		}
 	}
+	
+	@Test
+	public void testGetKeyPairFromByteKeys() {
+		try {
+			byte[] pubKey = Asymmetric.stringKeyToByteKey(myPubKey);
+			byte[] privKey = Asymmetric.stringKeyToByteKey(myPrivKey);
+			AsymmetricCipherKeyPair keyPair = Asymmetric.getKeyPairFromByteKeys(pubKey, privKey);
+			//keyPair constructed, now try encrypting something
+			String input = "dGVzdGluZyBteSBnbG9yaW91cyBtZXRob2Rz";
+			String encrypted = Asymmetric.encryptBase64String(input, keyPair.getPrivate());
+			String decrypted = Asymmetric.decryptBase64String(encrypted, keyPair.getPublic());
+			assertEquals( input, decrypted );
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
 
 	@Test
-	public void testStringKeyToKey() {
+	public void testKeyConversion1() {
 		try {
 			String myPrivKey2 = Asymmetric.keyToStringKey(Asymmetric.stringKeyToKey(myPrivKey));
 			String myPubKey2 = Asymmetric.keyToStringKey(Asymmetric.stringKeyToKey(myPubKey));
@@ -326,7 +348,40 @@ public class AsymmetricTest {
 	}
 	
 	@Test
-	public void testIsValidKey() {
+	public void testKeyConversion2() {
+		try {
+			String myPrivKey2 = Asymmetric.byteKeyToStringKey(Asymmetric.stringKeyToByteKey(myPrivKey));
+			String myPubKey2 = Asymmetric.byteKeyToStringKey(Asymmetric.stringKeyToByteKey(myPubKey));
+			assertEquals( myPrivKey, myPrivKey2 );
+			assertEquals( myPubKey, myPubKey2 );
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testKeyConversion3() {
+		try {
+			AsymmetricKeyParameter privKey = Asymmetric.stringKeyToKey(myPrivKey);
+			AsymmetricKeyParameter pubKey = Asymmetric.stringKeyToKey(myPubKey);
+			
+			byte[] privKey_bytes = Asymmetric.keyToByteKey(privKey);
+			byte[] pubKey_bytes = Asymmetric.keyToByteKey(pubKey);
+			
+			byte[] privKey_bytes2 = Asymmetric.stringKeyToByteKey(myPrivKey);
+			byte[] pubKey_bytes2 = Asymmetric.stringKeyToByteKey(myPubKey);
+			
+			assertEquals( Hex.toHexString(privKey_bytes), Hex.toHexString(privKey_bytes2) );
+			assertEquals( Hex.toHexString(pubKey_bytes), Hex.toHexString(pubKey_bytes2) );
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
+	}
+	
+	@Test
+	public void testIsValidKey_string() {
 		//test hardcoded keys
 		assertTrue( Asymmetric.isValidKey(myPrivKey) );
 		assertTrue( Asymmetric.isValidKey(myPubKey) );
@@ -334,18 +389,20 @@ public class AsymmetricTest {
 		assertTrue( Asymmetric.isValidKey(myPubKey2) );
 		
 		//test newly generated keys
-		AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
-		String newPrivKey, newPubKey;
-		try {
-			newPrivKey = Asymmetric.keyToStringKey(keyPair.getPrivate());
-			newPubKey = Asymmetric.keyToStringKey(keyPair.getPublic());
-		} catch (KeyDecodingException e) {
-			e.printStackTrace();
-			fail();
-			return;
+		if (LONG_TESTS){
+			AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+			String newPrivKey, newPubKey;
+			try {
+				newPrivKey = Asymmetric.keyToStringKey(keyPair.getPrivate());
+				newPubKey = Asymmetric.keyToStringKey(keyPair.getPublic());
+			} catch (Exception e) {
+				e.printStackTrace();
+				fail();
+				return;
+			}
+			assertTrue( Asymmetric.isValidKey(newPrivKey) );
+			assertTrue( Asymmetric.isValidKey(newPubKey) );
 		}
-		assertTrue( Asymmetric.isValidKey(newPrivKey) );
-		assertTrue( Asymmetric.isValidKey(newPubKey) );
 		
 		//test random gibberish
 		String input[] = {
@@ -357,7 +414,49 @@ public class AsymmetricTest {
 		for (int i=0; i<input.length; i++){
 			assertFalse( Asymmetric.isValidKey(input[i]) );
 		}
+	}
+	
+	@Test
+	public void testIsValidKey_byte() {
+		//test hardcoded keys
+		try {
+			assertTrue( Asymmetric.isValidKey(Asymmetric.stringKeyToByteKey(myPrivKey)) );
+			assertTrue( Asymmetric.isValidKey(Asymmetric.stringKeyToByteKey(myPubKey)) );
+			assertTrue( Asymmetric.isValidKey(Asymmetric.stringKeyToByteKey(myPrivKey2)) );
+			assertTrue( Asymmetric.isValidKey(Asymmetric.stringKeyToByteKey(myPubKey2)) );
+		} catch (KeyDecodingException e1) {
+			fail();
+			return;
+		}
 		
+		//test newly generated keys
+		if (LONG_TESTS){
+			AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+			byte[] newPrivKey, newPubKey;
+			try {
+				newPrivKey = Asymmetric.keyToByteKey(keyPair.getPrivate());
+				newPubKey = Asymmetric.keyToByteKey(keyPair.getPublic());
+			} catch (Exception e) {
+				e.printStackTrace();
+				fail();
+				return;
+			}
+			assertTrue( Asymmetric.isValidKey(newPrivKey) );
+			assertTrue( Asymmetric.isValidKey(newPubKey) );
+		}
+		
+		//test random gibberish
+		String input[] = {
+				"V2h5IHdvdWxkIHlvdSBkbyB0aGF0IHRvIG1lPw==",
+				"-----lollolasdasd",
+				"-----BEGIN RSA PRIVATE KEY-----\nasdasdjustkidding\n-----END RSA PRIVATE KEY-----",
+				"-----BEGIN RSA PUBLIC KEY-----\n nahforgetit then",
+		};
+		for (int i=0; i<input.length; i++){
+			assertFalse(Asymmetric.isValidKey(
+					input[i].getBytes(StandardCharsets.UTF_8)
+			));
+		}
 	}
 	
 }

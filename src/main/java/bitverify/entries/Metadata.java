@@ -11,17 +11,17 @@ import java.io.OutputStream;
 
 public class Metadata {
 
-	private String docHash;
+	private byte[] docHash = new byte[0];
 	private String linkToDownloadFile = ""; //e.g. magnet link
 	
 	private String docName = "";
 	private String docDescription = "";
 	private String docGeoLocation = "";
-	private String docTimeStamp = "";
+	private long docTimeStamp = 0;
 	private String[] tags = new String[0];
 	
-	public Metadata(String docHash, String linkToDownloadFile, String docName, String docDescription,
-			String docGeoLocation, String docTimeStamp, String[] tags){
+	public Metadata(byte[] docHash, String linkToDownloadFile, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp, String[] tags){
 		this.docHash = docHash;
 		this.linkToDownloadFile = linkToDownloadFile;
 		this.docName = docName;
@@ -34,12 +34,15 @@ public class Metadata {
 	public static Metadata deserialize(InputStream in) throws IOException {
 		// DataInputStream allows us to read in primitives in binary form.
 		try (DataInputStream d = new DataInputStream(in)) {
-			String docHash = d.readUTF();
+			int docHashLength = d.readInt();
+			byte[] docHash = new byte[docHashLength];
+			d.readFully(docHash);
+			
 			String linkToDownloadFile = d.readUTF();
 			String docName = d.readUTF();
 			String docDescription = d.readUTF();
 			String docGeoLocation = d.readUTF();
-			String docTimeStamp = d.readUTF();
+			long docTimeStamp = d.readLong();
 			
 			int numTags = d.readInt();
 			String[] tags = new String[numTags];
@@ -61,12 +64,14 @@ public class Metadata {
 		// DataOutputStream allows us to write primitives in binary form.
 		try (DataOutputStream d = new DataOutputStream(out)) {
 			// write out each field in binary form, in declaration order.
-			d.writeUTF(docHash);
+			d.writeInt(docHash.length); //not strictly needed, but just to make sure
+			d.write(docHash);
+			
 			d.writeUTF(linkToDownloadFile);
 			d.writeUTF(docName);
 			d.writeUTF(docDescription);
 			d.writeUTF(docGeoLocation);
-			d.writeUTF(docTimeStamp);
+			d.writeLong(docTimeStamp);
 			
 			d.writeInt(tags.length);
 			for (String tag : tags) {
@@ -83,7 +88,7 @@ public class Metadata {
 		return out.toByteArray();
 	}
 	
-	public String getDocHash(){
+	public byte[] getDocHash(){
 		return docHash;
 	}
 	
@@ -103,7 +108,7 @@ public class Metadata {
 		return docGeoLocation;
 	}
 	
-	public String getDocTimeStamp(){
+	public long getDocTimeStamp(){
 		return docTimeStamp;
 	}
 	

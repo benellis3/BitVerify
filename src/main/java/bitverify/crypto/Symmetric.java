@@ -28,7 +28,6 @@ public class Symmetric {
 			len += cipher.doFinal(out, len);
 		} catch (IllegalStateException e){
 			//this should never happen
-			e.printStackTrace();
 			throw new RuntimeException();
 		}
 		if (isEncrypting){
