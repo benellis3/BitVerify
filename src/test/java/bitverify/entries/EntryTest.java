@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.AsymmetricTest;
+import bitverify.crypto.Hash;
 
 public class EntryTest {
 		
@@ -17,8 +18,17 @@ public class EntryTest {
 		try {
 			AsymmetricCipherKeyPair uploaderKeyPair = 
 					Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
-			Metadata metadata = MetadataTest.generateMetadata1();
-			Entry entry = new Entry(uploaderKeyPair, metadata);
+			// --> metadata
+			byte[] docHash = Hash.hashString("imitation of some random file");
+			String linkToDownloadFile = "http://mywebsite.com/file01.txt";
+			String docName = "The Fall of Humanity";
+			String docDescription = "2+2 is sometimes 4";
+			String docGeoLocation = "some random coords near Cambridge";
+			long docTimeStamp = 1455524447;
+			String[] tags = {"cool", "terminator", "random"};
+			// <-- metadata
+			Entry entry = new Entry(uploaderKeyPair, docHash, linkToDownloadFile, docName, docDescription,
+					docGeoLocation, docTimeStamp, tags);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -29,9 +39,18 @@ public class EntryTest {
 		try {
 			AsymmetricCipherKeyPair uploaderKeyPair = 
 					Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
-			Metadata metadata = MetadataTest.generateMetadata1();
+			// --> metadata
+			byte[] docHash = Hash.hashString("imitation of some random file");
+			String linkToDownloadFile = "http://mywebsite.com/file01.txt";
+			String docName = "The Fall of Humanity";
+			String docDescription = "2+2 is sometimes 4";
+			String docGeoLocation = "some random coords near Cambridge";
+			long docTimeStamp = 1455524447;
+			String[] tags = {"cool", "terminator", "random"};
+			// <-- metadata
 			byte[] receiverID = Asymmetric.stringKeyToByteKey(AsymmetricTest.myPubKey);
-			Entry entry = new Entry(uploaderKeyPair, metadata, receiverID);
+			Entry entry = new Entry(uploaderKeyPair, receiverID, docHash, linkToDownloadFile, docName, docDescription,
+					docGeoLocation, docTimeStamp, tags);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -69,9 +88,7 @@ public class EntryTest {
 		assertEquals(Hex.toHexString(entry1.getUploaderID()), Hex.toHexString(entry1B.getUploaderID()));
 		assertEquals(Hex.toHexString(entry1.getReceiverID()), Hex.toHexString(entry1B.getReceiverID()));
 		//compare metadata
-		Metadata meta1 = entry1.getMetadata();
-		Metadata meta2 = entry1B.getMetadata();
-		assertTrue( MetadataTest.compareMetadata(meta1, meta2) );
+		assertTrue( compareMetadata(entry1, entry1B) );
 	}
 	
 	@Test
@@ -114,9 +131,7 @@ public class EntryTest {
 			return;
 		}
 		//compare metadata
-		Metadata meta1 = entry2.getMetadata();
-		Metadata meta2 = entry2B.getMetadata();
-		assertTrue( MetadataTest.compareMetadata(meta1, meta2) );
+		assertTrue( compareMetadata(entry2, entry2B) );
 	}
 
 	@Test
@@ -136,6 +151,30 @@ public class EntryTest {
 			fail();
 			return;
 		}
+	}
+	
+	/**
+	 * @return true iff m1 logically equals m2
+	 * note: do NOT use this in production code; testing only
+	 */
+	public static boolean compareMetadata(Entry e1, Entry e2){
+		try {
+			assertEquals(Hex.toHexString(e1.getMetadataDocHash()), Hex.toHexString(e2.getMetadataDocHash()));
+			assertEquals(e1.getMetadataLinkToDownloadFile(), e2.getMetadataLinkToDownloadFile());
+			assertEquals(e1.getMetadataDocName(), e2.getMetadataDocName());
+			assertEquals(e1.getMetadataDocDescription(), e2.getMetadataDocDescription());
+			assertEquals(e1.getMetadataDocGeoLocation(), e2.getMetadataDocGeoLocation());
+			assertEquals(e1.getMetadataDocTimeStamp(), e2.getMetadataDocTimeStamp());
+			
+			int numTags = e1.getMetadataTags().length;
+			assertEquals(e1.getMetadataTags().length, e2.getMetadataTags().length);
+			for (int i=0; i<numTags; i++){
+				assertEquals(e1.getMetadataTags()[i], e2.getMetadataTags()[i]);
+			}
+		} catch (Exception e){
+			return false;
+		}
+		return true;
 	}
 
 }
