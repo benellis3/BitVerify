@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-//import com.squareup.otto.ThreadEnforcer;
+import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
@@ -68,9 +68,9 @@ public class Miner implements Runnable{
 	private final int bitsInByte = 8;
 	
 	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
-	public Miner(Bus eventBus) throws SQLException{
+	public Miner(Bus eventBus, String target) throws SQLException{
 		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block(null,initialTarget);
+		blockMining = new Block(Block.simpleGenesisBlock(),initialTarget);
 		
 		//newMiningBlock();
 	    
@@ -80,12 +80,7 @@ public class Miner implements Runnable{
 		
 		//this.dataStore = dataStore;
 		
-		//Add unconfirmed entries from the database to the block for mining
-		//List<Entry> pool = dataStore.getUnconfirmedEntries();
-		
-		//for (Entry e: pool){
-		//	blockMining.addSingleEntry(e);
-		//}
+		setPackedTarget(packTarget(target));
 
 	}
 	
@@ -244,7 +239,11 @@ public class Miner implements Runnable{
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException{
-		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY));
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"0000d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+		
+		Thread miningThread = new Thread(m);
+		miningThread.start();
+		//Seems to mine quite quickly and then needs datastore
 		
 	}
 }
