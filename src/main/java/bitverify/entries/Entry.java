@@ -42,32 +42,50 @@ public class Entry {
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] metadataBytes = new byte[0];
 
-	private Metadata metadataObject = null;
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] encryptedSymmetricKey = new byte[0];
 
 	// Used by database to remember whether an entry is part of the active blockchain.
 	@DatabaseField
 	private boolean confirmed;
-
-	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata) throws KeyDecodingException{
+	
+	// --> metadata
+	private byte[] metadata_docHash = null;
+	private String metadata_linkToDownloadFile = null; //e.g. magnet link
+	private String metadata_docName = null;
+	private String metadata_docDescription = null;
+	private String metadata_docGeoLocation = null;
+	private long metadata_docTimeStamp = 0;
+	private String[] metadata_tags = null;
+	// <-- metadata
+	
+	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
+			byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
+			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException{
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
-		this.metadataObject = metadata;
+		setMetadataFields(metadata_docHash, metadata_linkToDownloadFile, metadata_docName, metadata_docDescription,
+				metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
 	}
 
 	// no-argument constructor required for database framework
 	Entry() { }
 
-	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, metadata);
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] metadata_docHash, String metadata_linkToDownloadFile,
+			String metadata_docName, String metadata_docDescription,
+			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, metadata_docHash, metadata_linkToDownloadFile,
+				metadata_docName, metadata_docDescription, metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
 		
 		//and finally:
 		finalise(uploaderKeyPair);
 	}
 	
-	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, Metadata metadata, byte[] receiverID) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, metadata);
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
+			byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
+			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, metadata_docHash, metadata_linkToDownloadFile,
+				metadata_docName, metadata_docDescription, metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
 
 		if (!Asymmetric.isValidKey(receiverID)){
 			throw new KeyDecodingException();
@@ -89,16 +107,13 @@ public class Entry {
 		this.encryptedSymmetricKey = encryptedSymmetricKey;
 		
 		if (!isPrivatelyShared()){
-			ByteArrayInputStream in = new ByteArrayInputStream(metadataBytes);
-			metadataObject = Metadata.deserialize(in);
+			deserializeMetadata(metadataBytes);
 		}
 	}
 	
 	private void finalise(AsymmetricCipherKeyPair uploaderKeyPair)
 			throws IOException, DataLengthException, KeyDecodingException{
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		metadataObject.serialize(out);
-		metadataBytes = out.toByteArray();
+		metadataBytes = serializeMetadata();
 		
 		if (isPrivatelyShared()){ //encrypt
 			try {
@@ -130,7 +145,7 @@ public class Entry {
 		byte[] metadataBytes_decrypted = Symmetric.decryptBytes(metadataBytes, symKey);
 		
 		ByteArrayInputStream in = new ByteArrayInputStream(metadataBytes_decrypted);
-		metadataObject = Metadata.deserialize(in);
+		deserializeMetadata(in);
 	}
 
 	public static Entry deserialize(InputStream in) throws IOException {
@@ -276,10 +291,6 @@ public class Entry {
 	public byte[] getReceiverID(){
 		return receiverID;
 	}
-	
-	public Metadata getMetadata(){
-		return metadataObject;
-	}
 
 	public void setBlockID(byte[] blockID) {
 		this.blockID = blockID;
@@ -288,4 +299,105 @@ public class Entry {
 	public void setConfirmed(boolean confirmed) {
 		this.confirmed = confirmed;
 	}
+	
+	
+	// ------------------------------------> metadata methods
+	
+	private void setMetadataFields(byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
+			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags){
+		this.metadata_docHash = metadata_docHash;
+		this.metadata_linkToDownloadFile = metadata_linkToDownloadFile;
+		this.metadata_docName = metadata_docName;
+		this.metadata_docDescription = metadata_docDescription;
+		this.metadata_docGeoLocation = metadata_docGeoLocation;
+		this.metadata_docTimeStamp = metadata_docTimeStamp;
+		this.metadata_tags = metadata_tags;
+	}
+	
+	private void deserializeMetadata(InputStream in) throws IOException {
+		// DataInputStream allows us to read in primitives in binary form.
+		try (DataInputStream d = new DataInputStream(in)) {
+			int docHashLength = d.readInt();
+			byte[] docHash = new byte[docHashLength];
+			d.readFully(docHash);
+			
+			String linkToDownloadFile = d.readUTF();
+			String docName = d.readUTF();
+			String docDescription = d.readUTF();
+			String docGeoLocation = d.readUTF();
+			long docTimeStamp = d.readLong();
+			
+			int numTags = d.readInt();
+			String[] tags = new String[numTags];
+			for (int i=0; i<numTags; i++){
+				tags[i] = d.readUTF();
+			}
+
+			setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
+					docGeoLocation, docTimeStamp, tags);
+		}
+	}
+	
+	private void deserializeMetadata(byte[] data) throws IOException {
+		ByteArrayInputStream in = new ByteArrayInputStream(data);
+		deserializeMetadata(in);
+	}
+	
+	private void serializeMetadata(OutputStream out) throws IOException {
+		// DataOutputStream allows us to write primitives in binary form.
+		try (DataOutputStream d = new DataOutputStream(out)) {
+			// write out each field in binary form, in declaration order.
+			d.writeInt(metadata_docHash.length); //not strictly needed, but just to make sure
+			d.write(metadata_docHash);
+			
+			d.writeUTF(metadata_linkToDownloadFile);
+			d.writeUTF(metadata_docName);
+			d.writeUTF(metadata_docDescription);
+			d.writeUTF(metadata_docGeoLocation);
+			d.writeLong(metadata_docTimeStamp);
+			
+			d.writeInt(metadata_tags.length);
+			for (String tag : metadata_tags) {
+				d.writeUTF(tag);
+			}
+
+			d.flush();
+		}
+	}
+	
+	public byte[] serializeMetadata() throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		serializeMetadata(out);
+		return out.toByteArray();
+	}
+	
+	public byte[] getMetadataDocHash(){
+		return metadata_docHash;
+	}
+	
+	public String getMetadataLinkToDownloadFile(){
+		return metadata_linkToDownloadFile;
+	}
+	
+	public String getMetadataDocName(){
+		return metadata_docName;
+	}
+	
+	public String getMetadataDocDescription(){
+		return metadata_docDescription;
+	}
+	
+	public String getMetadataDocGeoLocation(){
+		return metadata_docGeoLocation;
+	}
+	
+	public long getMetadataDocTimeStamp(){
+		return metadata_docTimeStamp;
+	}
+	
+	public String[] getMetadataTags(){
+		return metadata_tags;
+	}
+	
+	// <------------------------------------ metadata methods
 }
