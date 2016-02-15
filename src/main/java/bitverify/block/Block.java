@@ -141,18 +141,6 @@ public class Block {
     }
 
     /**
-     * @return boolean to indicate whether the nonce solves the 'puzzle' at the given difficulty.
-     */
-    public boolean checkNonce() {
-        boolean check = 1 > 0;
-        if (check) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * @param blockList List of blocks that represents a subchain in the total blockchain therefore order should be preserved
      * @return boolean to indicate whether the given subchain is valid or not
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
