@@ -5,20 +5,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import bitverify.entries.Entry;
+import bitverify.network.proto.MessageProto;
 import bitverify.persistence.DataStore;
 import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.GetPeers;
-import bitverify.network.proto.MessageProto.Version;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -26,37 +25,32 @@ import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
+
 /**
  * This class is responsible for co-ordination of network functions.
  * It controls the incoming and outgoing parts of the connection.
  * @author Ben Ellis, Robert Eady
  */
 public class ConnectionManager {
+    private static final Logger LOGGER = Logger.getLogger(ConnectionManager.class.getName());
     private DataStore ds;
     private ExecutorService es;
     private Bus bus;
     private Collection<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
-    private static int listenPort;
-    public ConnectionManager(int listenPort, DataStore ds, Bus bus) throws IOException{
-    	List<InetSocketAddress> initialPeers = getInitialPeers(); // it works!
-    	
-        peers = new ConcurrentLinkedQueue<>();
+
+    // underscore courtesy of Laszlo Makk :p
+    private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
+        peers = ConcurrentHashMap.newKeySet();
         this.bus = bus;
-        this.listenPort = listenPort;
         bus.register(this);
         es = Executors.newCachedThreadPool();
-        // connect to each given peer
-        for (InetSocketAddress peerAddress : initialPeers) {
-            try {
-                peers.add(new PeerHandler(peerAddress,es, ds, bus));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
         // Create new runnable to listen for new connections.
+        ServerSocket serverSocket;
+        serverSocket = new ServerSocket(listenPort);
+
         es.execute(() -> {
-                    try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
+                    try {
                         while (true) {
                             Socket s = serverSocket.accept();
                             // separate thread since it blocks waiting for messages.
@@ -74,30 +68,51 @@ public class ConnectionManager {
                                 }
                             });
                         }
-                    } catch (IOException ioe) {
+                    }
+                    catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
                 }
         );
-        // Send a version message to each of the initial peers.
-        for(PeerHandler p : peers) {
-            NetAddress netAddress = NetAddress.newBuilder()
-                    .setHostName(InetAddress.getLocalHost().getHostName()) //not relevant
-                    .setPort(listenPort).build();
-            Version version = Version.newBuilder().setListenPort(netAddress).build();
-            Message msg = Message.newBuilder()
-                    .setType(Message.Type.VERSION)
-                    .setVersion(version).build();
-            p.send(msg);
-        }
+        // connect to each given peer - the PeerHandler Class ensures
+        // that the VERSION - ACK protocol is obeyed. Creation is done
+        // in a separate thread as the PeerHandler constructor will
+        // block.
+        es.execute(() -> {
+            for (InetSocketAddress peerAddress : initialPeers) {
+                es.execute(()-> {
+                    try {
+                        PeerHandler p = new PeerHandler(peerAddress,listenPort,es, ds, bus);
+                        peers.add(p);
+                    }
+                    catch(TimeoutException toe) {
+                        System.out.println("Failed to contact an initial peer");
+                    }
+                    catch(InterruptedException | ExecutionException | IOException ie) {
+                        ie.printStackTrace();
+                    }
+                });
+            }
+            PeerProtocol peerProtocol = new PeerProtocol(peers, es, bus, ds, listenPort);
+            peerProtocol.send();
+        });
     }
+    public ConnectionManager(int listenPort, DataStore ds, Bus bus) throws IOException{
+    	List<InetSocketAddress> initialPeers = getInitialPeers(); // it works!
+        _initialise(initialPeers, listenPort, ds, bus);
+    }
+    // This is used primarily for testing
+    public ConnectionManager(List<InetSocketAddress> initialPeers,int listenPort, DataStore ds, Bus bus)
+            throws IOException{
+        _initialise(initialPeers, listenPort, ds, bus);
+    }
+    /**
+     * Peers are contacted in the constructor, but this method will send a GETPEERS message
+     * to all of the current peers that the class knows about.
+     */
     public void getPeers() {
         for(PeerHandler p : peers) {
-            GetPeers getPeers = GetPeers.newBuilder()
-                    .setMyAddress(NetAddress.newBuilder()
-                            .setHostName(p.getAddress().getHostName())
-                            .setPort(p.getLocalAddress().getPort()))
-                    .build();
+            GetPeers getPeers = GetPeers.newBuilder().build();
             Message message = Message.newBuilder().setType(Message.Type.GETPEERS)
                     .setGetPeers(getPeers).build();
             p.send(message);
@@ -127,6 +142,7 @@ public class ConnectionManager {
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
+    protected Collection<PeerHandler> peers(){return peers;}
     /**
      * For testing only - not relevant to actual version
      */
@@ -136,25 +152,6 @@ public class ConnectionManager {
         System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
     }
     /**
-     * This method is responsible for adding the peers to the list of peers.
-     * it achieves this by adding a runnable to the thread pool to avoid latency.
-     * @param event the PeersEvent that was raised by the PeerReceive runnable
-     */
-    @Subscribe
-    public void onPeersEvent(PeersEvent event) {
-        List<InetSocketAddress> addressList = event.getSocketAddressList();
-        es.execute(() -> {
-            for(InetSocketAddress addr : addressList) {
-                try {
-                    peers.add(new PeerHandler(addr, es, ds, bus));
-                }
-                catch(IOException ioe) {
-                    ioe.printStackTrace();
-                }
-            }
-        });
-    }
-    /**
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid
      * significant latency.
@@ -162,34 +159,25 @@ public class ConnectionManager {
      */
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
-        InetSocketAddress address = event.getSocketAddress();
-
         // extract the InetSocketAddresses from the Peers.
-        // Up to the recipient to check that the received list does not contain
-        // itself.
-
         es.execute(() -> {
-            ArrayList<InetSocketAddress> inetList = new ArrayList<>();
-            PeerHandler senderHandler = null;
+            InetSocketAddress addressFrom = event.getSocketAddress();
+            List<NetAddress> peerAddresses = new ArrayList<>();
+            PeerHandler sender = null;
             for(PeerHandler p : peers) {
-                InetSocketAddress addr = p.getAddress();
-                if(addr.equals(address))
-                    senderHandler = p;
-                inetList.add(addr);
-            }
-            inetList.remove(address);
-            // turn the inetList into a NetAddress list
-            ArrayList<NetAddress> netAddresses = new ArrayList<>();
-            for(PeerHandler p : peers) {
-                if(p != senderHandler) {
-                    netAddresses.add(NetAddress.newBuilder()
-                            .setHostName(p.getConnectedHost().getHostName())
-                            .setPort(p.getConnectedPort()).build());
+                InetSocketAddress peerListenAddress = p.getListenAddress();
+                if (p.getListenAddress().equals(addressFrom)) {
+                    sender = p;
+                } else {
+                    peerAddresses.add(NetAddress.newBuilder()
+                            .setHostName(peerListenAddress.getHostName())
+                            .setPort(peerListenAddress.getPort())
+                            .build());
                 }
             }
-            Peers peers = Peers.newBuilder().addAllAddress(netAddresses).build();
-            Message msg = Message.newBuilder().setType(Message.Type.PEERS).setPeers(peers).build();
-            senderHandler.send(msg); // should always be in the list since we have a connection to all nodes.
+            Peers peer = Peers.newBuilder().addAllAddress(peerAddresses).build();
+            Message msg = Message.newBuilder().setType(Message.Type.PEERS).setPeers(peer).build();
+            sender.send(msg);
         });
     }
 

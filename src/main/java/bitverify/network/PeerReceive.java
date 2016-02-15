@@ -17,8 +17,9 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Created by benellis on 02/02/2016.
@@ -27,10 +28,12 @@ public class PeerReceive implements Runnable {
     private Socket socket;
     private DataStore dataStore;
     private Bus eventBus;
-    public PeerReceive(Socket s, DataStore ds, Bus bus) {
+    private InetSocketAddress peerListenAddress;
+    public PeerReceive(Socket s, DataStore ds, Bus bus, InetSocketAddress peerListenAddress) {
         socket = s;
         dataStore = ds;
         eventBus = bus;
+        this.peerListenAddress = peerListenAddress;
     }
     @Override
     public void run() {
@@ -101,18 +104,15 @@ public class PeerReceive implements Runnable {
 
     }
     private void handleGetPeers(Message message) {
-        GetPeers getPeers = message.getGetPeers();
         // create an event which can be handed off to the connection manager.
-        NetAddress netAddress = getPeers.getMyAddress();
-        InetSocketAddress addr = new InetSocketAddress(netAddress.getHostName(), netAddress.getPort());
-        eventBus.post(new GetPeersEvent(addr));
+        eventBus.post(new GetPeersEvent(peerListenAddress));
     }
 
     private void handlePeers(Message message) {
         Peers peers = message.getPeers();
-        List<NetAddress> netAddressList = peers.getAddressList();
+        Collection<NetAddress> netAddressList = peers.getAddressList();
         // create a list of SocketInetAddresses from the netAddressList
-        List<InetSocketAddress> socketAddressList = new ArrayList<>();
+        Set<InetSocketAddress> socketAddressList = ConcurrentHashMap.newKeySet();
         for(NetAddress netAddress : netAddressList) {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
         }
