@@ -10,6 +10,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,15 +58,17 @@ public class Block {
      * @param target The integer value that mining calculates should be the number of zeros required to 'mine' this block.
      * @param nonce The changing value that is the free parameter input value to our hash that must reach the target zeros. 
      * @param entriesList List of Entry types that this block be the container for.  
+     * @throws IOException Requires the list of entries to be serializable.
      */
-    public Block(Block prevBlock,int target,int nonce, List<Entry> entriesList){
+    public Block(Block prevBlock,int target,int nonce, List<Entry> entriesList) throws IOException{
         this.prevBlockHash = prevBlock.hash();
         this.bitsTarget = target;
         this.timeStamp = System.currentTimeMillis();
         this.nonce = nonce; 
         this.entries = entriesList;
         this.verifiedEntries = true;
-        this.blockID = this.hash();
+        this.entriesHash = Hash.hashBytes(serializeEntries());
+//        this.blockID = this.hash();
     }
     
 /**
@@ -87,6 +90,7 @@ public class Block {
         this.timeStamp = timeStamp;
         this.bitsTarget = bitsTarget;
         this.nonce = nonce;
+//        this.entries = new ArrayList<Entry>();
         this.verifiedEntries = false;
     }
     /**
@@ -135,19 +139,6 @@ public class Block {
      */
     public void incrementNonce(){
         nonce += 1;
-    }
-    
-    /**
-     * 
-     * @return boolean to indicate whether the nonce solves the 'puzzle' at the given difficulty. 
-     */
-    public boolean checkNonce(){
-        boolean check = 1>0;
-        if(check){
-            return true;
-        }else{
-            return false;
-        }
     }
     
     /**
@@ -288,5 +279,9 @@ public class Block {
     
       public int getNonce(){
           return nonce;
-      }    
+      }
+      
+      public boolean isVerified(){
+          return this.verifiedEntries;
+      }
 }
