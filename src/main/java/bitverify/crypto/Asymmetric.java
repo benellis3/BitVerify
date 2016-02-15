@@ -14,9 +14,9 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PrivateKeyInfoFactory;
@@ -105,11 +105,15 @@ public class Asymmetric {
 		return new AsymmetricCipherKeyPair(stringKeyToKey(publicKey), stringKeyToKey(privateKey));
 	}
 	
+	public static AsymmetricCipherKeyPair getKeyPairFromByteKeys(byte[] publicKey, byte[] privateKey) throws KeyDecodingException{
+		return new AsymmetricCipherKeyPair(byteKeyToKey(publicKey), byteKeyToKey(privateKey));
+	}
+	
 	/**
 	 * Convert AsymmetricKeyParameter to string in PKCS#8 format.
 	 * Returned string can be saved on disk with .der extension.
 	 */
-	public static String keyToStringKey(AsymmetricKeyParameter key) throws KeyDecodingException{
+	public static String keyToStringKey(AsymmetricKeyParameter key) {
 		String codePrefix, codePostfix, key_multiline;
 		try {
 			if (key.isPrivate()){
@@ -128,7 +132,8 @@ public class Asymmetric {
 				codePostfix = "\n-----END RSA PUBLIC KEY-----";
 			}
 		} catch (IOException e){
-			throw new KeyDecodingException();
+			//should never happen
+			throw new RuntimeException();
 		}
 		return (codePrefix + key_multiline + codePostfix);
 	}
@@ -148,7 +153,11 @@ public class Asymmetric {
 	}
 	
 	private static String convertKeyToMultiLineFromBytes(byte[] key_bytes){
-		String key_singleline = Base64.toBase64String(key_bytes);
+		return convertKeyToMultiLineFromBytes(key_bytes, 0, key_bytes.length);
+	}
+	
+	private static String convertKeyToMultiLineFromBytes(byte[] key_bytes, int offset, int length){
+		String key_singleline = Base64.toBase64String(key_bytes, offset, length);
 		String key_multiline = ""; 
 		for (int c=0; c<key_singleline.length(); c+=64){
 			int endindex = Math.min(c+64, key_singleline.length());
@@ -171,20 +180,51 @@ public class Asymmetric {
 		}
 	}
 	
-	public static byte[] stringKeyToByteKey(String key) {
-		return key.getBytes(StandardCharsets.UTF_8);
+	public static byte[] stringKeyToByteKey(String key) throws KeyDecodingException {
+		return keyToByteKey(stringKeyToKey(key));
 	}
 	
-	public static String byteKeyToStringKey(byte[] key) {
-		return new String(key, StandardCharsets.UTF_8);
+	public static String byteKeyToStringKey(byte[] key) throws KeyDecodingException {
+		return keyToStringKey(byteKeyToKey(key));
 	}
 	
-	public static byte[] keyToByteKey(AsymmetricKeyParameter key) throws KeyDecodingException{
-		return stringKeyToByteKey( keyToStringKey(key) );
+	public static byte[] keyToByteKey(AsymmetricKeyParameter key) {
+		byte[] ret;
+		try {
+			if (key.isPrivate()){
+				PrivateKeyInfo privKeyInfo = PrivateKeyInfoFactory.createPrivateKeyInfo(key);
+				byte[] key_bytes = privKeyInfo.getEncoded(); //to get PKCS#8
+				//byte[] key_bytes = privKeyInfo.parsePrivateKey().toASN1Primitive().getEncoded(); //to get PKCS#1
+				ret = new byte[1 + key_bytes.length];
+				ret[0] = 1; //key is private FLAG
+				System.arraycopy(key_bytes, 0, ret, 1, key_bytes.length);
+			} else {
+				SubjectPublicKeyInfo pubKeyInfo = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(key);
+				byte[] key_bytes = pubKeyInfo.getEncoded(); //to get PKCS#8
+				//byte[] key_bytes = pubKeyInfo.parsePublicKey().toASN1Primitive().getEncoded(); //to get PKCS#1
+				ret = new byte[1 + key_bytes.length];
+				ret[0] = 0; //key is public FLAG
+				System.arraycopy(key_bytes, 0, ret, 1, key_bytes.length);
+			}
+		} catch (IOException e){
+			//should never happen
+			throw new RuntimeException();
+		}
+		return ret;
 	}
 	
 	public static AsymmetricKeyParameter byteKeyToKey(byte[] key) throws KeyDecodingException{
-		return stringKeyToKey( byteKeyToStringKey(key) );
+		try {
+			if (key[0] == 1){ //private
+				return PrivateKeyFactory.createKey(	Arrays.copyOfRange(key, 1, key.length) );
+			} else if (key[0] == 0) { //public
+				return PublicKeyFactory.createKey(	Arrays.copyOfRange(key, 1, key.length) );
+			} else {
+				throw new KeyDecodingException("Invalid byteKey. First byte is corrupted.");
+			}
+		} catch (IOException e){
+			throw new KeyDecodingException();
+		}
 	}
 	
 	public static boolean isValidKey(String key){
@@ -198,7 +238,7 @@ public class Asymmetric {
 	
 	public static boolean isValidKey(byte[] key){
 		try {
-			isValidKey( byteKeyToStringKey(key) );
+			byteKeyToKey(key);
 		} catch (Exception e) {
 			return false;
 		}
@@ -209,6 +249,9 @@ public class Asymmetric {
 		AsymmetricCipherKeyPair keyPair = generateNewKeyPair();
 		System.out.println( keyToStringKey(keyPair.getPrivate()) );
 		System.out.println( keyToStringKey(keyPair.getPublic()) );
+		
+		System.out.println( keyToByteKey(keyPair.getPrivate()).length );
+		System.out.println( keyToByteKey(keyPair.getPublic()).length );
 	}
 	
 }
