@@ -68,8 +68,27 @@ public class Block {
         this.entries = entriesList;
         this.verifiedEntries = true;
         this.entriesHash = Hash.hashBytes(serializeEntries());
-//        this.blockID = this.hash();
+        this.blockID = this.hash();
     }
+    
+    
+    /**
+     * 
+     *  Special constructor so that mining can assign the timestamp manually for conccurrent mining reasons.
+     *
+     */
+    public Block(Block prevBlock,long timestamp,int target,int nonce, List<Entry> entriesList) throws IOException{
+        this.prevBlockHash = prevBlock.hash();
+        this.bitsTarget = target;
+        this.timeStamp = timestamp;
+        this.nonce = nonce; 
+        this.entries = entriesList;
+        this.verifiedEntries = true;
+        this.entriesHash = Hash.hashBytes(serializeEntries());
+        this.blockID = this.hash();
+    }
+    
+    
     
 /**
  * 
@@ -104,7 +123,7 @@ public class Block {
         byte[] entryHash = Hash.hashString(itsComing);
         long timeStamp = System.currentTimeMillis();
         int target = 3;
-        int nonce = 58;
+        int nonce = 0;
         Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
         resultBlock.verifiedEntries = true;
         return resultBlock;
@@ -252,6 +271,14 @@ public class Block {
     
     public void setNonce(int nonce){
         this.nonce = nonce;
+    }
+    
+    @Override
+    public boolean equals(Object thatObject){
+        if (!(thatObject instanceof Block)) return false;
+        Block thatBlock = (Block) thatObject;
+//        boolean
+        return true;
     }
     
     

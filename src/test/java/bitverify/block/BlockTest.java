@@ -21,18 +21,13 @@ public class BlockTest {
     public void createGenesisBlock(){
         Block genesis = Block.simpleGenesisBlock();
         assertTrue(genesis.isVerified());
-        assertEquals(genesis.getNonce(),58);
+        assertEquals(genesis.getNonce(),0);
     }
     
     @Test
     public void singleEntrySerialize() throws IOException{
         Entry entry1;
-        try {
-            entry1 = EntryTest.generateEntry1();
-        } catch (KeyDecodingException | IOException e) {
-            fail();
-            return;
-        }
+        entry1 = EntryTest.generateEntry1();
         
         List<Entry> entries = Arrays.asList(entry1);
         int target = 3;
@@ -42,13 +37,10 @@ public class BlockTest {
         
         Block deserializedBlock = Block.deserialize(serialBlock);
         
-        System.out.println(firstBlock.getPrevBlockHash());
-        System.out.println(deserializedBlock.getPrevBlockHash());
-        
         assertTrue(Arrays.equals(firstBlock.getPrevBlockHash(), deserializedBlock.getPrevBlockHash()));
         assertEquals(firstBlock.getTimeStamp(),deserializedBlock.getTimeStamp());
         assertTrue(Arrays.equals(firstBlock.hash(), deserializedBlock.hash()));
-        
+        assertEquals(firstBlock.getTarget(),deserializedBlock.getTarget());
         
     }
     
