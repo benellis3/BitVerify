@@ -318,4 +318,8 @@ public class Block {
     public boolean areEntriesSet() {
         return entries != null;
     }
+
+    public boolean isVerified(){
+        return this.verifiedEntries;
+    }
 }
