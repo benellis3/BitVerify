@@ -73,6 +73,23 @@ public class Block {
     }
 
     /**
+     * 
+     *  Special constructor so that mining can assign the timestamp manually for conccurrent mining reasons.
+     *
+     */
+    public Block(Block prevBlock,long timestamp,int target,int nonce, List<Entry> entriesList) throws IOException{
+        this.prevBlockHash = prevBlock.hash();
+        this.bitsTarget = target;
+        this.timeStamp = timestamp;
+        this.nonce = nonce; 
+        this.entries = entriesList;
+        this.verifiedEntries = true;
+        this.entriesHash = Hash.hashBytes(serializeEntries());
+        this.blockID = this.hash();
+    }
+    
+
+    /**
      * This constructor will only be used by the deserialize method. That is why the timestamp is manually entered as well as
      * the hashes for the block and entries. When using this method, the block is not verified until it is given a list of
      * entries that agrees with the initial hash that was deserialized.
@@ -102,8 +119,8 @@ public class Block {
         byte[] entryHash = Hash.hashString(itsComing);
         long timeStamp = 0;
         int target = 3;
-        int nonce = 58;
-        Block resultBlock = new Block(prevHash, entryHash, timeStamp, target, nonce);
+        int nonce = 0;
+        Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
         resultBlock.verifiedEntries = true;
         return resultBlock;
     }
@@ -260,8 +277,16 @@ public class Block {
     public void setNonce(int nonce) {
         this.nonce = nonce;
     }
-
-
+    
+    @Override
+    public boolean equals(Object thatObject){
+        if (!(thatObject instanceof Block)) return false;
+        Block thatBlock = (Block) thatObject;
+//        boolean
+        return true;
+    }
+    
+    
 //  GETTER METHODS
 
     public byte[] getBlockID() {
