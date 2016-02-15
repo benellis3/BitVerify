@@ -60,12 +60,11 @@ public class IdentityTest {
 			return;
 		}
 		//check fields
-		assertEquals(myID1.getName(), myID2.getName());
+		assertEquals(myID1.getDescription(), myID2.getDescription());
 		assertEquals(Hex.toHexString(myID1.getPublicKey()), Hex.toHexString(myID2.getPublicKey()));
 		assertEquals(Hex.toHexString(myID1.getPrivateKey()), Hex.toHexString(myID2.getPrivateKey()));
-		assertEquals(myID1.getNeedsEncryption(), myID2.getNeedsEncryption());
-		assertFalse(myID1.isEncrypted());
-		assertFalse(myID2.isEncrypted());
+		assertFalse(myID1.getNeedsEncryption());
+		assertFalse(myID2.getNeedsEncryption());
 	}
 	
 	@Test
@@ -94,12 +93,11 @@ public class IdentityTest {
 			return;
 		}
 		//check fields BEFORE decryption
-		assertEquals(myID1.getName(), myID2.getName());
+		assertEquals(myID1.getDescription(), myID2.getDescription());
 		assertEquals(Hex.toHexString(myID1.getPublicKey()), Hex.toHexString(myID2.getPublicKey()));
 		assertEquals(null, myID2.getPrivateKey());
-		assertEquals(myID1.getNeedsEncryption(), myID2.getNeedsEncryption());
-		assertTrue(myID1.isEncrypted());
-		assertTrue(myID2.isEncrypted());
+		assertTrue(myID1.getNeedsEncryption());
+		assertTrue(myID2.getNeedsEncryption());
 		//decrypt
 		try {
 			myID2.decrypt(passwordExample);
@@ -108,12 +106,11 @@ public class IdentityTest {
 			return;
 		}
 		//check fields AFTER decryption
-		assertEquals(myID1.getName(), myID2.getName());
+		assertEquals(myID1.getDescription(), myID2.getDescription());
 		assertEquals(Hex.toHexString(myID1.getPublicKey()), Hex.toHexString(myID2.getPublicKey()));
 		assertEquals(Hex.toHexString(myID1.getPrivateKey()), Hex.toHexString(myID2.getPrivateKey()));
-		assertEquals(myID1.getNeedsEncryption(), myID2.getNeedsEncryption());
-		assertTrue(myID1.isEncrypted());
-		assertFalse(myID2.isEncrypted());
+		assertTrue(myID1.getNeedsEncryption());
+		assertTrue(myID2.getNeedsEncryption());
 	}
 	
 	@Test
@@ -142,12 +139,11 @@ public class IdentityTest {
 			return;
 		}
 		//check fields BEFORE decryption
-		assertEquals(myID1.getName(), myID2.getName());
+		assertEquals(myID1.getDescription(), myID2.getDescription());
 		assertEquals(Hex.toHexString(myID1.getPublicKey()), Hex.toHexString(myID2.getPublicKey()));
 		assertEquals(null, myID2.getPrivateKey());
-		assertEquals(myID1.getNeedsEncryption(), myID2.getNeedsEncryption());
-		assertTrue(myID1.isEncrypted());
-		assertTrue(myID2.isEncrypted());
+		assertTrue(myID1.getNeedsEncryption());
+		assertTrue(myID2.getNeedsEncryption());
 		//decrypt
 		boolean exceptionThrown = false;
 		try {
@@ -160,12 +156,11 @@ public class IdentityTest {
 		}
 		assertTrue(exceptionThrown);
 		//check fields again
-		assertEquals(myID1.getName(), myID2.getName());
+		assertEquals(myID1.getDescription(), myID2.getDescription());
 		assertEquals(Hex.toHexString(myID1.getPublicKey()), Hex.toHexString(myID2.getPublicKey()));
 		assertEquals(null, myID2.getPrivateKey());
-		assertEquals(myID1.getNeedsEncryption(), myID2.getNeedsEncryption());
-		assertTrue(myID1.isEncrypted());
-		assertTrue(myID2.isEncrypted());
+		assertTrue(myID1.getNeedsEncryption());
+		assertTrue(myID2.getNeedsEncryption());
 	}
 
 }
