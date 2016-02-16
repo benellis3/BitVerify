@@ -7,8 +7,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import com.j256.ormlite.support.ConnectionSource;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -90,7 +88,7 @@ public class Miner implements Runnable{
 	//}
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
-		newMiningBlock();
+		newMiningBlock(new ArrayList<Entry>());
 	    
 		//Set up the event bus
 		this.eventBus = eventBus;
@@ -137,7 +135,7 @@ public class Miner implements Runnable{
 						//Pass successful block to application logic for broadcasting to the network
 						eventBus.post(new BlockFoundEvent(blockMining));
 	
-						newMiningBlock();
+						newMiningBlock(new ArrayList<Entry>());
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -152,7 +150,7 @@ public class Miner implements Runnable{
 		}
 	}
 	
-	public void newMiningBlock() throws SQLException, IOException{
+	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget();
@@ -160,7 +158,7 @@ public class Miner implements Runnable{
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
-		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, new ArrayList<Entry>());
+		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, entries);
 	}
 	
 	//This gets called when a new block has been successfully mined elsewhere
@@ -172,9 +170,14 @@ public class Miner implements Runnable{
 	
 	//Subscribe to new entry events on bus
     @Subscribe
-    public void onNewEntryEvent(NewEntryEvent e) {
+    public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining
-        blockMining.addSingleEntry(e.getNewEntry());
+        //blockMining.addSingleEntry(e.getNewEntry());
+    	List<Entry> entries = blockMining.getEntriesList();
+    	
+    	entries.add(e.getNewEntry());
+    	
+    	newMiningBlock(entries);
     }
 	
 	public void setPackedTarget(int p){
@@ -245,12 +248,16 @@ public class Miner implements Runnable{
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException, IOException{
+		System.out.println("test");
+		
 		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
 		
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
+		System.out.println("test2");
 		
-		Thread miningThread = new Thread(m);
-		miningThread.start();
+		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
+		
+		//Thread miningThread = new Thread(m);
+		//miningThread.start();
 		//Seems to mine quite quickly and then needs datastore
 		
 	}
