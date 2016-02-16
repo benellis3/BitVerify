@@ -39,7 +39,7 @@ public class Block {
     private int nonce = 0;
 
     // for benefit of database
-    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(dataType = DataType.BYTE_ARRAY, uniqueIndex = true)
     private byte[] blockID;
     @DatabaseField
     private long height;
@@ -117,6 +117,7 @@ public class Block {
         int target = 3;
         int nonce = 0;
         Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
+        resultBlock.setEntriesList(Collections.emptyList());
         resultBlock.verifiedEntries = true;
         return resultBlock;
     }

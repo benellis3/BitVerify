@@ -1,5 +1,8 @@
 package bitverify.persistence;
 
+import bitverify.block.Block;
+import bitverify.entries.Entry;
+import bitverify.entries.EntryTest;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.field.DataType;
@@ -12,12 +15,27 @@ import com.j256.ormlite.table.TableUtils;
 import org.junit.Test;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Random;
 
 /**
  * Created by Rob on 13/02/2016.
  */
 public class DatabaseStoreTest {
+    static class TestObject {
+
+        @DatabaseField(dataType = DataType.BYTE_ARRAY, index=true, columnDefinition = "VARBINARY(16)")
+        private byte[] ID;
+        @DatabaseField
+        private String name;
+        TestObject() { }
+
+        public TestObject(byte[] ID, String name) {
+            this.ID = ID;
+            this.name = name;
+        }
+    }
+
     static class TestObject2 {
         @DatabaseField(dataType = DataType.BYTE_ARRAY, uniqueIndex = true)
         private byte[] blockID;
@@ -32,23 +50,35 @@ public class DatabaseStoreTest {
         }
     }
 
-    static class TestObject {
-        @DatabaseField(dataType = DataType.BYTE_ARRAY, index=true, columnDefinition = "VARBINARY(16)")
-        private byte[] ID;
-        @DatabaseField
-        private String name;
+    @Test
+    public void TestDatabase() throws SQLException {
+        DataStore ds = new DatabaseStore("jdbc:h2:mem:bitverifytest");
 
-        TestObject() { }
+        // genesis block should be present and most recent
+        Block b1 = ds.getBlock(Block.getGenesisBlock().getBlockID());
+        Block b2 = ds.getMostRecentBlock();
+        assertEquals(b1, b2);
 
-        public TestObject(byte[] ID, String name) {
-            this.ID = ID;
-            this.name = name;
-        }
+        // insert a couple of entries
+        Entry e1 = EntryTest.generateEntry1();
+        ds.insertEntry(e1);
+        Entry e2 = EntryTest.generateEntry2();
+        ds.insertEntry(e2);
+
+        // should get resulting entries as unconfirmed
+        List<Entry> e = ds.getUnconfirmedEntries();
+        assertEquals(2, e.size());
+        assertEquals(e.get(0).getEntryID(), e1.getEntryID());
+        assertEquals(e.get(1).getEntryID(), e2.getEntryID());
+
+        // inserting a duplicate block should fail leaving only 1 block in store
+        boolean inserted = ds.insertBlock(Block.getGenesisBlock());
+        assertEquals(1, ds.getBlocksCount());
+        assertEquals(false, inserted);
     }
 
     @Test
     public void TestUnique() throws SQLException {
-
 
         // make a database
         ConnectionSource cs = new JdbcConnectionSource("jdbc:h2:mem:account");
