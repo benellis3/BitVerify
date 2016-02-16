@@ -289,8 +289,7 @@ public class DatabaseStore implements DataStore {
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         w.or(
             w.like("docName", likeQuery),
-            w.like("docDescription", likeQuery),
-            w.like("docTags", likeQuery)
+            w.like("docDescription", likeQuery)
         );
         return w.query();
 
@@ -303,7 +302,8 @@ public class DatabaseStore implements DataStore {
 
 
     public String getProperty(String key) throws SQLException {
-        return propertyDao.queryForId(key).getValue();
+        Property p = propertyDao.queryForId(key);
+        return p == null ? null : p.getValue();
     }
 
     public void setProperty(String key, String value) throws SQLException {
