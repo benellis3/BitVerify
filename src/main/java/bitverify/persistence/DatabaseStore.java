@@ -147,6 +147,60 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
+    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {
+        // try to retrieve the starting block from the database.
+        Block startBlock = getBlock(idFrom);
+        if (startBlock == null)
+            return null;
+
+        Where<Block, Void> w = blockDao.queryBuilder()
+                .orderBy("height", true)
+                .orderBy("timeStamp", false)
+                .where();
+
+        if (limit == -1) {
+            w.gt("height", startBlock.getHeight());
+            limit = Integer.MAX_VALUE;
+        } else {
+            long startHeight = startBlock.getHeight() + 1;
+            w.between("height", startHeight, startHeight + limit - 1);
+        }
+
+        CloseableIterator<Block> results = w.iterator();
+
+        List<Block> output = new ArrayList<>();
+        // results will be ordered earliest->latest along the blockchain
+
+        byte[] expectedParentID = startBlock.getBlockID();
+        try {
+            // separate cases depending on whether we must check the end ID on every iteration.
+            if (idTo == null) {
+                while (results.hasNext() && limit > 0) {
+                    Block b = results.next();
+                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                        output.add(b);
+                        expectedParentID = b.getBlockID();
+                    }
+                }
+            } else {
+                while (results.hasNext() && limit > 0) {
+                    Block b = results.next();
+                    // stop before returning the 'to' block
+                    if (Arrays.equals(b.getBlockID(), idTo))
+                        break;
+                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                        output.add(b);
+                        expectedParentID = b.getBlockID();
+                    }
+                }
+            }
+        } finally {
+            results.close();
+        }
+
+        return output;
+    }
+
     public boolean insertBlock(Block b) throws SQLException {
         // TODO: check if we are unorphaning any blocks
 
