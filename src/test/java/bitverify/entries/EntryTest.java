@@ -159,17 +159,19 @@ public class EntryTest {
 	 */
 	public static boolean compareMetadata(Entry e1, Entry e2){
 		try {
-			assertEquals(Hex.toHexString(e1.getMetadataDocHash()), Hex.toHexString(e2.getMetadataDocHash()));
-			assertEquals(e1.getMetadataLinkToDownloadFile(), e2.getMetadataLinkToDownloadFile());
-			assertEquals(e1.getMetadataDocName(), e2.getMetadataDocName());
-			assertEquals(e1.getMetadataDocDescription(), e2.getMetadataDocDescription());
-			assertEquals(e1.getMetadataDocGeoLocation(), e2.getMetadataDocGeoLocation());
-			assertEquals(e1.getMetadataDocTimeStamp(), e2.getMetadataDocTimeStamp());
-			
-			int numTags = e1.getMetadataTags().length;
-			assertEquals(e1.getMetadataTags().length, e2.getMetadataTags().length);
-			for (int i=0; i<numTags; i++){
-				assertEquals(e1.getMetadataTags()[i], e2.getMetadataTags()[i]);
+			assertEquals(Hex.toHexString(e1.getDocHash()), Hex.toHexString(e2.getDocHash()));
+			assertEquals(e1.getDocLink(), e2.getDocLink());
+			assertEquals(e1.getDocName(), e2.getDocName());
+			assertEquals(e1.getDocDescription(), e2.getDocDescription());
+			assertEquals(e1.getDocGeoLocation(), e2.getDocGeoLocation());
+			assertEquals(e1.getDocTimeStamp(), e2.getDocTimeStamp());
+
+			if (e1.getDocTags() != null) {
+				int numTags = e1.getDocTags().length;
+				assertEquals(e1.getDocTags().length, e2.getDocTags().length);
+				for (int i = 0; i < numTags; i++) {
+					assertEquals(e1.getDocTags()[i], e2.getDocTags()[i]);
+				}
 			}
 		} catch (Exception e){
 			return false;

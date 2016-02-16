@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Scanner;
 
+import bitverify.crypto.Hash;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -13,7 +14,6 @@ import com.squareup.otto.ThreadEnforcer;
 import bitverify.block.Block;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
-import bitverify.entries.Metadata;
 import bitverify.mining.Miner;
 import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
@@ -134,7 +134,7 @@ public class Node {
 		//TODO Input validation
 		System.out.println("Enter file path:");
 		String filePath = mScanner.nextLine();
-		String hash = "12903910lasfa";
+		byte[] hash = Hash.hashBytes(new byte[0]);
 		
 		System.out.println("Enter file download:");
 		String fileDownload = mScanner.nextLine();
@@ -154,13 +154,11 @@ public class Node {
 		for (int i = 0; i < tags.length; i++) {
 			tags[i] = tags[i].trim();
 		}
-		String fileTimeStamp = getCurrentDatetime();
 		
 		// Construct metadata and entry objects for file
-		Metadata data = new Metadata(hash, fileDownload, fileName, fileDescription, fileGeo, fileTimeStamp, tags);
 		Entry entry;
 		try {
-			entry = new Entry(mUser.getAsymmetricKeyPair(), data);
+			entry = new Entry(mUser.getAsymmetricKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);

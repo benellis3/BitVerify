@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -50,42 +51,58 @@ public class Entry {
 	private boolean confirmed;
 	
 	// --> metadata
-	private byte[] metadata_docHash = null;
-	private String metadata_linkToDownloadFile = null; //e.g. magnet link
-	private String metadata_docName = null;
-	private String metadata_docDescription = null;
-	private String metadata_docGeoLocation = null;
-	private long metadata_docTimeStamp = 0;
-	private String[] metadata_tags = null;
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	private byte[] docHash = null;
+
+	private static final int DOC_LINK_LENGTH = 2048;
+	@DatabaseField(width = DOC_LINK_LENGTH)
+	private String docLink = null; //e.g. magnet link
+
+	private static final int DOC_NAME_LENGTH = 255;
+	@DatabaseField(width = DOC_NAME_LENGTH)
+	private String docName = null;
+
+	private static final int DOC_DESCRIPTION_LENGTH = 2048;
+	@DatabaseField(width = DOC_DESCRIPTION_LENGTH)
+	private String docDescription = null;
+
+	private static final int DOC_LOCATION_LENGTH = 255;
+	@DatabaseField(width = DOC_LOCATION_LENGTH)	
+	private String docGeoLocation = null;
+	
+	@DatabaseField
+	private long docTimeStamp = 0;
+	
+	private String[] docTags = null;
 	// <-- metadata
 	
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
-			byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
-			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException{
+			byte[] docHash, String linkToDownloadFile, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp, String[] tags) throws KeyDecodingException{
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
-		setMetadataFields(metadata_docHash, metadata_linkToDownloadFile, metadata_docName, metadata_docDescription,
-				metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
+		setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
+				docGeoLocation, docTimeStamp, tags);
 	}
 
 	// no-argument constructor required for database framework
 	Entry() { }
 
-	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] metadata_docHash, String metadata_linkToDownloadFile,
-			String metadata_docName, String metadata_docDescription,
-			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, metadata_docHash, metadata_linkToDownloadFile,
-				metadata_docName, metadata_docDescription, metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
+				 String docName, String docDescription,
+				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink,
+				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
 		
 		//and finally:
 		finalise(uploaderKeyPair);
 	}
 	
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
-			byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
-			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, metadata_docHash, metadata_linkToDownloadFile,
-				metadata_docName, metadata_docDescription, metadata_docGeoLocation, metadata_docTimeStamp, metadata_tags);
+				 byte[] docHash, String docLink, String docName, String docDescription,
+				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink,
+				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
 
 		if (!Asymmetric.isValidKey(receiverID)){
 			throw new KeyDecodingException();
@@ -303,15 +320,27 @@ public class Entry {
 	
 	// ------------------------------------> metadata methods
 	
-	private void setMetadataFields(byte[] metadata_docHash, String metadata_linkToDownloadFile, String metadata_docName, String metadata_docDescription,
-			String metadata_docGeoLocation, long metadata_docTimeStamp, String[] metadata_tags){
-		this.metadata_docHash = metadata_docHash;
-		this.metadata_linkToDownloadFile = metadata_linkToDownloadFile;
-		this.metadata_docName = metadata_docName;
-		this.metadata_docDescription = metadata_docDescription;
-		this.metadata_docGeoLocation = metadata_docGeoLocation;
-		this.metadata_docTimeStamp = metadata_docTimeStamp;
-		this.metadata_tags = metadata_tags;
+	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp, String[] docTags){
+		this.docHash = docHash;
+		if (docLink.length() > DOC_LINK_LENGTH)
+			throw new IllegalArgumentException("Link must be at most " + DOC_LINK_LENGTH + " characters long");
+		this.docLink = docLink;
+
+		if (docName.length() > DOC_NAME_LENGTH)
+			throw new IllegalArgumentException("Name must be at most " + DOC_NAME_LENGTH + " characters long");
+		this.docName = docName;
+
+		if (docDescription.length() > DOC_DESCRIPTION_LENGTH)
+			throw new IllegalArgumentException("Description must be at most " + DOC_DESCRIPTION_LENGTH + " characters long");
+		this.docDescription = docDescription;
+
+		if (docGeoLocation.length() > DOC_LOCATION_LENGTH)
+			throw new IllegalArgumentException("GeoLocation must be at most " + DOC_LOCATION_LENGTH + " characters long");
+		this.docGeoLocation = docGeoLocation;
+
+		this.docTimeStamp = docTimeStamp;
+		this.docTags = docTags;
 	}
 	
 	private void deserializeMetadata(InputStream in) throws IOException {
@@ -347,17 +376,17 @@ public class Entry {
 		// DataOutputStream allows us to write primitives in binary form.
 		try (DataOutputStream d = new DataOutputStream(out)) {
 			// write out each field in binary form, in declaration order.
-			d.writeInt(metadata_docHash.length); //not strictly needed, but just to make sure
-			d.write(metadata_docHash);
+			d.writeInt(docHash.length); //not strictly needed, but just to make sure
+			d.write(docHash);
 			
-			d.writeUTF(metadata_linkToDownloadFile);
-			d.writeUTF(metadata_docName);
-			d.writeUTF(metadata_docDescription);
-			d.writeUTF(metadata_docGeoLocation);
-			d.writeLong(metadata_docTimeStamp);
+			d.writeUTF(docLink);
+			d.writeUTF(docName);
+			d.writeUTF(docDescription);
+			d.writeUTF(docGeoLocation);
+			d.writeLong(docTimeStamp);
 			
-			d.writeInt(metadata_tags.length);
-			for (String tag : metadata_tags) {
+			d.writeInt(docTags.length);
+			for (String tag : docTags) {
 				d.writeUTF(tag);
 			}
 
@@ -371,32 +400,35 @@ public class Entry {
 		return out.toByteArray();
 	}
 	
-	public byte[] getMetadataDocHash(){
-		return metadata_docHash;
+	public byte[] getDocHash(){
+		return docHash;
 	}
 	
-	public String getMetadataLinkToDownloadFile(){
-		return metadata_linkToDownloadFile;
+	public String getDocLink(){
+		return docLink;
 	}
 	
-	public String getMetadataDocName(){
-		return metadata_docName;
+	public String getDocName(){
+		return docName;
 	}
 	
-	public String getMetadataDocDescription(){
-		return metadata_docDescription;
+	public String getDocDescription(){
+		return docDescription;
 	}
 	
-	public String getMetadataDocGeoLocation(){
-		return metadata_docGeoLocation;
+	public String getDocGeoLocation(){
+		return docGeoLocation;
 	}
 	
-	public long getMetadataDocTimeStamp(){
-		return metadata_docTimeStamp;
+	public long getDocTimeStamp(){
+		return docTimeStamp;
 	}
-	
-	public String[] getMetadataTags(){
-		return metadata_tags;
+
+	/**
+	 * Gets the document tags. May be null.
+     */
+	public String[] getDocTags(){
+		return docTags;
 	}
 	
 	// <------------------------------------ metadata methods

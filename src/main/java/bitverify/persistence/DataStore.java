@@ -1,6 +1,7 @@
 package bitverify.persistence;
 
 import bitverify.block.Block;
+import bitverify.crypto.Identity;
 import bitverify.entries.Entry;
 
 import java.sql.SQLException;
@@ -68,6 +69,14 @@ public interface DataStore {
     public List<Entry> getUnconfirmedEntries() throws SQLException;
 
     /**
+     * Get all entries where one of the string metadata fields partially matches the given query.
+     * @param searchQuery the search query
+     * @return all matching entries
+     * @throws SQLException
+     */
+    public List<Entry> searchEntries(String searchQuery) throws SQLException;
+
+    /**
      * Insert an entry into the store.
      * @param e the entry
      * @throws SQLException
@@ -90,5 +99,9 @@ public interface DataStore {
     public void setProperty(String key, String value) throws SQLException;
 
 
+    public List<Identity> getIdentities() throws SQLException;
 
+    public void updateIdentity(Identity identity) throws SQLException;
+
+    public void insertIdentity(Identity identity) throws SQLException;
 }
