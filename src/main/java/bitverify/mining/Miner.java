@@ -254,7 +254,7 @@ public class Miner implements Runnable{
 		
 		System.out.println("test2");
 		
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
+		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		//Thread miningThread = new Thread(m);
 		//miningThread.start();
