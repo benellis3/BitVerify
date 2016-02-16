@@ -96,8 +96,8 @@ public class DatabaseStore implements DataStore {
 
     private void prepareEntriesForBlockQuery() throws SQLException {
         QueryBuilder<BlockEntry, Void> blockEntryQB = blockEntryDao.queryBuilder()
-                .selectColumns("entry_id");
-        blockEntryQB.where().eq("block_id", new SelectArg());
+                .selectColumns("entryID");
+        blockEntryQB.where().eq("blockID", new SelectArg());
 
         QueryBuilder<Entry, UUID> entryQB = entryDao.queryBuilder();
         entryQB.where().in("entryID", blockEntryQB);
