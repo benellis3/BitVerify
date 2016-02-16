@@ -17,53 +17,54 @@ public class Identity {
 	private static final long NUM_OF_ENCRYPTION_ROUNDS = 1000;
 	private static final long NUM_OF_MASTERPW_HASH_ROUNDS = 500000;
 	
-	private String name;
+	private String description;
 	private byte[] publicKey;
-	private byte[] privateKey = null; //not null iff decrypted
+	private byte[] decryptedPrivateKey = null; //do not persist to DB
 	
 	private boolean needsEncryption = false; //whether it needs encryption with master pw
-	private boolean isEncrypted = false;
-	private byte[] encryptedPrivateKey = null;
+	private byte[] privateKey = null; //in encrypted form IF needsEcryption is true
+		//same as decryptedPrivateKey otherwise
 	
 	Identity(){ }
 	
-	private Identity(String name, byte[] publicKey){
-		this.name = name;
+	private Identity(String description, byte[] publicKey){
+		this.description = description;
 		this.publicKey = publicKey;
 	}
 	
-	private Identity(String name, byte[] publicKey, byte[] privateKey, boolean isEncrypted, boolean needsEncryption){
-		this(name, publicKey);
+	private Identity(String description, byte[] publicKey, byte[] privateKey, boolean needsEncryption){
+		this(description, publicKey);
 		this.needsEncryption = needsEncryption;
-		this.isEncrypted = isEncrypted;
-		if (isEncrypted){
-			this.encryptedPrivateKey = privateKey;
+		if (needsEncryption){
+			this.privateKey = privateKey;
 		} else {
 			this.privateKey = privateKey;
+			this.decryptedPrivateKey = privateKey;
 		}
+		
 	}
 	
-	public Identity(String name, byte[] publicKey, byte[] privateKey, String masterPassword){
-		this(name, publicKey);
+	public Identity(String description, byte[] publicKey, byte[] decryptedPrivateKey, String masterPassword){
+		this(description, publicKey);
 		this.needsEncryption = true;
 		
-		this.isEncrypted = false;
-		this.privateKey = privateKey;
+		this.decryptedPrivateKey = decryptedPrivateKey;
 		encrypt(masterPassword);
 	}
 	
-	public Identity(String name, AsymmetricCipherKeyPair keyPair, String masterPassword){
-		this(name,
+	public Identity(String description, AsymmetricCipherKeyPair keyPair, String masterPassword){
+		this(description,
 				Asymmetric.keyToByteKey(keyPair.getPublic()),
 				Asymmetric.keyToByteKey(keyPair.getPrivate()),
 				masterPassword);
 	}
 	
-	public Identity(String name, byte[] publicKey, byte[] privateKey){
-		this(name, publicKey);
+	public Identity(String description, byte[] publicKey, byte[] decryptedPrivateKey){
+		this(description, publicKey);
 		this.needsEncryption = false;
 		
-		this.privateKey = privateKey;
+		this.privateKey = decryptedPrivateKey;
+		this.decryptedPrivateKey = decryptedPrivateKey;
 	}
 	
 	public Identity(String name, AsymmetricCipherKeyPair keyPair){
@@ -81,19 +82,13 @@ public class Identity {
 			byte[] publicKey = new byte[publicKeyLength];
 			d.readFully(publicKey);
 
-			boolean isEncrypted = d.readBoolean();
+			boolean needsEncryption = d.readBoolean();
 			
-			if (isEncrypted){
-				int encPrivateKeyLength = d.readInt();
-				byte[] encPrivateKey = new byte[encPrivateKeyLength];
-				d.readFully(encPrivateKey);
-				return new Identity(name, publicKey, encPrivateKey, true, true);
-			} else {
-				int privateKeyLength = d.readInt();
-				byte[] privateKey = new byte[privateKeyLength];
-				d.readFully(privateKey);
-				return new Identity(name, publicKey, privateKey, false, false);
-			}
+			int privateKeyLength = d.readInt();
+			byte[] privateKey = new byte[privateKeyLength];
+			d.readFully(privateKey);
+			
+			return new Identity(name, publicKey, privateKey, needsEncryption);
 		}
 	}
 	
@@ -102,33 +97,20 @@ public class Identity {
 		return deserialize(in);
 	}
 	
-	private void _serialize(OutputStream out) throws IOException {
+	public void serialize(OutputStream out) throws IOException {
 		// DataOutputStream allows us to write primitives in binary form.
 		try (DataOutputStream d = new DataOutputStream(out)) {
-			d.writeUTF(name);
+			d.writeUTF(description);
 			
 			d.writeInt(publicKey.length);
 			d.write(publicKey);
 			
-			d.writeBoolean(isEncrypted);
-			
-			if (isEncrypted){
-				d.writeInt(encryptedPrivateKey.length);
-				d.write(encryptedPrivateKey);
-			} else {
-				d.writeInt(privateKey.length);
-				d.write(privateKey);
-			}
+			d.writeBoolean(needsEncryption);
+						
+			d.writeInt(privateKey.length);
+			d.write(privateKey);
 						
 			d.flush();
-		}
-	}
-	
-	public void serialize(OutputStream out) throws IOException {
-		if (needsEncryption == isEncrypted){
-			_serialize(out);
-		} else {
-			throw new RuntimeException();
 		}
 	}
 	
@@ -147,7 +129,24 @@ public class Identity {
 	}
 	
 	private void encrypt(String masterPassword){
-		if (isEncrypted) return;
+		try {
+			byte[] symKey = getSymmetricKey(masterPassword);
+			if (symKey.length != Symmetric.KEY_LENGTH_IN_BYTES){
+				//warning, using the fact here that we are using SHA256
+				throw new RuntimeException("wrong symmetric key length");
+			}
+			byte[] tmp = decryptedPrivateKey;
+			for (long round=0; round<NUM_OF_ENCRYPTION_ROUNDS; round++){
+				tmp = Symmetric.encryptBytes(tmp, symKey);
+			}
+			privateKey = tmp;
+		} catch (InvalidCipherTextException e) { //should never happen
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+	}
+	
+	public void decrypt(String masterPassword) throws NotMatchingKeyException{
 		try {
 			byte[] symKey = getSymmetricKey(masterPassword);
 			if (symKey.length != Symmetric.KEY_LENGTH_IN_BYTES){
@@ -156,50 +155,34 @@ public class Identity {
 			}
 			byte[] tmp = privateKey;
 			for (long round=0; round<NUM_OF_ENCRYPTION_ROUNDS; round++){
-				tmp = Symmetric.encryptBytes(tmp, symKey);
-			}
-			encryptedPrivateKey = tmp;
-		} catch (InvalidCipherTextException e) { //should never happen
-			e.printStackTrace();
-			throw new RuntimeException();
-		}
-		isEncrypted = true;
-	}
-	
-	public void decrypt(String masterPassword) throws NotMatchingKeyException{
-		if (!isEncrypted) return;
-		try {
-			byte[] symKey = getSymmetricKey(masterPassword);
-			if (symKey.length != Symmetric.KEY_LENGTH_IN_BYTES){
-				//warning, using the fact here that we are using SHA256
-				throw new RuntimeException("wrong symmetric key length");
-			}
-			byte[] tmp = encryptedPrivateKey;
-			for (long round=0; round<NUM_OF_ENCRYPTION_ROUNDS; round++){
 				tmp = Symmetric.decryptBytes(tmp, symKey);
 			}
-			privateKey = tmp;
+			decryptedPrivateKey = tmp;
 		} catch (InvalidCipherTextException e) {
 			e.printStackTrace();
 			throw new NotMatchingKeyException("wrong password");
 		}
-		isEncrypted = false;
 	}
 	
-	public String getName(){
-		return name;
+	public String getDescription(){
+		return description;
+	}
+	
+	public void setDescription(String description){
+		this.description = description;
 	}
 	
 	public byte[] getPublicKey(){
 		return publicKey;
 	}
 	
+	/**
+	 * @return private key in byteKey format (see Asymmetric.java).
+	 * 	Returns null if private key is not decrypted. In that case, you need to call
+	 * 	decrypt() first.
+	 */
 	public byte[] getPrivateKey(){
-		return privateKey;
-	}
-	
-	public boolean isEncrypted(){
-		return isEncrypted;
+		return decryptedPrivateKey;
 	}
 	
 	public boolean getNeedsEncryption(){
@@ -207,8 +190,8 @@ public class Identity {
 	}
 	
 	public AsymmetricCipherKeyPair getKeyPair() throws KeyDecodingException{
-		if (isEncrypted) return null;
-		return Asymmetric.getKeyPairFromByteKeys(publicKey, privateKey);
+		if (decryptedPrivateKey == null) return null;
+		return Asymmetric.getKeyPairFromByteKeys(publicKey, decryptedPrivateKey);
 	}
 	
 }
