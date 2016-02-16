@@ -3,6 +3,7 @@ package bitverify.persistence;
 
 import bitverify.block.Block;
 
+import bitverify.crypto.Identity;
 import bitverify.entries.Entry;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
@@ -12,6 +13,7 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.SelectArg;
+import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -26,6 +28,7 @@ public class DatabaseStore implements DataStore {
     private Dao<Block, Void> blockDao;
     private Dao<BlockEntry, Void> blockEntryDao;
     private Dao<Property, String> propertyDao;
+    private Dao<Identity, Integer> identityDao;
 
     private PreparedQuery<Block> mostRecentBlockQuery;
     private PreparedQuery<Entry> entriesForBlockQuery;
@@ -41,6 +44,7 @@ public class DatabaseStore implements DataStore {
         blockDao = DaoManager.createDao(cs, Block.class);
         blockEntryDao = DaoManager.createDao(cs, BlockEntry.class);
         propertyDao = DaoManager.createDao(cs, Property.class);
+        identityDao = DaoManager.createDao(cs, Identity.class);
 
         initializeDatabase(cs);
 
@@ -70,6 +74,7 @@ public class DatabaseStore implements DataStore {
             TableUtils.createTableIfNotExists(cs, Block.class);
             TableUtils.createTableIfNotExists(cs, BlockEntry.class);
             TableUtils.createTableIfNotExists(cs, Property.class);
+            TableUtils.createTableIfNotExists(cs, Identity.class);
 
             // make sure genesis block is present
             Block g = Block.getGenesisBlock();
@@ -91,8 +96,8 @@ public class DatabaseStore implements DataStore {
 
     private void prepareEntriesForBlockQuery() throws SQLException {
         QueryBuilder<BlockEntry, Void> blockEntryQB = blockEntryDao.queryBuilder()
-                .selectColumns("entry_id");
-        blockEntryQB.where().eq("block_id", new SelectArg());
+                .selectColumns("entryID");
+        blockEntryQB.where().eq("blockID", new SelectArg());
 
         QueryBuilder<Entry, UUID> entryQB = entryDao.queryBuilder();
         entryQB.where().in("entryID", blockEntryQB);
@@ -271,12 +276,24 @@ public class DatabaseStore implements DataStore {
         return entryDao.queryForId(id);
     }
 
-    public List<Entry> getEntries(byte[] fileHash) throws SQLException {
-        return entryDao.queryForEq("fileHash", fileHash);
+    public List<Entry> getEntries(byte[] docHash) throws SQLException {
+        return entryDao.queryForEq("docHash", docHash);
     }
 
     public List<Entry> getUnconfirmedEntries() throws SQLException {
         return entryDao.queryForEq("confirmed", false);
+    }
+
+    public List<Entry> searchEntries(String searchQuery) throws SQLException {
+        String likeQuery = "%" + searchQuery + "%";
+        Where<Entry, UUID> w = entryDao.queryBuilder().where();
+        w.or(
+            w.like("docName", likeQuery),
+            w.like("docDescription", likeQuery),
+            w.like("docTags", likeQuery)
+        );
+        return w.query();
+
     }
 
     public void insertEntry(Entry e) throws SQLException {
@@ -293,6 +310,18 @@ public class DatabaseStore implements DataStore {
         if (key.length() > 255 || value.length() > 255)
             throw new IllegalArgumentException("Property key and value must be at most 255 characters long");
         propertyDao.createOrUpdate(new Property(key, value));
+    }
+
+    public List<Identity> getIdentities() throws SQLException {
+        return identityDao.queryForAll();
+    }
+
+    public void updateIdentity(Identity identity) throws SQLException {
+        identityDao.update(identity);
+    }
+
+    public void insertIdentity(Identity identity) throws SQLException {
+        identityDao.create(identity);
     }
 
 

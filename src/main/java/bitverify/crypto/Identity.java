@@ -9,6 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import com.j256.ormlite.field.DataType;
+import com.j256.ormlite.field.DatabaseField;
+import org.bouncycastle.asn1.dvcs.Data;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 
@@ -16,19 +19,30 @@ public class Identity {
 	
 	private static final long NUM_OF_ENCRYPTION_ROUNDS = 1000;
 	private static final long NUM_OF_MASTERPW_HASH_ROUNDS = 500000;
-	
+
+	@DatabaseField(generatedId = true)
+	private int id;
+
+	private static final int DESCRIPTION_LENGTH = 255;
+	@DatabaseField(width = DESCRIPTION_LENGTH)
 	private String description;
+
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] publicKey;
+
 	private byte[] decryptedPrivateKey = null; //do not persist to DB
-	
+
+	@DatabaseField
 	private boolean needsEncryption = false; //whether it needs encryption with master pw
+
+	@DatabaseField(dataType = DataType.BYTE_ARRAY)
 	private byte[] privateKey = null; //in encrypted form IF needsEcryption is true
 		//same as decryptedPrivateKey otherwise
 	
 	Identity(){ }
 	
 	private Identity(String description, byte[] publicKey){
-		this.description = description;
+		this.setDescription(description);
 		this.publicKey = publicKey;
 	}
 	
@@ -169,6 +183,8 @@ public class Identity {
 	}
 	
 	public void setDescription(String description){
+		if (description.length() > DESCRIPTION_LENGTH)
+			throw new IllegalArgumentException("Description must be at most " + DESCRIPTION_LENGTH + "characters long.");
 		this.description = description;
 	}
 	
