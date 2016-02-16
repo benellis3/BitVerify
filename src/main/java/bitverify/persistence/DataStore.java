@@ -34,6 +34,15 @@ public interface DataStore {
     public List<Block> getNMostRecentBlocks(int n) throws SQLException;
 
     /**
+     * Get all of the blocks after a certain block or between two blocks, up to a limited number.
+     * @param idFrom get blocks after this block ID
+     * @param idTo only get blocks before this block ID. Provide null if there is no limit.
+     * @param limit the maximum number of block IDs to get. Provide -1 if there is no limit.
+     * @return
+     */
+    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
+
+    /**
      * Inserts the given block into the store, unless it is already present.
      * @param b the block
      * @return true if the block was inserted, false if it was already present.
