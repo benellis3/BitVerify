@@ -95,11 +95,14 @@ public class Block {
      */
     private Block(byte[] prevHash, byte[] entriesHash, long timeStamp, int bitsTarget, int nonce) {
         this.prevBlockHash = prevHash;
-        this.entriesHash = entriesHash;
-        this.timeStamp = timeStamp;
         this.bitsTarget = bitsTarget;
+        this.timeStamp = timeStamp;
         this.nonce = nonce;
+        
+        this.entriesHash = entriesHash;
         this.verifiedEntries = false;
+        
+        this.blockID = this.hashHeader();
     }
 
     /**
@@ -275,8 +278,12 @@ public class Block {
     public boolean equals(Object thatObject){
         if (!(thatObject instanceof Block)) return false;
         Block thatBlock = (Block) thatObject;
-//        boolean
-        return true;
+        boolean b1 = Arrays.equals(this.getPrevBlockHash(),thatBlock.getPrevBlockHash());
+        boolean b2 = Arrays.equals(this.getEntriesHash(),thatBlock.getEntriesHash());
+        boolean b3 = (this.getTimeStamp() == thatBlock.getTimeStamp());
+        boolean b4 = (this.getTarget() == thatBlock.getTarget());
+        boolean b5 = (this.getNonce() == thatBlock.getNonce());
+        return b1 && b2 && b3 && b4 && b5;
     }
     
     
