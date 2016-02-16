@@ -149,7 +149,7 @@ public class ConnectionManager {
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent nee) {
         // prints the document description
-        System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
+        System.out.println(nee.getNewEntry().getDocDescription());
     }
     /**
      * Create a peers message to send to the sender of the

@@ -77,8 +77,12 @@ public class PeerReceive implements Runnable {
             entry = Entry.deserialize(bytes);
             // check the validity of the entry
             if (entry.testEntryHashSignature()) {
-                // commented out for testing purposes
-                //dataStore.insertEntry(entry);
+                try {
+                    dataStore.insertEntry(entry);
+                }
+                catch(SQLException sqle) {
+                    throw new RuntimeException("Error connecting to database :(", sqle);
+                }
                 // raise a NewEntryEvent on the event bus
                 eventBus.post(new NewEntryEvent(entry));
 

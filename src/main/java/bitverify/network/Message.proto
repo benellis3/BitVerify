@@ -29,6 +29,7 @@ message GetBlock {
 
 message BlockMessage {
     required bytes blockBytes = 1;
+    repeated bytes entries = 2;
 }
 
 message EntryMessage {

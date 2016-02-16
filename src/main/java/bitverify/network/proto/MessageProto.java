@@ -3517,6 +3517,19 @@ public final class MessageProto {
      * <code>required bytes blockBytes = 1;</code>
      */
     com.google.protobuf.ByteString getBlockBytes();
+
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getEntriesList();
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    int getEntriesCount();
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    com.google.protobuf.ByteString getEntries(int index);
   }
   /**
    * Protobuf type {@code BlockMessage}
@@ -3531,6 +3544,7 @@ public final class MessageProto {
     }
     private BlockMessage() {
       blockBytes_ = com.google.protobuf.ByteString.EMPTY;
+      entries_ = java.util.Collections.emptyList();
     }
 
     @java.lang.Override
@@ -3565,6 +3579,14 @@ public final class MessageProto {
               blockBytes_ = input.readBytes();
               break;
             }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              entries_.add(input.readBytes());
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -3574,6 +3596,9 @@ public final class MessageProto {
             new com.google.protobuf.InvalidProtocolBufferException(
                 e.getMessage()).setUnfinishedMessage(this));
       } finally {
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = java.util.Collections.unmodifiableList(entries_);
+        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -3606,6 +3631,28 @@ public final class MessageProto {
       return blockBytes_;
     }
 
+    public static final int ENTRIES_FIELD_NUMBER = 2;
+    private java.util.List<com.google.protobuf.ByteString> entries_;
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getEntriesList() {
+      return entries_;
+    }
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public int getEntriesCount() {
+      return entries_.size();
+    }
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public com.google.protobuf.ByteString getEntries(int index) {
+      return entries_.get(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -3625,6 +3672,9 @@ public final class MessageProto {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, blockBytes_);
       }
+      for (int i = 0; i < entries_.size(); i++) {
+        output.writeBytes(2, entries_.get(i));
+      }
       unknownFields.writeTo(output);
     }
 
@@ -3636,6 +3686,15 @@ public final class MessageProto {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, blockBytes_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < entries_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(entries_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getEntriesList().size();
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -3751,6 +3810,8 @@ public final class MessageProto {
         super.clear();
         blockBytes_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
+        entries_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -3779,6 +3840,11 @@ public final class MessageProto {
           to_bitField0_ |= 0x00000001;
         }
         result.blockBytes_ = blockBytes_;
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = java.util.Collections.unmodifiableList(entries_);
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.entries_ = entries_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3797,6 +3863,16 @@ public final class MessageProto {
         if (other == bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance()) return this;
         if (other.hasBlockBytes()) {
           setBlockBytes(other.getBlockBytes());
+        }
+        if (!other.entries_.isEmpty()) {
+          if (entries_.isEmpty()) {
+            entries_ = other.entries_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureEntriesIsMutable();
+            entries_.addAll(other.entries_);
+          }
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -3860,6 +3936,78 @@ public final class MessageProto {
       public Builder clearBlockBytes() {
         bitField0_ = (bitField0_ & ~0x00000001);
         blockBytes_ = getDefaultInstance().getBlockBytes();
+        onChanged();
+        return this;
+      }
+
+      private java.util.List<com.google.protobuf.ByteString> entries_ = java.util.Collections.emptyList();
+      private void ensureEntriesIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>(entries_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getEntriesList() {
+        return java.util.Collections.unmodifiableList(entries_);
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public int getEntriesCount() {
+        return entries_.size();
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public com.google.protobuf.ByteString getEntries(int index) {
+        return entries_.get(index);
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder setEntries(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureEntriesIsMutable();
+        entries_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder addEntries(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureEntriesIsMutable();
+        entries_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder addAllEntries(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureEntriesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, entries_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder clearEntries() {
+        entries_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
@@ -6224,13 +6372,13 @@ public final class MessageProto {
       "ION\020\006\022\007\n\003ACK\020\007\"*\n\007Version\022\037\n\nlistenPort\030" +
       "\001 \002(\0132\013.NetAddress\" \n\003Ack\022\031\n\004addr\030\001 \001(\0132",
       "\013.NetAddress\" \n\010GetBlock\022\024\n\014currentBlock" +
-      "\030\001 \002(\014\"\"\n\014BlockMessage\022\022\n\nblockBytes\030\001 \002" +
-      "(\014\"\"\n\014EntryMessage\022\022\n\nentryBytes\030\001 \002(\014\"%" +
-      "\n\005Peers\022\034\n\007address\030\001 \003(\0132\013.NetAddress\",\n" +
-      "\nNetAddress\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 " +
-      "\002(\005\"*\n\010GetPeers\022\036\n\tmyAddress\030\001 \002(\0132\013.Net" +
-      "AddressB\'\n\027bitverify.network.protoB\014Mess" +
-      "ageProto"
+      "\030\001 \002(\014\"3\n\014BlockMessage\022\022\n\nblockBytes\030\001 \002" +
+      "(\014\022\017\n\007entries\030\002 \003(\014\"\"\n\014EntryMessage\022\022\n\ne" +
+      "ntryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n\007address\030\001 \003(" +
+      "\0132\013.NetAddress\",\n\nNetAddress\022\020\n\010hostName" +
+      "\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"*\n\010GetPeers\022\036\n\tmyAd" +
+      "dress\030\001 \002(\0132\013.NetAddressB\'\n\027bitverify.ne" +
+      "twork.protoB\014MessageProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -6273,7 +6421,7 @@ public final class MessageProto {
     internal_static_BlockMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_BlockMessage_descriptor,
-        new java.lang.String[] { "BlockBytes", });
+        new java.lang.String[] { "BlockBytes", "Entries", });
     internal_static_EntryMessage_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_EntryMessage_fieldAccessorTable = new
