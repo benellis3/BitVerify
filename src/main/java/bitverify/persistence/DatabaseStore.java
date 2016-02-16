@@ -285,14 +285,15 @@ public class DatabaseStore implements DataStore {
     }
 
     public List<Entry> searchEntries(String searchQuery) throws SQLException {
-        String likeQuery = "%" + searchQuery + "%";
+        String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
-        w.or(
-            w.like("docName", likeQuery),
-            w.like("docDescription", likeQuery)
-        );
-        return w.query();
-
+        for (String query : queries) {
+            String likeQuery = "%" + searchQuery + "%";
+            w.like("docName", likeQuery);
+            w.like("docDescription", likeQuery);
+        }
+        // OR all of our like clauses together
+        return w.or(queries.length * 2).query();
     }
 
     public void insertEntry(Entry e) throws SQLException {

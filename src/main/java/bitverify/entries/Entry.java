@@ -59,11 +59,11 @@ public class Entry {
 	private String docLink = null; //e.g. magnet link
 
 	private static final int DOC_NAME_LENGTH = 255;
-	@DatabaseField(width = DOC_NAME_LENGTH)
+	@DatabaseField(columnDefinition = "VARCHAR_IGNORECASE("+DOC_NAME_LENGTH+")")
 	private String docName = null;
 
 	private static final int DOC_DESCRIPTION_LENGTH = 2048;
-	@DatabaseField(width = DOC_DESCRIPTION_LENGTH)
+	@DatabaseField(columnDefinition = "VARCHAR_IGNORECASE("+DOC_DESCRIPTION_LENGTH+")")
 	private String docDescription = null;
 
 	private static final int DOC_LOCATION_LENGTH = 255;

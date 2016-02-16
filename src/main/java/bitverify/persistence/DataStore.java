@@ -70,6 +70,8 @@ public interface DataStore {
 
     /**
      * Get all entries where one of the string metadata fields partially matches the given query.
+     * Query is split on whitespace, so for example searching for "london bridge" will return
+     * any entries containing "london" and any entries containing "bridge".
      * @param searchQuery the search query
      * @return all matching entries
      * @throws SQLException
