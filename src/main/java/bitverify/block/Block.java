@@ -78,14 +78,14 @@ public class Block {
      *
      */
     public Block(Block prevBlock,long timestamp,int target,int nonce, List<Entry> entriesList) throws IOException{
-        this.prevBlockHash = prevBlock.hash();
+        this.prevBlockHash = prevBlock.hashHeader();
         this.bitsTarget = target;
         this.timeStamp = timestamp;
         this.nonce = nonce; 
         this.entries = entriesList;
         this.verifiedEntries = true;
         this.entriesHash = Hash.hashBytes(serializeEntries());
-        this.blockID = this.hash();
+        this.blockID = this.hashHeader();
     }
     
 
