@@ -60,16 +60,7 @@ public class Block {
      * @param entriesList List of Entry types that this block be the container for.
      */
     public Block(Block prevBlock, int target, int nonce, List<Entry> entriesList) {
-        this.prevBlockHash = prevBlock.hashHeader();
-        this.bitsTarget = target;
-        this.timeStamp = System.currentTimeMillis();
-        this.nonce = nonce;
-
-        this.entries = entriesList;
-        this.entriesHash = hashEntries();
-        this.verifiedEntries = true;
-
-        this.blockID = this.hashHeader();
+        this(prevBlock,System.currentTimeMillis(),target,nonce,entriesList);
     }
 
     /**
@@ -77,14 +68,16 @@ public class Block {
      *  Special constructor so that mining can assign the timestamp manually for conccurrent mining reasons.
      *
      */
-    public Block(Block prevBlock,long timestamp,int target,int nonce, List<Entry> entriesList) throws IOException{
+    public Block(Block prevBlock,long timestamp,int target,int nonce, List<Entry> entriesList){
         this.prevBlockHash = prevBlock.hashHeader();
         this.bitsTarget = target;
         this.timeStamp = timestamp;
-        this.nonce = nonce; 
+        this.nonce = nonce;
+
         this.entries = entriesList;
+        this.entriesHash = hashEntries();
         this.verifiedEntries = true;
-        this.entriesHash = Hash.hashBytes(serializeEntries());
+
         this.blockID = this.hashHeader();
     }
     
