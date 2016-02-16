@@ -248,12 +248,16 @@ public class Miner implements Runnable{
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException, IOException{
+		System.out.println("test");
+		
 		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		
+		System.out.println("test2");
 		
 		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
-		Thread miningThread = new Thread(m);
-		miningThread.start();
+		//Thread miningThread = new Thread(m);
+		//miningThread.start();
 		//Seems to mine quite quickly and then needs datastore
 		
 	}
