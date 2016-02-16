@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -15,6 +17,8 @@ import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseStore;
+
 import org.bouncycastle.util.encoders.Hex;
 
 /**
@@ -85,7 +89,7 @@ public class Miner implements Runnable{
 
 	//}
 	
-	public Miner(Bus eventBus, DataStore dataStore) throws SQLException{
+	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
 		newMiningBlock();
 	    
 		//Set up the event bus
@@ -125,7 +129,7 @@ public class Miner implements Runnable{
 
 		while (mining){
 			try{
-				result = Hex.toHexString(blockMining.hashBlock());
+				result = Hex.toHexString(blockMining.hashHeader());
 				
 				if (mineSuccess(result)){
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
@@ -137,7 +141,7 @@ public class Miner implements Runnable{
 				}
 				
 				//Increment the header's nonce to generate a new hash
-				blockMining.getHeader().incrementNonce();
+				blockMining.incrementNonce();
 				}
 			catch (SQLException e){
 				e.printStackTrace();
@@ -214,8 +218,8 @@ public class Miner implements Runnable{
 		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
 			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
 
-			long mostRecentTime = nMostRecent.get(0).getHeader().getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getHeader().getTimeStamp();
+			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 		
 			//Limit exponential growth
@@ -235,13 +239,15 @@ public class Miner implements Runnable{
 		}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			return dataStore.getMostRecentBlock().getHeader().getTarget();
+			return dataStore.getMostRecentBlock().getTarget();
 		}
 	}
 	
 	//For quick tests
-	public static void main(String[] args) throws SQLException{
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"0000d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+	public static void main(String[] args) throws SQLException, IOException{
+		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		Thread miningThread = new Thread(m);
 		miningThread.start();
