@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
+import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.support.ConnectionSource;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -14,6 +17,8 @@ import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseStore;
+
 import org.bouncycastle.util.encoders.Hex;
 
 /**
@@ -68,23 +73,23 @@ public class Miner implements Runnable{
 	private final int bitsInByte = 8;
 	
 	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
-	public Miner(Bus eventBus, String target) throws SQLException{
+	//public Miner(Bus eventBus, String target) throws SQLException{
 		//Temporary block creation until we can pass the most recent block
-		blockMining = new Block(Block.simpleGenesisBlock(),initialTarget);
+		//blockMining = new Block(Block.getGenesisBlock(),initialTarget);
 		
 		//newMiningBlock();
 	    
 		//Set up the event bus
-		this.eventBus = eventBus;
-		eventBus.register(this);
+		//this.eventBus = eventBus;
+		//eventBus.register(this);
 		
 		//this.dataStore = dataStore;
 		
-		setPackedTarget(packTarget(target));
+	//	setPackedTarget(packTarget(target));
 
-	}
+	//}
 	
-	public Miner(Bus eventBus, DataStore dataStore) throws SQLException{
+	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
 		newMiningBlock();
 	    
 		//Set up the event bus
@@ -124,7 +129,7 @@ public class Miner implements Runnable{
 
 		while (mining){
 			try{
-				result = Hex.toHexString(blockMining.hashBlock());
+				result = Hex.toHexString(blockMining.hashHeader());
 				
 				if (mineSuccess(result)){
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
@@ -136,7 +141,7 @@ public class Miner implements Runnable{
 				}
 				
 				//Increment the header's nonce to generate a new hash
-				blockMining.getHeader().incrementNonce();
+				blockMining.incrementNonce();
 				}
 			catch (SQLException e){
 				e.printStackTrace();
@@ -147,14 +152,15 @@ public class Miner implements Runnable{
 		}
 	}
 	
-	public void newMiningBlock() throws SQLException{
+	public void newMiningBlock() throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget();
 		setPackedTarget(target);
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
-		blockMining = new Block(lastBlockInChain, target);
+		
+		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, new ArrayList<Entry>());
 	}
 	
 	//This gets called when a new block has been successfully mined elsewhere
@@ -212,8 +218,8 @@ public class Miner implements Runnable{
 		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
 			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
 
-			long mostRecentTime = nMostRecent.get(0).getHeader().getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getHeader().getTimeStamp();
+			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 		
 			//Limit exponential growth
@@ -233,13 +239,15 @@ public class Miner implements Runnable{
 		}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			return dataStore.getMostRecentBlock().getHeader().getTarget();
+			return dataStore.getMostRecentBlock().getTarget();
 		}
 	}
 	
 	//For quick tests
-	public static void main(String[] args) throws SQLException{
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"0000d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+	public static void main(String[] args) throws SQLException, IOException{
+		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		Thread miningThread = new Thread(m);
 		miningThread.start();
