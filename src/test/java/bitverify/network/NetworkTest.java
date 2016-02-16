@@ -65,6 +65,9 @@ public class NetworkTest {
         assertTrue(success);
     }
     /**
+     * This test tests the deserialization of blocks and their sending around the network.
+     */
+    /**
      * This test tests the basic sending functionality of the ConnectionManager.
      * This allows a basic Entry message to be sent around the network. It does
      * <b> NOT </b> test the peer discovery part of the program.
@@ -92,9 +95,9 @@ public class NetworkTest {
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
         String cmp = "";
         for(int i = 0; i < NUM_STRINGS - 1; i++) {
-            cmp += e.getMetadata().getDocDescription() + System.lineSeparator();
+            cmp += e.getDocDescription() + System.lineSeparator();
         }
-        cmp += e.getMetadata().getDocDescription();
+        cmp += e.getDocDescription();
         assertEquals(cmp, outContent.toString().trim());
     }
 

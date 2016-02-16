@@ -10,6 +10,7 @@ import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.GetBlock;
 import bitverify.persistence.DataStore;
+import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 
 import java.io.IOException;
@@ -89,22 +90,35 @@ public class PeerReceive implements Runnable {
             }
         }
         catch(IOException ioe) {ioe.printStackTrace();}
-        //catch(IOException | SQLException ioe) {ioe.printStackTrace();}
     }
 
     private void handleBlockMessage(Message message) {
         BlockMessage blockMessage = message.getBlock();
         byte[] bytes = blockMessage.getBlockBytes().toByteArray();
-        // Requires integration with Niquo.
-        Block block;
-        //try {
-            // deserialise block
-            // block = Block.deserialize(bytes);
-            // if(block.isValid()) {
-                // dataStore.insertBlock(block);
-                // eventBus.post(newBlockEvent(block));
-            // }
-        //}
+        List<ByteString> entryBytes = blockMessage.getEntriesList();
+        List<Entry> entryList = new ArrayList<>();
+        try {
+            // deserialize block
+            Block block = Block.deserialize(bytes);
+            for(ByteString string : entryBytes) {
+                entryList.add(Entry.deserialize(string.toByteArray()));
+            }
+            //TODO Ensure that the block is validated as the next in the chain.
+            if(block.setEntriesList(entryList)) {
+                try {
+                    boolean newBlock = dataStore.insertBlock(block);
+                    if(newBlock) {
+                        eventBus.post(new NewBlockEvent(block));
+                    }
+                }
+                catch(SQLException sqle) {
+                    throw new RuntimeException("Error connecting to database :(", sqle);
+                }
+            }
+        }
+        catch(IOException ioe) {
+            ioe.printStackTrace();
+        }
 
     }
     private void handleGetPeers(Message message) {

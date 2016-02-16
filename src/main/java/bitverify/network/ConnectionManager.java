@@ -10,8 +10,9 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import bitverify.block.Block;
 import bitverify.entries.Entry;
-import bitverify.network.proto.MessageProto;
+import bitverify.network.proto.MessageProto.BlockMessage;
 import bitverify.persistence.DataStore;
 import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.NetAddress;
@@ -119,6 +120,26 @@ public class ConnectionManager {
         }
     }
     public int getNumPeers() {return peers.size();}
+    /**
+     * Send the given message to all connected peers
+     * @param block The block to be broadcast
+     * @throws IOException in the case that serialization fails
+     */
+    public void broadcastBlock(Block block) throws IOException {
+        List<Entry> entryList = block.getEntriesList();
+        List<ByteString> byteStringList = new ArrayList<>();
+        for(Entry e : entryList) {
+            byteStringList.add(ByteString.copyFrom(e.serialize()));
+        }
+        BlockMessage blockMessage = BlockMessage.newBuilder()
+                .setBlockBytes(ByteString.copyFrom(block.serializeHeader()))
+                .addAllEntries(byteStringList).build();
+        Message msg = Message.newBuilder().setType(Message.Type.BLOCK)
+                .setBlock(blockMessage).build();
+        for(PeerHandler peer : peers) {
+            peer.send(msg);
+        }
+    }
     /**
      * Send the given message to all connected peers.
      * @param e The entry which must be broadcast
