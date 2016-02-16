@@ -1,5 +1,6 @@
 package bitverify.network;
 
+import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.entries.EntryTest;
 import bitverify.persistence.DataStore;
@@ -29,6 +30,8 @@ public class NetworkTest {
     private static final int NUM_CONNECTIONS = 3;
     private static final int LARGE_INITIAL_PORT = 32500;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
+    private static final int TARGET = 5;
+    private static final int NONCE = 3;
     @Before
     public void setUpStreams() {
         oldStdOut = System.out;
@@ -66,7 +69,37 @@ public class NetworkTest {
     }
     /**
      * This test tests the deserialization of blocks and their sending around the network.
+     * It is similar to LargerNetworkTest() below, but with Block instead of Entries.
      */
+    @Test
+    public void BlockNetworkTest() throws Exception {
+        List<InetSocketAddress> addressList = new CopyOnWriteArrayList<>();
+        List<ConnectionManager> connectionList = new ArrayList<>();
+        // create list of connectionManagers.
+        for(int i = 0; i < NUM_CONNECTIONS; i++) {
+            connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i, null,
+                    new Bus(ThreadEnforcer.ANY)));
+            addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
+        }
+        // sleep to allow connections to be established
+        Thread.sleep(300);
+        // create a simple Block
+        Entry e1 = EntryTest.generateEntry1();
+        Entry e2 = EntryTest.generateEntry2();
+        Block testBlock = new Block(Block.getGenesisBlock(),TARGET, NONCE, new ArrayList<Entry>() {{add(e1); add(e2);}});
+        for(ConnectionManager conn : connectionList) {
+            conn.broadcastBlock(testBlock);
+        }
+        Thread.sleep(600);
+        // ConnectionManager should print the nonce
+        int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
+        String cmp = "";
+        for(int i = 0; i < NUM_STRINGS - 1; i++) {
+            cmp += NONCE + System.lineSeparator();
+        }
+        cmp += NONCE;
+        assertEquals(cmp, outContent.toString().trim());
+    }
     /**
      * This test tests the basic sending functionality of the ConnectionManager.
      * This allows a basic Entry message to be sent around the network. It does

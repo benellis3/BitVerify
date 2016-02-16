@@ -173,6 +173,13 @@ public class ConnectionManager {
         System.out.println(nee.getNewEntry().getDocDescription());
     }
     /**
+     * For block testing - prints nonce
+     */
+    @Subscribe
+    public void onNewBlockEvent(NewBlockEvent nbe) {
+        System.out.println(nbe.getNewBlock().getNonce());
+    }
+    /**
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid
      * significant latency.

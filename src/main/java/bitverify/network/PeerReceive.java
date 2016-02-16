@@ -105,10 +105,16 @@ public class PeerReceive implements Runnable {
             }
             //TODO Ensure that the block is validated as the next in the chain.
             if(block.setEntriesList(entryList)) {
+                // validate the block chain
+                List<Block> blockList = new ArrayList<>();
                 try {
-                    boolean newBlock = dataStore.insertBlock(block);
-                    if(newBlock) {
-                        eventBus.post(new NewBlockEvent(block));
+                    blockList.add(dataStore.getBlock(block.getPrevBlockHash()));
+                    blockList.add(block);
+                    if(Block.verifyChain(blockList)) {
+                        boolean newBlock = dataStore.insertBlock(block);
+                        if (newBlock) {
+                            eventBus.post(new NewBlockEvent(block));
+                        }
                     }
                 }
                 catch(SQLException sqle) {

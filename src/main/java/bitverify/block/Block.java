@@ -159,11 +159,10 @@ public class Block {
      * @return boolean to indicate whether the given subchain is valid or not
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
-    public static boolean verifyChain(List<Block> blockList) throws Exception {
+    public static boolean verifyChain(List<Block> blockList) {
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
-            Exception e = new IllegalStateException();
-            throw e;
+            throw new IllegalArgumentException();
         } else if (listLen == 1) {
             return true;
         } else {
