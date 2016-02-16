@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.j256.ormlite.logger.LocalLog;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -88,13 +89,14 @@ public class Miner implements Runnable{
 	//}
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
-		newMiningBlock(new ArrayList<Entry>());
-	    
+		this.dataStore = dataStore;
+		System.out.println(dataStore.getBlocksCount());
+		
 		//Set up the event bus
 		this.eventBus = eventBus;
 		eventBus.register(this);
 		
-		this.dataStore = dataStore;
+		newMiningBlock(new ArrayList<Entry>());
 		
 		//Add unconfirmed entries from the database to the block for mining
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
@@ -125,11 +127,20 @@ public class Miner implements Runnable{
 		
 		mining = true;
 
+		System.out.println("Target istest"+packedTarget);
+		
+		System.out.println("Target is"+unpackTarget(packedTarget));
+		
 		while (mining){
 			try{
 				result = Hex.toHexString(blockMining.hashHeader());
 				
+				//System.out.println(result);
+				
 				if (mineSuccess(result)){
+						System.out.println("Success");
+						System.out.println(result);
+					
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
 						dataStore.insertBlock(blockMining);
 						//Pass successful block to application logic for broadcasting to the network
@@ -188,12 +199,22 @@ public class Miner implements Runnable{
 	public int packTarget(String s){
 		//Require that the string is the correct format and is represents an integer
 		
+		String target = s.replaceFirst("0+", "");
+		
+		//System.out.println("s: "+s);
+		//System.out.println("target: "+target);
+		
 		int sizeMantissa = 6;
 		
-		if (s.length() < 6) sizeMantissa = s.length();
+		if (target.length() < 6) sizeMantissa = target.length();
 		
-		String mantissa = s.substring(0, sizeMantissa);	//Get the first 6 characters of the string
-		int exponent = ((s.length()-(sizeMantissa)) / 2) + byteOffset;	//We divide by two since each character is half a byte
+		String mantissa = target.substring(0, sizeMantissa);	//Get the first 6 characters of the string
+		int exponent = ((target.length()-(sizeMantissa)) / 2) + byteOffset;	//We divide by two since each character is half a byte
+		
+		//Fix rounding error
+		
+		//System.out.println("mantissa: "+mantissa);
+		//System.out.println("exponent: "+exponent);
 		
 		int result = Integer.valueOf(mantissa,16) + (exponent << (3 * bitsInByte));
 		
@@ -216,6 +237,7 @@ public class Miner implements Runnable{
 	
 	//Reject new blocks that don't adhere to this target
 	public int calculatePackedTarget() throws SQLException{
+		
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		long blocksCount = dataStore.getBlocksCount();
 		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
@@ -242,22 +264,40 @@ public class Miner implements Runnable{
 		}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			return dataStore.getMostRecentBlock().getTarget();
+			//System.out.println("hey"+dataStore.getMostRecentBlock().getTarget());
+			//System.out.println(this.packTarget("0000ffffe6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5"));
+			//System.out.println(this.unpackTarget(536871167));
+			
+			return packTarget("0000ffffe6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5");
+			//return dataStore.getMostRecentBlock().getTarget();
 		}
 	}
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException, IOException{
-		System.out.println("test");
-		
+
+		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
+	
 		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
 		
 		System.out.println("test2");
 		
-		//Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
+		System.out.println(d.getBlocksCount());
 		
-		//Thread miningThread = new Thread(m);
-		//miningThread.start();
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
+		
+		int packed = m.packTarget("00000000000404CB000000000000000000000000000000000000000000000000");
+		int packed2 = m.packTarget("0404CB000000000000000000000000000000000000000000000000");
+		
+		System.out.println("test1sdfsdf "+Integer.toHexString(packed));
+		System.out.println("test1sdfsdf "+Integer.toHexString(packed2));
+		
+		System.out.println("testing "+m.unpackTarget(0x1a404cb0));
+		
+		Thread miningThread = new Thread(m);
+		miningThread.start();
+		
+		
 		//Seems to mine quite quickly and then needs datastore
 		
 	}
