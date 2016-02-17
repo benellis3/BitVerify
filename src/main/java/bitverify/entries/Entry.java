@@ -23,7 +23,7 @@ import bitverify.crypto.Symmetric;
 @DatabaseTable
 public class Entry {
 
-	@DatabaseField
+	@DatabaseField(id = true)
 	private UUID entryID = UUID.randomUUID();
 
 	@DatabaseField(dataType = DataType.BYTE_ARRAY)

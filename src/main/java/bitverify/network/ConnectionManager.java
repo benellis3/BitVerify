@@ -43,13 +43,15 @@ public class ConnectionManager {
     private Bus bus;
     private List<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
-
+    private BlockProtocol blockProtocol;
     // underscore courtesy of Laszlo Makk :p
     private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
-        peers = new CopyOnWriteArrayList();
+        peers = new CopyOnWriteArrayList<>(); // use addIfAbsent to avoid adding duplicates
         this.bus = bus;
         bus.register(this);
         es = Executors.newCachedThreadPool();
+        blockProtocol = new BlockProtocol();
+        dataStore = ds;
         // Create new runnable to listen for new connections.
         ServerSocket serverSocket = new ServerSocket(listenPort);
 
@@ -185,9 +187,6 @@ public class ConnectionManager {
         // prints the document description
         System.out.println(nee.getNewEntry().getDocDescription());
     }
-    /**
-     * For block testing - prints nonce
-     */
     @Subscribe
     public void onNewBlockEvent(NewBlockEvent nbe) {
         System.out.println(nbe.getNewBlock().getNonce());
@@ -287,7 +286,7 @@ public class ConnectionManager {
     }
 
 
-    class BlockProtocol {
+    public class BlockProtocol {
         private Random rand = new Random();
         private volatile boolean awaitingHeaders = false;
 
@@ -319,7 +318,7 @@ public class ConnectionManager {
         }
 
         @Subscribe
-        void onHeadersMessage(HeadersMessageEvent e) {
+        public void onHeadersMessage(HeadersMessageEvent e) {
             if (!awaitingHeaders)
                 return;
 
@@ -327,7 +326,7 @@ public class ConnectionManager {
         }
 
         @Subscribe
-        void onBlockMessage(BlockMessageEvent e) {
+        public void onBlockMessage(BlockMessageEvent e) {
             MessageProto.BlockMessage message = e.getBlockMessage();
 
             byte[] blockBytes = message.getBlockBytes().toByteArray();
@@ -373,7 +372,7 @@ public class ConnectionManager {
     }
 
     private enum State {WAIT, IDLE}
-    class PeerProtocol  {
+    public class PeerProtocol  {
 
         private State state;
         private int listenPort;

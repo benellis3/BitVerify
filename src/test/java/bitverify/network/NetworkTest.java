@@ -4,6 +4,8 @@ import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.entries.EntryTest;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseStore;
+import com.j256.ormlite.logger.LocalLog;
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 import org.junit.After;
@@ -27,7 +29,7 @@ public class NetworkTest {
     private PrintStream oldStdOut;
     // database not ready yet.
     //private DataStore dataStore;
-    private static final int NUM_CONNECTIONS = 3;
+    private static final int NUM_CONNECTIONS = 4;
     private static final int LARGE_INITIAL_PORT = 32500;
     private static final int DISCOVERY_INITIAL_PORT = 11000;
     private static final int TARGET = 5;
@@ -73,12 +75,13 @@ public class NetworkTest {
      */
     @Test
     public void BlockNetworkTest() throws Exception {
+        System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
         List<InetSocketAddress> addressList = new CopyOnWriteArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
-            connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i, null,
-                    new Bus(ThreadEnforcer.ANY)));
+            connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i,
+                    new DatabaseStore("jdbc:h2:mem:blockNetworkTest" + i), new Bus(ThreadEnforcer.ANY)));
             addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
         }
         // sleep to allow connections to be established
@@ -92,7 +95,8 @@ public class NetworkTest {
         }
         Thread.sleep(600);
         // ConnectionManager should print the nonce
-        int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
+        // we should only get the num connections as we are attempting to insert duplicates
+        int NUM_STRINGS = NUM_CONNECTIONS;
         String cmp = "";
         for(int i = 0; i < NUM_STRINGS - 1; i++) {
             cmp += NONCE + System.lineSeparator();
