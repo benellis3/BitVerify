@@ -51,8 +51,8 @@ public class Miner implements Runnable{
 	private int packedTarget;
 	private final int initialTarget = 0x08800000;
 	//Ensure the target does not go outside the specified range
-	private final BigInteger minTarget = new BigInteger("1",16);
-	private final BigInteger maxTarget = new BigInteger("f",16).shiftLeft(255);
+	private final BigInteger minTarget = new BigInteger("1",16);				//0x03000001 is min possible
+	private final BigInteger maxTarget = new BigInteger("f",16).shiftLeft(255); //0x20ffffff is max possible
 	
 	//Minimum of 1
 	//Maximum of f << 255
@@ -90,7 +90,7 @@ public class Miner implements Runnable{
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
 		this.dataStore = dataStore;
-		System.out.println(dataStore.getBlocksCount());
+		//System.out.println(dataStore.getBlocksCount());
 		
 		//Set up the event bus
 		this.eventBus = eventBus;
@@ -132,9 +132,9 @@ public class Miner implements Runnable{
 		
 		mining = true;
 
-		System.out.println("Target istest"+packedTarget);
+		//System.out.println("Target istest"+packedTarget);
 		
-		System.out.println("Target is"+unpackTarget(packedTarget));
+		//System.out.println("Target is"+unpackTarget(packedTarget));
 		
 		while (mining){
 			try{
@@ -143,8 +143,8 @@ public class Miner implements Runnable{
 				//System.out.println(result);
 				
 				if (mineSuccess(result, this.packedTarget)){
-						System.out.println("Success");
-						System.out.println(result);
+						//System.out.println("Success");
+						//System.out.println(result);
 					
 						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
 						dataStore.insertBlock(blockMining);
@@ -204,14 +204,32 @@ public class Miner implements Runnable{
 	public static int packTarget(String s){
 		//Require that the string is the correct format and is represents an integer
 		
-		String target = s.replaceFirst("0+", "");
+		//Remove leading zeros
+		String target = s.replaceFirst("^0+", "");
 		
 		//System.out.println("s: "+s);
 		//System.out.println("target: "+target);
 		
+		
+		
 		int sizeMantissa = 6;
 		
-		if (target.length() < 6) sizeMantissa = target.length();
+		//There must be a byte number of places to the right of the 6 mantissa bits
+		//If there is not we include a leading zero
+		if (!((target.length() - sizeMantissa) % 2 == 0)){
+			target = "0"+target;
+		}
+		
+		//System.out.println("targetmodified "+target);
+		
+		//If the target is zero
+		if (target.equals("")) return 0x03000000;
+		
+		if (target.length() < sizeMantissa){
+			//We do not need to shift
+			//sizeMantissa = target.length();
+			return Integer.valueOf(target,16) + 0x03000000;
+		}
 		
 		String mantissa = target.substring(0, sizeMantissa);	//Get the first 6 characters of the string
 		int exponent = ((target.length()-(sizeMantissa)) / 2) + byteOffset;	//We divide by two since each character is half a byte
@@ -221,22 +239,27 @@ public class Miner implements Runnable{
 		//System.out.println("mantissa: "+mantissa);
 		//System.out.println("exponent: "+exponent);
 		
-		int result = Integer.valueOf(mantissa,16) + (exponent << (3 * bitsInByte));
+		int result = Integer.valueOf(mantissa,16) + (exponent << (3 * bitsInByte));	//Shift exponent three hex digits to the left for packed storage
 		
+		
+		//System.out.println("resultis "+Integer.toHexString(result));
 		return result;
 	}
 	
 	//Calculate the hexstring representation of the target from its packed form
 	public static String unpackTarget(int p){
 		//packedTarget stored as
-		//	0xeemmmm
+		//	0xeemmmmmm
 		//represents m * 2 ^ (bitsInByte * (e - byteOffset))
+		
+		//Use maximum representable target if greater than this
+		if (p > 0x20ffffff) p = 0x20ffffff;
 		
 		BigInteger mantissa = BigInteger.valueOf(p & 0xffffff);
 		int exponent = p >> (3 * bitsInByte);		//Extract the exponent
 		
 		BigInteger result = mantissa.shiftLeft((bitsInByte * (exponent - byteOffset)));
-		
+
 		return result.toString(16);
 	}
 	
@@ -280,24 +303,13 @@ public class Miner implements Runnable{
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException, IOException{
+		//System.out.println("My test "+unpackTarget(0xffffffff));
 
 		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
 	
 		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		
-		System.out.println("test2");
-		
-		System.out.println(d.getBlocksCount());
-		
 		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
-		int packed = packTarget("00000000000404CB000000000000000000000000000000000000000000000000");
-		int packed2 = packTarget("0404CB000000000000000000000000000000000000000000000000");
-		
-		System.out.println("test1sdfsdf "+Integer.toHexString(packed));
-		System.out.println("test1sdfsdf "+Integer.toHexString(packed2));
-		
-		System.out.println("testing "+unpackTarget(0x1a404cb0));
 		
 		Thread miningThread = new Thread(m);
 		miningThread.start();
