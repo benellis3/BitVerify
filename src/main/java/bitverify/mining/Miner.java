@@ -57,7 +57,7 @@ public class Miner implements Runnable{
 	//Minimum of 1
 	//Maximum of f << 255
 	
-	private final int byteOffset = 3;	//A constant used in unpacking the target
+	private static final int byteOffset = 3;	//A constant used in unpacking the target
 	
 	//The number of blocks before we recalculate the difficulty
 	private int adjustTargetFrequency = 1008;
@@ -69,7 +69,7 @@ public class Miner implements Runnable{
 	private Block blockMining;
 	
 	//Simple constant for making calculations easier to read
-	private final int bitsInByte = 8;
+	private static final int bitsInByte = 8;
 	
 	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
 	//public Miner(Bus eventBus, String target) throws SQLException{
@@ -105,9 +105,14 @@ public class Miner implements Runnable{
 
 	}
 	
-	//Determine whether the block's hash meets the target's requirements
-	public boolean mineSuccess(String hash){
-		String target = unpackTarget(packedTarget);
+	//Determine whether the block's hash meets it's target requirements
+	public static boolean blockHashMeetDifficulty(Block b){
+		return mineSuccess(Hex.toHexString(b.hashHeader()),b.getTarget());
+	}
+	
+	//Determine whether a hash meets the target's difficulty
+	public static boolean mineSuccess(String hash, int packedT){
+		String target = unpackTarget(packedT);
 		
 		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
@@ -137,7 +142,7 @@ public class Miner implements Runnable{
 				
 				//System.out.println(result);
 				
-				if (mineSuccess(result)){
+				if (mineSuccess(result, this.packedTarget)){
 						System.out.println("Success");
 						System.out.println(result);
 					
@@ -196,7 +201,7 @@ public class Miner implements Runnable{
 	}
 	
 	//Calculate the packed representation of the target from the string
-	public int packTarget(String s){
+	public static int packTarget(String s){
 		//Require that the string is the correct format and is represents an integer
 		
 		String target = s.replaceFirst("0+", "");
@@ -222,7 +227,7 @@ public class Miner implements Runnable{
 	}
 	
 	//Calculate the hexstring representation of the target from its packed form
-	public String unpackTarget(int p){
+	public static String unpackTarget(int p){
 		//packedTarget stored as
 		//	0xeemmmm
 		//represents m * 2 ^ (bitsInByte * (e - byteOffset))
@@ -286,13 +291,13 @@ public class Miner implements Runnable{
 		
 		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
-		int packed = m.packTarget("00000000000404CB000000000000000000000000000000000000000000000000");
-		int packed2 = m.packTarget("0404CB000000000000000000000000000000000000000000000000");
+		int packed = packTarget("00000000000404CB000000000000000000000000000000000000000000000000");
+		int packed2 = packTarget("0404CB000000000000000000000000000000000000000000000000");
 		
 		System.out.println("test1sdfsdf "+Integer.toHexString(packed));
 		System.out.println("test1sdfsdf "+Integer.toHexString(packed2));
 		
-		System.out.println("testing "+m.unpackTarget(0x1a404cb0));
+		System.out.println("testing "+unpackTarget(0x1a404cb0));
 		
 		Thread miningThread = new Thread(m);
 		miningThread.start();

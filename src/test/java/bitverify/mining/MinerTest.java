@@ -43,15 +43,13 @@ public class MinerTest {
 				true,
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.mineSuccess(input[i]) );	
+			assertEquals(output[i], Miner.mineSuccess(input[i],0x1f3b20fa));	
 		}
 	}
 	
 	//Test whether mining targets are successfully unpacked from the integer representation
 	@Test
 	public void testUnPack() throws SQLException, IOException{
-		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		int input[] = {
 				0x04111111,
@@ -64,15 +62,13 @@ public class MinerTest {
 				"0",	//Reject negative targets
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.unpackTarget(input[i]) );	
+			assertEquals( output[i], Miner.unpackTarget(input[i]) );	
 		}
 	}
 	
 	//Test whether mining targets are successfully packed into the integer representation
 	@Test
 	public void testPack() throws SQLException, IOException{
-		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		int output[] = {
 				0x04111111,
@@ -85,7 +81,7 @@ public class MinerTest {
 				"0",
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.packTarget(input[i]) );	
+			assertEquals( output[i], Miner.packTarget(input[i]) );	
 		}
 	}
 	
