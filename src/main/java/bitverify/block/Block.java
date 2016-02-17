@@ -1,6 +1,7 @@
 package bitverify.block;
 
 import bitverify.entries.*;
+import bitverify.mining.Miner;
 import bitverify.crypto.Hash;
 
 import java.io.ByteArrayInputStream;
@@ -114,8 +115,8 @@ public class Block {
         byte[] prevHash = Hash.hashString(mythology);
         byte[] entryHash = Hash.hashString(itsComing);
         long timeStamp = 0;
-        int target = 3;
-        int nonce = 0;
+        int target = Miner.packTarget("000000fa1e3800000000000000000000000000000000000000000000000000000");
+        int nonce = 9415616;
         Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
         resultBlock.setEntriesList(Collections.emptyList());
         resultBlock.verifiedEntries = true;
@@ -151,6 +152,8 @@ public class Block {
      * adds one to the nonce value for the miner.
      */
     public void incrementNonce() {
+    	//If we have mined all nonce values without a successful mine, update the timestamp and try again
+        if (nonce == -1) this.timeStamp = System.currentTimeMillis();
         nonce += 1;
     }
 
