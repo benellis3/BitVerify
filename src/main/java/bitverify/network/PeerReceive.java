@@ -8,7 +8,6 @@ import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.BlockMessage;
 import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Peers;
-import bitverify.network.proto.MessageProto.GetBlock;
 import bitverify.persistence.DataStore;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
@@ -20,7 +19,6 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Created by benellis on 02/02/2016.
@@ -44,9 +42,6 @@ public class PeerReceive implements Runnable {
             while(true) {
                 message = Message.parseDelimitedFrom(is);
                 switch(message.getType()) {
-                    case GETBLOCK:
-                        handleGetBlockMessage(message);
-                        break;
                     case GETPEERS:
                         handleGetPeers(message);
                         break;
@@ -111,13 +106,6 @@ public class PeerReceive implements Runnable {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
         }
         eventBus.post(new PeersEvent(socketAddressList));
-    }
-
-    private void handleGetBlockMessage(Message message) {
-        GetBlock getBlockMessage = message.getGetBlock();
-        // retrieve blocks from the database and put an event on the event bus
-        // which allows the appropriate block next block to be sent in a message
-
     }
 }
 

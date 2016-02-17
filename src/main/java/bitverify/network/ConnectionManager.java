@@ -21,6 +21,8 @@ import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.GetPeers;
+import bitverify.network.proto.MessageProto.GetHeadersMessage;
+import bitverify.network.proto.MessageProto.Message.Type;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -294,7 +296,7 @@ public class ConnectionManager {
             bus.register(this);
         }
 
-        void requestHeaders() {
+        void requestHeaders() throws SQLException{
             // choose a peer
             PeerHandler p;
             synchronized (peers) {
@@ -309,7 +311,7 @@ public class ConnectionManager {
                     .setFromBlock(ByteString.copyFrom(latestKnown.getBlockID()))
                     .build();
             Message m = Message.newBuilder()
-                    .setType(Type.GET_HEAEDERS)
+                    .setType(Type.GET_HEADERS)
                     .build();
 
             p.send(m);
@@ -339,8 +341,8 @@ public class ConnectionManager {
                     return;
 
                 // verify its hash meets its target
-                if (!block.verifyHeader())
-                    return;
+                /*if (!block.verifyHeader())
+                    return;*/
 
                 List<ByteString> entryBytesList = message.getEntriesList();
                 List<Entry> entryList = new ArrayList<>();
