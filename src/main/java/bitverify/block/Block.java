@@ -114,9 +114,9 @@ public class Block {
         String itsComing = "You hear that, Mr. Anderson. That is the sound inevitability.";
         byte[] prevHash = Hash.hashString(mythology);
         byte[] entryHash = Hash.hashString(itsComing);
-        long timeStamp = 0;
-        int target = Miner.packTarget("000000fa1e3800000000000000000000000000000000000000000000000000000");
-        int nonce = 9415616;
+        long timeStamp = 1455745984018l;
+        int target = Miner.packTarget("00000fa1e3800000000000000000000000000000000000000000000000000000");
+        int nonce = 10136621;
         Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
         resultBlock.setEntriesList(Collections.emptyList());
         resultBlock.verifiedEntries = true;
