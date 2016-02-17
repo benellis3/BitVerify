@@ -5,22 +5,23 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
-import bitverify.block.Block;
 import bitverify.mining.Miner.BlockFoundEvent;
+import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseStore;
 
 public class MinerTest {
 
 	//Test whether hashes are successful when they should be
 	@Test
-	public void testMineSuccess() throws SQLException{
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+	public void testMineSuccess() throws SQLException, IOException{
+		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		m.setPackedTarget(0x1f3b20fa);
 		//We have an unpacked target of 003b20fa00000000000000000000000000000000000000000000000000000000
@@ -42,14 +43,13 @@ public class MinerTest {
 				true,
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.mineSuccess(input[i]) );	
+			assertEquals(output[i], Miner.mineSuccess(input[i],0x1f3b20fa));	
 		}
 	}
 	
 	//Test whether mining targets are successfully unpacked from the integer representation
 	@Test
-	public void testUnPack() throws SQLException{
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+	public void testUnPack() throws SQLException, IOException{
 		
 		int input[] = {
 				0x04111111,
@@ -62,14 +62,13 @@ public class MinerTest {
 				"0",	//Reject negative targets
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.unpackTarget(input[i]) );	
+			assertEquals( output[i], Miner.unpackTarget(input[i]) );	
 		}
 	}
 	
 	//Test whether mining targets are successfully packed into the integer representation
 	@Test
-	public void testPack() throws SQLException{
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
+	public void testPack() throws SQLException, IOException{
 		
 		int output[] = {
 				0x04111111,
@@ -82,23 +81,23 @@ public class MinerTest {
 				"0",
 		};
 		for (int i=0; i<input.length; i++){
-			assertEquals( output[i], m.packTarget(input[i]) );	
+			assertEquals( output[i], Miner.packTarget(input[i]) );	
 		}
 	}
 	
 	//@Test
 	@Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {
-    	try {
-    		Block block = e.getBlock();
-			String hash = Hex.toHexString(block.hashBlock());
+    	//try {
+    		////Block block = e.getBlock();
+			////String hash = Hex.toHexString(block.hashHeader());
 			//int target = block.getTarget();
 			//String targetUnPacked = m.unpackTarget(target);
 			//boolean result = targetUnPacked < hash;
 			//assertEquals( true, result );	
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		//} catch (IOException e1) {
+		//	e1.printStackTrace();
+		//}
     	
     }
 
