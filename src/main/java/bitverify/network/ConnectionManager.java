@@ -283,6 +283,8 @@ public class ConnectionManager {
         // then, in parallel,
         // - get more headers from same peer
         // - download blocks from all peers in parallel
+
+
     }
 
 
@@ -306,11 +308,12 @@ public class ConnectionManager {
             // send a GetBlockHeaders message
             // ask for blocks from our latest known block
             Block latestKnown = dataStore.getMostRecentBlock();
-            GetHeadersMessage headersMessage = GetHeadersMessage.newBuilder()
+            GetHeadersMessage getHeadersMessage = GetHeadersMessage.newBuilder()
                     .setFromBlock(ByteString.copyFrom(latestKnown.getBlockID()))
                     .build();
             Message m = Message.newBuilder()
                     .setType(Type.GET_HEADERS)
+                    .setGetHeaders(getHeadersMessage)
                     .build();
 
             p.send(m);
@@ -321,6 +324,23 @@ public class ConnectionManager {
         public void onHeadersMessage(HeadersMessageEvent e) {
             if (!awaitingHeaders)
                 return;
+
+            List<ByteString> serializedHeaders = e.getHeadersMessage().getHeadersList();
+            List<Block> headers = new ArrayList<>(serializedHeaders.size());
+
+            try {
+                for (ByteString bytes : serializedHeaders)
+                    headers.add(Block.deserialize(bytes.toByteArray()));
+            } catch (IOException ex) {
+                // TODO: a header was invalidly formatted, we should discard the sequence and re-request from another peer
+                return;
+            }
+
+            // validate headers sequence
+            if (!Block.verifyChain(headers))
+                return;
+
+
 
 
         }
@@ -340,6 +360,7 @@ public class ConnectionManager {
                     return;
 
                 // verify its hash meets its target
+                // TODO: will be implemented by Niquo
                 /*if (!block.verifyHeader())
                     return;*/
 
