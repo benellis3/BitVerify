@@ -108,6 +108,7 @@ public class DatabaseStore implements DataStore {
         return blockDao.countOf();
     }
 
+
     public Block getMostRecentBlock() throws SQLException {
         return latestBlock;
     }

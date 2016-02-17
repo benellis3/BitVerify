@@ -93,40 +93,10 @@ public class PeerReceive implements Runnable {
     }
 
     private void handleBlockMessage(Message message) {
-        BlockMessage blockMessage = message.getBlock();
-        byte[] bytes = blockMessage.getBlockBytes().toByteArray();
-        List<ByteString> entryBytes = blockMessage.getEntriesList();
-        List<Entry> entryList = new ArrayList<>();
-        try {
-            // deserialize block
-            Block block = Block.deserialize(bytes);
-            for(ByteString string : entryBytes) {
-                entryList.add(Entry.deserialize(string.toByteArray()));
-            }
-            //TODO Ensure that the block is validated as the next in the chain.
-            if(block.setEntriesList(entryList)) {
-                // validate the block chain
-                List<Block> blockList = new ArrayList<>();
-                try {
-                    blockList.add(dataStore.getBlock(block.getPrevBlockHash()));
-                    blockList.add(block);
-                    if(Block.verifyChain(blockList)) {
-                        boolean newBlock = dataStore.insertBlock(block);
-                        if (newBlock) {
-                            eventBus.post(new NewBlockEvent(block));
-                        }
-                    }
-                }
-                catch(SQLException sqle) {
-                    throw new RuntimeException("Error connecting to database :(", sqle);
-                }
-            }
-        }
-        catch(IOException ioe) {
-            ioe.printStackTrace();
-        }
-
+        BlockMessage m = message.getBlock();
+        eventBus.post(new BlockMessageEvent(m));
     }
+
     private void handleGetPeers(Message message) {
         // create an event which can be handed off to the connection manager.
         eventBus.post(new GetPeersEvent(peerListenAddress));

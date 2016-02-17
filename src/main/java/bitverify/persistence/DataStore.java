@@ -20,7 +20,7 @@ public interface DataStore {
     public long getBlocksCount() throws SQLException;
 
     /**
-     * Gets the most recent block on the active blockchain.
+     * Gets the most recent block on the active blockchain. Never returns null.
      * @throws SQLException
      */
     public Block getMostRecentBlock() throws SQLException;
