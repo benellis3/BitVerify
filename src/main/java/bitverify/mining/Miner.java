@@ -60,33 +60,20 @@ public class Miner implements Runnable{
 	private static final int byteOffset = 3;	//A constant used in unpacking the target
 	
 	//The number of blocks before we recalculate the difficulty
-	private int adjustTargetFrequency = 1008;
+	//private int adjustTargetFrequency = 1008;
 	//The amount of time we want adjustTargetFrequency blocks to take to mine, in milliseconds
 	//(one week)
-	private long idealMiningTime = 604800000;
+	//private long idealMiningTime = 604800000;
+	
+	//Test times
+	private int adjustTargetFrequency = 2;
+	private long idealMiningTime = 10000;
 	
 	//The block we are currently mining
 	private Block blockMining;
 	
 	//Simple constant for making calculations easier to read
 	private static final int bitsInByte = 8;
-	
-	//Temporary Constructor for testing purposes since dataStore cannot be instantiated for testing
-	//public Miner(Bus eventBus, String target) throws SQLException{
-		//Temporary block creation until we can pass the most recent block
-		//blockMining = new Block(Block.getGenesisBlock(),initialTarget);
-		
-		//newMiningBlock();
-	    
-		//Set up the event bus
-		//this.eventBus = eventBus;
-		//eventBus.register(this);
-		
-		//this.dataStore = dataStore;
-		
-	//	setPackedTarget(packTarget(target));
-
-	//}
 	
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
 		this.dataStore = dataStore;
@@ -132,27 +119,30 @@ public class Miner implements Runnable{
 		
 		mining = true;
 
-		//System.out.println("Target istest"+packedTarget);
-		
 		//System.out.println("Target is"+unpackTarget(packedTarget));
 		
 		while (mining){
 			try{
 				result = Hex.toHexString(blockMining.hashHeader());
-				
-				//System.out.println(result);
-				
+
 				if (mineSuccess(result, this.packedTarget)){
-						//System.out.println("Success");
-						//System.out.println(result);
+					//System.out.println("Success");
+					//System.out.println(result);
+					//System.out.println(blockMining.getNonce());
 					
-						//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
-						dataStore.insertBlock(blockMining);
-						//Pass successful block to application logic for broadcasting to the network
-						eventBus.post(new BlockFoundEvent(blockMining));
+					//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
+					dataStore.insertBlock(blockMining);
+					//Pass successful block to application logic for broadcasting to the network
+					eventBus.post(new BlockFoundEvent(blockMining));
 	
-						newMiningBlock(new ArrayList<Entry>());
+					newMiningBlock(new ArrayList<Entry>());
 				}
+				//else if (mineSuccess(result, this.packedProofTarget)){
+				//	//Application logic must broadcast to peers
+				//	//Must maintain a list of peers in database that have received proof from
+				//	//Reject incoming entries from public IPs not from the list
+				//	eventBus.post(new ProofBlockFoundEvent(blockMining));
+				//}
 				
 				//Increment the header's nonce to generate a new hash
 				blockMining.incrementNonce();
@@ -174,6 +164,9 @@ public class Miner implements Runnable{
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
+		//System.out.println("Previous block timestamp: "+lastBlockInChain.getTimeStamp());
+		//System.out.println("Current block timestamp: "+System.currentTimeMillis());
+		
 		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, entries);
 	}
 	
@@ -187,8 +180,7 @@ public class Miner implements Runnable{
 	//Subscribe to new entry events on bus
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
-    	//Add entry from pool to block we are mining
-        //blockMining.addSingleEntry(e.getNewEntry());
+    	//Add entry from pool to block we are mining (by creating a new block)
     	List<Entry> entries = blockMining.getEntriesList();
     	
     	entries.add(e.getNewEntry());
@@ -202,16 +194,11 @@ public class Miner implements Runnable{
 	
 	//Calculate the packed representation of the target from the string
 	public static int packTarget(String s){
-		//Require that the string is the correct format and is represents an integer
+		//Require that the string is the correct format
 		
 		//Remove leading zeros
 		String target = s.replaceFirst("^0+", "");
-		
-		//System.out.println("s: "+s);
-		//System.out.println("target: "+target);
-		
-		
-		
+
 		int sizeMantissa = 6;
 		
 		//There must be a byte number of places to the right of the 6 mantissa bits
@@ -220,29 +207,19 @@ public class Miner implements Runnable{
 			target = "0"+target;
 		}
 		
-		//System.out.println("targetmodified "+target);
-		
 		//If the target is zero
 		if (target.equals("")) return 0x03000000;
 		
 		if (target.length() < sizeMantissa){
 			//We do not need to shift
-			//sizeMantissa = target.length();
 			return Integer.valueOf(target,16) + 0x03000000;
 		}
 		
 		String mantissa = target.substring(0, sizeMantissa);	//Get the first 6 characters of the string
 		int exponent = ((target.length()-(sizeMantissa)) / 2) + byteOffset;	//We divide by two since each character is half a byte
 		
-		//Fix rounding error
-		
-		//System.out.println("mantissa: "+mantissa);
-		//System.out.println("exponent: "+exponent);
-		
 		int result = Integer.valueOf(mantissa,16) + (exponent << (3 * bitsInByte));	//Shift exponent three hex digits to the left for packed storage
-		
-		
-		//System.out.println("resultis "+Integer.toHexString(result));
+
 		return result;
 	}
 	
@@ -259,7 +236,7 @@ public class Miner implements Runnable{
 		int exponent = p >> (3 * bitsInByte);		//Extract the exponent
 		
 		BigInteger result = mantissa.shiftLeft((bitsInByte * (exponent - byteOffset)));
-
+		
 		return result.toString(16);
 	}
 	
@@ -268,21 +245,31 @@ public class Miner implements Runnable{
 		
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		long blocksCount = dataStore.getBlocksCount();
-		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
+		
+		//System.out.println("Number of blocks"+blocksCount);
+		
+		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 1)) {
 			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
-
+			
+			//These datastore retrievals seems to return incorrect blocks
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency-1).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
+			
+			//System.out.println("Most Recent: "+mostRecentTime);
+			//System.out.println("No ago: "+nAgoTime);
+			//System.out.println("Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
 			if (difference > idealMiningTime*4) difference = idealMiningTime*4;
-		
+			
 			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(packedTarget),16))).divide(BigInteger.valueOf(idealMiningTime));
 			
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
+			
+			//System.out.println("New Target: "+newTarget);
 		
 			return packTarget(newTarget.toString(16));
 		}
@@ -292,30 +279,19 @@ public class Miner implements Runnable{
 		}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			//System.out.println("hey"+dataStore.getMostRecentBlock().getTarget());
-			//System.out.println(this.packTarget("0000ffffe6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5"));
-			//System.out.println(this.unpackTarget(536871167));
-			
-			return packTarget("0000ffffe6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5");
-			//return dataStore.getMostRecentBlock().getTarget();
+			return dataStore.getMostRecentBlock().getTarget();
 		}
 	}
 	
 	//For quick tests
 	public static void main(String[] args) throws SQLException, IOException{
-		//System.out.println("My test "+unpackTarget(0xffffffff));
-
 		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
-	
-		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
+		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		
+		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
 		
 		Thread miningThread = new Thread(m);
 		miningThread.start();
-		
-		
-		//Seems to mine quite quickly and then needs datastore
-		
 	}
 }

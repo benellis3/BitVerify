@@ -8,10 +8,8 @@ import java.sql.SQLException;
 import org.junit.Test;
 
 import com.squareup.otto.Bus;
-import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
-import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.persistence.DataStore;
 import bitverify.persistence.DatabaseStore;
 
@@ -31,6 +29,8 @@ public class MinerTest {
 				"cf80cd8aed482d5d1527d7dc72fceff84e6326592848447d2dc0b0e87dfc9a90",
 				"a5fdf69452bc32ff2ef109f4b501d84928ea04e0d6ebf2eac42cf35a9d926ba9",
 				"00ffffffe6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5",
+				"003b20fae6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5",
+				"003b20f9e6fcdc36f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5",
 				"0000000000000000f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5",
 				"0000001000000000f7db2c2d9a8cd6ddf31763c0ada5fcf27904d445f6dc00e5",
 		};
@@ -39,6 +39,8 @@ public class MinerTest {
 				false,
 				false,
 				false,
+				false,
+				true,
 				true,
 				true,
 		};
@@ -68,10 +70,11 @@ public class MinerTest {
 				0x03ffffff,
 				0x04ffffff,
 				0x21ffffff,	//Test uses max 256 bit hex value (doesn't go over)
-				//0x21ffffff,
+				-10, //Check it negative values unpack to zero (invalid case)
 				
-				//0x7fffffff	//This is the maximum value before negative due to highest bit set (two's complement) - out or range of 256 hash anyway
+				//0x7fffffff	//This is the maximum value before negative due to highest bit set (two's complement) - out of range of 256 hash anyway
 		};
+		
 		String output[] = {
 				"11111100",
 				"3b12ab0000000000",
@@ -89,6 +92,7 @@ public class MinerTest {
 				"ffffff",
 				"ffffff00",
 				"ffffff0000000000000000000000000000000000000000000000000000000000",
+				"0",
 				
 		};
 		for (int i=0; i<input.length; i++){
@@ -135,21 +139,5 @@ public class MinerTest {
 			assertEquals( output[i], Miner.packTarget(input[i]) );	
 		}
 	}
-	
-	//@Test
-	@Subscribe
-    public void onBlockFoundEvent(BlockFoundEvent e) {
-    	//try {
-    		////Block block = e.getBlock();
-			////String hash = Hex.toHexString(block.hashHeader());
-			//int target = block.getTarget();
-			//String targetUnPacked = m.unpackTarget(target);
-			//boolean result = targetUnPacked < hash;
-			//assertEquals( true, result );	
-		//} catch (IOException e1) {
-		//	e1.printStackTrace();
-		//}
-    	
-    }
 
 }
