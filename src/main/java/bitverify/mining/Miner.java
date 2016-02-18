@@ -99,11 +99,23 @@ public class Miner implements Runnable{
 		return mineSuccess(Hex.toHexString(b.hashHeader()),b.getTarget());
 	}
 	
+	public static boolean miningProofMeetDifficulty(Block b){
+		return mineSuccess(Hex.toHexString(b.hashHeader()),calculateMiningProofTarget(b.getTarget()));
+	}
+	
+	//Check target is that given by target calculation (or is more difficult)
 	public static boolean checkBlockDifficulty(DataStore ds, Block b, Block parent) throws SQLException{
 		int targetShouldBe = calculatePackedTarget(ds, parent);
 		
 		return mineSuccess(unpackTarget(targetShouldBe),b.getTarget());
 	}
+	
+	public static boolean checkMiningProofDifficulty(DataStore ds, Block b, Block parent) throws SQLException{
+		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(ds, parent));
+		
+		return mineSuccess(unpackTarget(proofTargetShouldBe),b.getTarget());
+	}
+	
 	
 	//Determine whether a hash meets the target's difficulty
 	public static boolean mineSuccess(String hash, int packedT){
@@ -129,8 +141,6 @@ public class Miner implements Runnable{
 
 		//System.out.println("Target is"+unpackTarget(packedTarget));
 		
-		
-		
 		while (mining){
 			try{
 				result = Hex.toHexString(blockMining.hashHeader());
@@ -145,7 +155,6 @@ public class Miner implements Runnable{
 					eventBus.post(new BlockFoundEvent(blockMining));
 	
 					newMiningBlock(new ArrayList<Entry>());
-					
 					
 				}
 				else if (mineSuccess(result, currentMiningProofTarget)){
@@ -174,12 +183,7 @@ public class Miner implements Runnable{
 		
 		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock());
 		
-		BigInteger proofTarget = new BigInteger(unpackTarget(target),16);
-		
-		BigInteger proofTargetScaled = proofTarget.multiply(BigInteger.valueOf(miningProofDifficultyScale));
-		proofTarget.add(BigInteger.valueOf(0x70));
-		
-		this.currentMiningProofTarget = packTarget(proofTargetScaled.toString(16));
+		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
 		System.out.println("New Proof Target: "+unpackTarget(currentMiningProofTarget));
 		
@@ -304,6 +308,15 @@ public class Miner implements Runnable{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
 			return block.getTarget();
 		}
+	}
+	
+	public static int calculateMiningProofTarget(int successTarget){
+		BigInteger proofTarget = new BigInteger(unpackTarget(successTarget),16);
+		
+		BigInteger proofTargetScaled = proofTarget.multiply(BigInteger.valueOf(miningProofDifficultyScale));
+		proofTarget.add(BigInteger.valueOf(0x70));
+		
+		return packTarget(proofTargetScaled.toString(16));
 	}
 	
 	//For quick tests
