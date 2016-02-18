@@ -13,6 +13,7 @@ import org.junit.Test;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
 import bitverify.entries.EntryTest;
+import bitverify.mining.Miner;
 
 
 public class BlockTest {
@@ -31,7 +32,7 @@ public class BlockTest {
         Entry entry1 = EntryTest.generateEntry1();
         
         List<Entry> entries = Arrays.asList(entry1);
-        int target = 3;
+        int target = 0;
         int nonce = 0;
         Block firstBlock = new Block(genesis,target,nonce,entries);
         byte[] serialBlock = firstBlock.serializeHeader();
@@ -97,7 +98,4 @@ public class BlockTest {
         assertFalse(deserializedBlock.setEntriesList(Arrays.asList(entry2)));
         
     }
-    
-    
-    
 }
