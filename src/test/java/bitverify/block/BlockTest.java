@@ -33,7 +33,7 @@ public class BlockTest {
     }
     
     @Test
-    public void singleEntrySerialize() throws IOException{
+    public void singleEntrySerialize() throws Exception{
         Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         
@@ -46,7 +46,10 @@ public class BlockTest {
         Block deserializedBlock = Block.deserialize(serialBlock);
         
         assertTrue(firstBlock.equals(deserializedBlock));
-        
+        assertFalse(deserializedBlock.isVerified());
+        assertTrue(deserializedBlock.setEntriesList(entries));
+        assertTrue(deserializedBlock.isVerified());
+        assertTrue(Block.verifyChain(Arrays.asList(genesis,firstBlock)));
     }
     
     @Test
@@ -61,6 +64,20 @@ public class BlockTest {
         
         assertTrue(Block.verifyChain(Arrays.asList(genesis,block1)));
         
+    }
+    
+    @Test
+    public void listTwoBlocksOneNotMeetsTarget() throws Exception{
+        Block genesis = Block.getGenesisBlock();
+        Entry entry1 = EntryTest.generateEntry1();
+        List<Entry> entries1 = Arrays.asList(entry1);
+        int target = 0;
+        int nonce = 0;
+        
+        Block block1 = new Block(genesis,target,nonce,entries1);
+        
+        assertFalse(Block.verifyChain(Arrays.asList(genesis,block1)));
+        assertFalse(block1.setEntriesList(entries1));
     }
     
     @Test
@@ -108,4 +125,7 @@ public class BlockTest {
         assertFalse(deserializedBlock.setEntriesList(Arrays.asList(entry2)));
         
     }
+    
+    
+    
 }
