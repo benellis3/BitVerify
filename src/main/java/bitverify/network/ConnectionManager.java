@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
+import bitverify.mining.Miner;
 import bitverify.network.proto.MessageProto;
 import bitverify.network.proto.MessageProto.BlockMessage;
 import bitverify.persistence.DataStore;
@@ -463,9 +464,8 @@ public class ConnectionManager {
                     return;
 
                 // verify its hash meets its target
-                // TODO: will be implemented by Niquo
-                    /*if (!block.verifyHeader())
-                        return;*/
+                if (!Miner.blockHashMeetDifficulty(block))
+                    return;
 
                 List<ByteString> entryBytesList = message.getEntriesList();
                 List<Entry> entryList = new ArrayList<>();
