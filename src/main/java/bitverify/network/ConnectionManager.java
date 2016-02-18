@@ -29,7 +29,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.sun.xml.internal.ws.client.sei.ResponseBuilder;
 
 
 /**
@@ -295,11 +294,19 @@ public class ConnectionManager {
     /**
      * Handles sending a single request for headers to a peer, then awaiting the response.
      */
-    public class HeadersProtocol {
+    public class HeadersFuture implements RunnableFuture<List<Block>> {
         private List<Block> result;
-        private CountDownLatch resultLatch = new CountDownLatch(1);
+        private final CountDownLatch resultLatch = new CountDownLatch(1);
+        private final PeerHandler peer;
+        private final byte[] fromBlockID;
 
-        void requestHeaders(PeerHandler peer, byte[] fromBlockID) throws SQLException {
+        public HeadersFuture(PeerHandler peer, byte[] fromBlockID) {
+            this.peer = peer;
+            this.fromBlockID = fromBlockID;
+        }
+
+        @Override
+        public void run() {
             // send a GetBlockHeaders message
             // ask for blocks from our latest known block
             GetHeadersMessage getHeadersMessage = GetHeadersMessage.newBuilder()
@@ -335,14 +342,35 @@ public class ConnectionManager {
             resultLatch.countDown();
         }
 
-        List<Block> getResult() {
-            try {
-                resultLatch.await();
-            } catch (InterruptedException e) {
-                // TODO: what should we do here?
-                e.printStackTrace();
-            }
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return false;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+
+        @Override
+        public boolean isDone() {
+            return resultLatch.getCount() == 0;
+        }
+
+        @Override
+        public List<Block> get() throws InterruptedException, ExecutionException {
+            resultLatch.await();
             return result;
+        }
+
+        @Override
+        public List<Block> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            if (resultLatch.await(timeout, unit))
+                return result;
+            else {
+                bus.unregister(this);
+                throw new TimeoutException();
+            }
         }
     }
 
@@ -373,9 +401,9 @@ public class ConnectionManager {
             // for now, if a peer suddenly gives us some invalid headers, we don't cancel previous download
             // tasks or discard earlier block headers they gave us.
             while (true) {
-                HeadersProtocol hp = new HeadersProtocol();
-                hp.requestHeaders(p, fromBlockID);
-                List<Block> receivedHeaders = hp.getResult();
+                HeadersFuture h = new HeadersFuture(p, fromBlockID);
+                h.run();
+                List<Block> receivedHeaders = h.get();
 
                 if (receivedHeaders == null) {
                     // choose a new peer and try again
@@ -388,7 +416,7 @@ public class ConnectionManager {
                     if ((Arrays.equals(fromBlockID, firstPredecessorID) || dataStore.getBlock(firstPredecessorID) != null)
                             && Block.verifyChain(receivedHeaders)) {
 
-                        headers.addAll(hp.getResult());
+                        headers.addAll(receivedHeaders);
                         // start downloading blocks
                         es.execute(() -> downloadBlocks(receivedHeaders));
 
