@@ -94,8 +94,8 @@ public class Miner implements Runnable{
 		return mineSuccess(Hex.toHexString(b.hashHeader()),b.getTarget());
 	}
 	
-	public static boolean checkBlockDifficulty(DataStore ds, Block b) throws SQLException{
-		int targetShouldBe = calculatePackedTarget(ds, ds.getBlock(b.getPrevBlockHash()));
+	public static boolean checkBlockDifficulty(DataStore ds, Block b, Block parent) throws SQLException{
+		int targetShouldBe = calculatePackedTarget(ds, parent);
 		
 		return mineSuccess(unpackTarget(targetShouldBe),b.getTarget());
 	}
