@@ -148,7 +148,7 @@ public class DatabaseStore implements DataStore {
     }
 
     public List<Block> getNMostRecentBlocks(int n) throws SQLException {
-        getNMostRecentBlocks(n, latestBlock);
+        return getNMostRecentBlocks(n, latestBlock);
     }
 
     public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {

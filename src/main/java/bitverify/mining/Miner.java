@@ -47,12 +47,9 @@ public class Miner implements Runnable{
 	//Whether we are currently mining
 	private boolean mining;
 	
-	//The mining target (the hash of the block must be less than the unpacked target)
-	private int packedTarget;
-	private final int initialTarget = 0x08800000;
 	//Ensure the target does not go outside the specified range
-	private final BigInteger minTarget = new BigInteger("1",16);				//0x03000001 is min possible
-	private final BigInteger maxTarget = new BigInteger("f",16).shiftLeft(255); //0x20ffffff is max possible
+	private static final BigInteger minTarget = new BigInteger("1",16);				//0x03000001 is min possible
+	private static final BigInteger maxTarget = new BigInteger("f",16).shiftLeft(255); //0x20ffffff is max possible
 	
 	//Minimum of 1
 	//Maximum of f << 255
@@ -60,14 +57,14 @@ public class Miner implements Runnable{
 	private static final int byteOffset = 3;	//A constant used in unpacking the target
 	
 	//The number of blocks before we recalculate the difficulty
-	//private int adjustTargetFrequency = 1008;
+	//private static final int adjustTargetFrequency = 1008;
 	//The amount of time we want adjustTargetFrequency blocks to take to mine, in milliseconds
 	//(one week)
-	//private long idealMiningTime = 604800000;
+	//private static final long idealMiningTime = 604800000;
 	
 	//Test times
-	private int adjustTargetFrequency = 2;
-	private long idealMiningTime = 10000;
+	private static final int adjustTargetFrequency = 2;
+	private static final long idealMiningTime = 8000;
 	
 	//The block we are currently mining
 	private Block blockMining;
@@ -95,6 +92,12 @@ public class Miner implements Runnable{
 	//Determine whether the block's hash meets it's target requirements
 	public static boolean blockHashMeetDifficulty(Block b){
 		return mineSuccess(Hex.toHexString(b.hashHeader()),b.getTarget());
+	}
+	
+	public static boolean checkBlockDifficulty(DataStore ds, Block b, Block parent) throws SQLException{
+		int targetShouldBe = calculatePackedTarget(ds, parent);
+		
+		return mineSuccess(unpackTarget(targetShouldBe),b.getTarget());
 	}
 	
 	//Determine whether a hash meets the target's difficulty
@@ -125,9 +128,9 @@ public class Miner implements Runnable{
 			try{
 				result = Hex.toHexString(blockMining.hashHeader());
 
-				if (mineSuccess(result, this.packedTarget)){
-					//System.out.println("Success");
-					//System.out.println(result);
+				if (mineSuccess(result, blockMining.getTarget())){
+					System.out.println("Success");
+					System.out.println("Block Hash: "+result);
 					//System.out.println(blockMining.getNonce());
 					
 					//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
@@ -159,8 +162,8 @@ public class Miner implements Runnable{
 	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
-		int target = calculatePackedTarget();
-		setPackedTarget(target);
+		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock());
+		//setPackedTarget(target);
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
@@ -187,10 +190,6 @@ public class Miner implements Runnable{
     	
     	newMiningBlock(entries);
     }
-	
-	public void setPackedTarget(int p){
-		packedTarget = p;
-	}
 	
 	//Calculate the packed representation of the target from the string
 	public static int packTarget(String s){
@@ -240,46 +239,52 @@ public class Miner implements Runnable{
 		return result.toString(16);
 	}
 	
+	public static String stringFormat(String s){
+		while (s.length() < 64){
+			s = "0"+s;
+		}
+		return s;
+	}
+	
 	//Reject new blocks that don't adhere to this target
-	public int calculatePackedTarget() throws SQLException{
+	public static int calculatePackedTarget(DataStore ds, Block block) throws SQLException{
 		
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
-		long blocksCount = dataStore.getBlocksCount();
+		long blocksCount = block.getHeight();
 		
-		//System.out.println("Number of blocks"+blocksCount);
-		
+		// When we can get adjustTargetFrequency before the current
 		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 1)) {
-			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
+			List<Block> nMostRecent = ds.getNMostRecentBlocks(adjustTargetFrequency + 1, block);
 			
 			//These datastore retrievals seems to return incorrect blocks
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency-1).getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 			
 			//System.out.println("Most Recent: "+mostRecentTime);
 			//System.out.println("No ago: "+nAgoTime);
-			//System.out.println("Difference: "+difference);
+			System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
 			if (difference > idealMiningTime*4) difference = idealMiningTime*4;
 			
-			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(packedTarget),16))).divide(BigInteger.valueOf(idealMiningTime));
+			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(block.getTarget()),16))).divide(BigInteger.valueOf(idealMiningTime));
 			
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			//System.out.println("New Target: "+newTarget);
+			System.out.println("New Target: "+stringFormat(newTarget.toString(16)));
 		
 			return packTarget(newTarget.toString(16));
 		}
-		else if(blocksCount == 0){
+		//else if(blocksCount == 0){
 			//Start with initial target
-			return initialTarget;
-		}
+		//	return initialTarget;
+		//}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
-			return dataStore.getMostRecentBlock().getTarget();
+			return block.getTarget();
 		}
 	}
 	
