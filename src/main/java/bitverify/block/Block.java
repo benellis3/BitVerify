@@ -188,9 +188,8 @@ public class Block {
     }
 
     /**
-     * Creates a array hash for the current block.
-     *
-     * @return 32 byte array hash
+     * Calucaltes the hash of this block's header. Also updates the blockID to match the calculated hash as they should always be consistent.
+     * @return the header hash as a byte array
      */
     public byte[] hashHeader() {
         ByteArrayOutputStream header = new ByteArrayOutputStream();
@@ -202,7 +201,8 @@ public class Block {
         }
         byte[] firstHash = Hash.hashBytes(header.toByteArray());
         byte[] secondHash = Hash.hashBytes(firstHash);
-        return secondHash;
+        blockID = secondHash;
+        return blockID;
     }
 
     /**
