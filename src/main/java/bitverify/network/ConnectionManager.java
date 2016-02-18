@@ -441,11 +441,33 @@ public class ConnectionManager {
             }
         }
 
+
+
         /**
          * Download given blocks in a distributed fashion, in parallel.
          */
         private void downloadBlocks(List<Block> headers) {
             // TODO: implement this...
+
+            // evenly divide up the headers we have amongst our peers
+            int i = 0;
+            while (i < headers.size()) {
+                for (PeerHandler peer : peers) {
+                    MessageProto.GetBlocksMessage gbm = MessageProto.GetBlocksMessage.newBuilder()
+                            .setBlockID(ByteString.copyFrom(headers.get(i).getBlockID()))
+                            .build();
+
+                    MessageProto.Message message = MessageProto.Message.newBuilder()
+                            .setType(MessageProto.Message.Type.GET_BLOCK)
+                            .setGetBlock(gbm)
+                            .build();
+
+
+                }
+
+
+            }
+
         }
 
 

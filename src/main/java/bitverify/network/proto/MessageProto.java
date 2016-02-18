@@ -126,17 +126,17 @@ public final class MessageProto {
     bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder getGetHeadersOrBuilder();
 
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    boolean hasGetBlocks();
+    boolean hasGetBlock();
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlocks();
+    bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlock();
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlocksOrBuilder();
+    bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlockOrBuilder();
   }
   /**
    * Protobuf type {@code Message}
@@ -308,12 +308,12 @@ public final class MessageProto {
             case 82: {
               bitverify.network.proto.MessageProto.GetBlocksMessage.Builder subBuilder = null;
               if (((bitField0_ & 0x00000200) == 0x00000200)) {
-                subBuilder = getBlocks_.toBuilder();
+                subBuilder = getBlock_.toBuilder();
               }
-              getBlocks_ = input.readMessage(bitverify.network.proto.MessageProto.GetBlocksMessage.PARSER, extensionRegistry);
+              getBlock_ = input.readMessage(bitverify.network.proto.MessageProto.GetBlocksMessage.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(getBlocks_);
-                getBlocks_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(getBlock_);
+                getBlock_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000200;
               break;
@@ -394,6 +394,10 @@ public final class MessageProto {
        * <code>GET_HEADERS = 8;</code>
        */
       GET_HEADERS(7, 8),
+      /**
+       * <code>GET_BLOCK = 9;</code>
+       */
+      GET_BLOCK(8, 9),
       ;
 
       /**
@@ -428,6 +432,10 @@ public final class MessageProto {
        * <code>GET_HEADERS = 8;</code>
        */
       public static final int GET_HEADERS_VALUE = 8;
+      /**
+       * <code>GET_BLOCK = 9;</code>
+       */
+      public static final int GET_BLOCK_VALUE = 9;
 
 
       public final int getNumber() { return value; }
@@ -442,6 +450,7 @@ public final class MessageProto {
           case 6: return VERSION;
           case 7: return ACK;
           case 8: return GET_HEADERS;
+          case 9: return GET_BLOCK;
           default: return null;
         }
       }
@@ -677,25 +686,25 @@ public final class MessageProto {
       return getHeaders_;
     }
 
-    public static final int GETBLOCKS_FIELD_NUMBER = 10;
-    private bitverify.network.proto.MessageProto.GetBlocksMessage getBlocks_;
+    public static final int GETBLOCK_FIELD_NUMBER = 10;
+    private bitverify.network.proto.MessageProto.GetBlocksMessage getBlock_;
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    public boolean hasGetBlocks() {
+    public boolean hasGetBlock() {
       return ((bitField0_ & 0x00000200) == 0x00000200);
     }
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    public bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlocks() {
-      return getBlocks_;
+    public bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlock() {
+      return getBlock_;
     }
     /**
-     * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+     * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
-    public bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlocksOrBuilder() {
-      return getBlocks_;
+    public bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlockOrBuilder() {
+      return getBlock_;
     }
 
     private void initFields() {
@@ -708,7 +717,7 @@ public final class MessageProto {
       version_ = bitverify.network.proto.MessageProto.Version.getDefaultInstance();
       ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
       getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
-      getBlocks_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
+      getBlock_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -762,8 +771,8 @@ public final class MessageProto {
           return false;
         }
       }
-      if (hasGetBlocks()) {
-        if (!getGetBlocks().isInitialized()) {
+      if (hasGetBlock()) {
+        if (!getGetBlock().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -803,7 +812,7 @@ public final class MessageProto {
         output.writeMessage(9, getHeaders_);
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeMessage(10, getBlocks_);
+        output.writeMessage(10, getBlock_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -852,7 +861,7 @@ public final class MessageProto {
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(10, getBlocks_);
+          .computeMessageSize(10, getBlock_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -971,7 +980,7 @@ public final class MessageProto {
           getVersionFieldBuilder();
           getAckFieldBuilder();
           getGetHeadersFieldBuilder();
-          getGetBlocksFieldBuilder();
+          getGetBlockFieldBuilder();
         }
       }
       private static Builder create() {
@@ -1030,10 +1039,10 @@ public final class MessageProto {
           getHeadersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000100);
-        if (getBlocksBuilder_ == null) {
-          getBlocks_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
+        if (getBlockBuilder_ == null) {
+          getBlock_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
         } else {
-          getBlocksBuilder_.clear();
+          getBlockBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000200);
         return this;
@@ -1135,10 +1144,10 @@ public final class MessageProto {
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000200;
         }
-        if (getBlocksBuilder_ == null) {
-          result.getBlocks_ = getBlocks_;
+        if (getBlockBuilder_ == null) {
+          result.getBlock_ = getBlock_;
         } else {
-          result.getBlocks_ = getBlocksBuilder_.build();
+          result.getBlock_ = getBlockBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -1183,8 +1192,8 @@ public final class MessageProto {
         if (other.hasGetHeaders()) {
           mergeGetHeaders(other.getGetHeaders());
         }
-        if (other.hasGetBlocks()) {
-          mergeGetBlocks(other.getGetBlocks());
+        if (other.hasGetBlock()) {
+          mergeGetBlock(other.getGetBlock());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1237,8 +1246,8 @@ public final class MessageProto {
             return false;
           }
         }
-        if (hasGetBlocks()) {
-          if (!getGetBlocks().isInitialized()) {
+        if (hasGetBlock()) {
+          if (!getGetBlock().isInitialized()) {
             
             return false;
           }
@@ -2228,120 +2237,120 @@ public final class MessageProto {
         return getHeadersBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.GetBlocksMessage getBlocks_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
+      private bitverify.network.proto.MessageProto.GetBlocksMessage getBlock_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.GetBlocksMessage, bitverify.network.proto.MessageProto.GetBlocksMessage.Builder, bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder> getBlocksBuilder_;
+          bitverify.network.proto.MessageProto.GetBlocksMessage, bitverify.network.proto.MessageProto.GetBlocksMessage.Builder, bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder> getBlockBuilder_;
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public boolean hasGetBlocks() {
+      public boolean hasGetBlock() {
         return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlocks() {
-        if (getBlocksBuilder_ == null) {
-          return getBlocks_;
+      public bitverify.network.proto.MessageProto.GetBlocksMessage getGetBlock() {
+        if (getBlockBuilder_ == null) {
+          return getBlock_;
         } else {
-          return getBlocksBuilder_.getMessage();
+          return getBlockBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public Builder setGetBlocks(bitverify.network.proto.MessageProto.GetBlocksMessage value) {
-        if (getBlocksBuilder_ == null) {
+      public Builder setGetBlock(bitverify.network.proto.MessageProto.GetBlocksMessage value) {
+        if (getBlockBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          getBlocks_ = value;
+          getBlock_ = value;
           onChanged();
         } else {
-          getBlocksBuilder_.setMessage(value);
+          getBlockBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000200;
         return this;
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public Builder setGetBlocks(
+      public Builder setGetBlock(
           bitverify.network.proto.MessageProto.GetBlocksMessage.Builder builderForValue) {
-        if (getBlocksBuilder_ == null) {
-          getBlocks_ = builderForValue.build();
+        if (getBlockBuilder_ == null) {
+          getBlock_ = builderForValue.build();
           onChanged();
         } else {
-          getBlocksBuilder_.setMessage(builderForValue.build());
+          getBlockBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000200;
         return this;
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public Builder mergeGetBlocks(bitverify.network.proto.MessageProto.GetBlocksMessage value) {
-        if (getBlocksBuilder_ == null) {
+      public Builder mergeGetBlock(bitverify.network.proto.MessageProto.GetBlocksMessage value) {
+        if (getBlockBuilder_ == null) {
           if (((bitField0_ & 0x00000200) == 0x00000200) &&
-              getBlocks_ != bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance()) {
-            getBlocks_ =
-              bitverify.network.proto.MessageProto.GetBlocksMessage.newBuilder(getBlocks_).mergeFrom(value).buildPartial();
+              getBlock_ != bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance()) {
+            getBlock_ =
+              bitverify.network.proto.MessageProto.GetBlocksMessage.newBuilder(getBlock_).mergeFrom(value).buildPartial();
           } else {
-            getBlocks_ = value;
+            getBlock_ = value;
           }
           onChanged();
         } else {
-          getBlocksBuilder_.mergeFrom(value);
+          getBlockBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000200;
         return this;
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public Builder clearGetBlocks() {
-        if (getBlocksBuilder_ == null) {
-          getBlocks_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
+      public Builder clearGetBlock() {
+        if (getBlockBuilder_ == null) {
+          getBlock_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
           onChanged();
         } else {
-          getBlocksBuilder_.clear();
+          getBlockBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000200);
         return this;
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlocksMessage.Builder getGetBlocksBuilder() {
+      public bitverify.network.proto.MessageProto.GetBlocksMessage.Builder getGetBlockBuilder() {
         bitField0_ |= 0x00000200;
         onChanged();
-        return getGetBlocksFieldBuilder().getBuilder();
+        return getGetBlockFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlocksOrBuilder() {
-        if (getBlocksBuilder_ != null) {
-          return getBlocksBuilder_.getMessageOrBuilder();
+      public bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlockOrBuilder() {
+        if (getBlockBuilder_ != null) {
+          return getBlockBuilder_.getMessageOrBuilder();
         } else {
-          return getBlocks_;
+          return getBlock_;
         }
       }
       /**
-       * <code>optional .GetBlocksMessage getBlocks = 10;</code>
+       * <code>optional .GetBlocksMessage getBlock = 10;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.GetBlocksMessage, bitverify.network.proto.MessageProto.GetBlocksMessage.Builder, bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder> 
-          getGetBlocksFieldBuilder() {
-        if (getBlocksBuilder_ == null) {
-          getBlocksBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getGetBlockFieldBuilder() {
+        if (getBlockBuilder_ == null) {
+          getBlockBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               bitverify.network.proto.MessageProto.GetBlocksMessage, bitverify.network.proto.MessageProto.GetBlocksMessage.Builder, bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder>(
-                  getGetBlocks(),
+                  getGetBlock(),
                   getParentForChildren(),
                   isClean());
-          getBlocks_ = null;
+          getBlock_ = null;
         }
-        return getBlocksBuilder_;
+        return getBlockBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:Message)
@@ -7738,29 +7747,29 @@ public final class MessageProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rMessage.proto\"\237\003\n\007Message\022\033\n\004type\030\001 \002(" +
+      "\n\rMessage.proto\"\255\003\n\007Message\022\033\n\004type\030\001 \002(" +
       "\0162\r.Message.Type\022 \n\007headers\030\002 \001(\0132\017.Head" +
       "ersMessage\022\034\n\005block\030\003 \001(\0132\r.BlockMessage" +
       "\022\034\n\005entry\030\004 \001(\0132\r.EntryMessage\022\025\n\005peers\030" +
       "\005 \001(\0132\006.Peers\022\033\n\010getPeers\030\006 \001(\0132\t.GetPee" +
       "rs\022\031\n\007version\030\007 \001(\0132\010.Version\022\021\n\003ack\030\010 \001" +
       "(\0132\004.Ack\022&\n\ngetHeaders\030\t \001(\0132\022.GetHeader" +
-      "sMessage\022$\n\tgetBlocks\030\n \001(\0132\021.GetBlocksM" +
-      "essage\"i\n\004Type\022\013\n\007HEADERS\020\001\022\t\n\005BLOCK\020\002\022\t" +
-      "\n\005ENTRY\020\003\022\t\n\005PEERS\020\004\022\014\n\010GETPEERS\020\005\022\013\n\007VE",
-      "RSION\020\006\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\"*\n\007Ver" +
-      "sion\022\037\n\nlistenPort\030\001 \002(\0132\013.NetAddress\" \n" +
-      "\003Ack\022\031\n\004addr\030\001 \001(\0132\013.NetAddress\"7\n\021GetHe" +
-      "adersMessage\022\021\n\tfromBlock\030\001 \002(\014\022\017\n\007toBlo" +
-      "ck\030\002 \001(\014\"!\n\016HeadersMessage\022\017\n\007headers\030\001 " +
-      "\003(\014\"#\n\020GetBlocksMessage\022\017\n\007blockID\030\001 \002(\014" +
-      "\"3\n\014BlockMessage\022\022\n\nblockBytes\030\001 \002(\014\022\017\n\007" +
-      "entries\030\002 \003(\014\"\"\n\014EntryMessage\022\022\n\nentryBy" +
-      "tes\030\001 \002(\014\"%\n\005Peers\022\034\n\007address\030\001 \003(\0132\013.Ne" +
-      "tAddress\",\n\nNetAddress\022\020\n\010hostName\030\001 \002(\t",
-      "\022\014\n\004port\030\002 \002(\005\"*\n\010GetPeers\022\036\n\tmyAddress\030" +
-      "\001 \002(\0132\013.NetAddressB\'\n\027bitverify.network." +
-      "protoB\014MessageProto"
+      "sMessage\022#\n\010getBlock\030\n \001(\0132\021.GetBlocksMe" +
+      "ssage\"x\n\004Type\022\013\n\007HEADERS\020\001\022\t\n\005BLOCK\020\002\022\t\n" +
+      "\005ENTRY\020\003\022\t\n\005PEERS\020\004\022\014\n\010GETPEERS\020\005\022\013\n\007VER",
+      "SION\020\006\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\022\r\n\tGET_" +
+      "BLOCK\020\t\"*\n\007Version\022\037\n\nlistenPort\030\001 \002(\0132\013" +
+      ".NetAddress\" \n\003Ack\022\031\n\004addr\030\001 \001(\0132\013.NetAd" +
+      "dress\"7\n\021GetHeadersMessage\022\021\n\tfromBlock\030" +
+      "\001 \002(\014\022\017\n\007toBlock\030\002 \001(\014\"!\n\016HeadersMessage" +
+      "\022\017\n\007headers\030\001 \003(\014\"#\n\020GetBlocksMessage\022\017\n" +
+      "\007blockID\030\001 \002(\014\"3\n\014BlockMessage\022\022\n\nblockB" +
+      "ytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\"\n\014EntryMess" +
+      "age\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n\007addr" +
+      "ess\030\001 \003(\0132\013.NetAddress\",\n\nNetAddress\022\020\n\010",
+      "hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"*\n\010GetPeers" +
+      "\022\036\n\tmyAddress\030\001 \002(\0132\013.NetAddressB\'\n\027bitv" +
+      "erify.network.protoB\014MessageProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -7779,7 +7788,7 @@ public final class MessageProto {
     internal_static_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Message_descriptor,
-        new java.lang.String[] { "Type", "Headers", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", "GetHeaders", "GetBlocks", });
+        new java.lang.String[] { "Type", "Headers", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", "GetHeaders", "GetBlock", });
     internal_static_Version_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Version_fieldAccessorTable = new
