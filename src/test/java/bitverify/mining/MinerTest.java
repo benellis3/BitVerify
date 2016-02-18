@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class MinerTest {
 
-	//Test whether hashes are successful when they should be
+	//Test whether hashes are successful
 	@Test
 	public void testMineSuccess() throws SQLException, IOException{
 		//We have an unpacked target of 003b20fa00000000000000000000000000000000000000000000000000000000
@@ -39,7 +39,7 @@ public class MinerTest {
 		}
 	}
 	
-	//Test whether mining targets are successfully unpacked from the integer representation
+	//Test whether mining targets are successfully unpacked from their integer representation
 	@Test
 	public void testUnpack() throws SQLException, IOException{
 		
@@ -90,7 +90,7 @@ public class MinerTest {
 		}
 	}
 	
-	//Test whether mining targets are successfully packed into the integer representation
+	//Test whether mining targets are successfully packed into their integer representation
 	@Test
 	public void testPack() throws SQLException, IOException{
 		
