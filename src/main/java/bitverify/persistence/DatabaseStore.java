@@ -117,20 +117,20 @@ public class DatabaseStore implements DataStore {
         return entryDao.query(entriesForBlockQuery);
     }
 
-    public List<Block> getNMostRecentBlocks(int n) throws SQLException {
+    public List<Block> getNMostRecentBlocks(int n,  Block fromBlock) throws SQLException {
         // Sorted with the recent block at (or near) the header of the block
         // n = 2 means return the most recent block and the one before
         CloseableIterator<Block> initialResults = blockDao.queryBuilder()
                 .orderBy("height", false)
                 .orderBy("timeStamp", true)
                 .where()
-                .between("height", latestBlock.getHeight() - n + 1, latestBlock.getHeight())
+                .between("height", fromBlock.getHeight() - n + 1, fromBlock.getHeight())
                 .iterator();
 
         // place results in a list
         ArrayList<Block> output = new ArrayList<>(n);
 
-        byte[] expectedID = latestBlock.getBlockID();
+        byte[] expectedID = fromBlock.getBlockID();
 
         try {
             while (initialResults.hasNext()) {
@@ -145,6 +145,10 @@ public class DatabaseStore implements DataStore {
         }
 
         return output;
+    }
+
+    public List<Block> getNMostRecentBlocks(int n) throws SQLException {
+        getNMostRecentBlocks(n, latestBlock);
     }
 
     public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {
