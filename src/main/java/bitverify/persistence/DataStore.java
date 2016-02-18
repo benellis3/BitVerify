@@ -39,7 +39,7 @@ public interface DataStore {
      * @param n the number of recent-most blocks to get.
      * @throws SQLException
      */
-    public List<Block> getNMostRecentBlocks(int n,  byte[] blockID) throws SQLException;
+    public List<Block> getNMostRecentBlocks(int n,  Block fromBlock) throws SQLException;
 
     /**
      * Get all of the blocks after a certain block or between two blocks, up to a limited number.
