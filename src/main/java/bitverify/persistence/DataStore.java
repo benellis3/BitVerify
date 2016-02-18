@@ -34,6 +34,14 @@ public interface DataStore {
     public List<Block> getNMostRecentBlocks(int n) throws SQLException;
 
     /**
+     * Gets the N most recent blocks, from (including) the given blockID backwards.
+     * Blocks returned only contain their headers, no entries.
+     * @param n the number of recent-most blocks to get.
+     * @throws SQLException
+     */
+    public List<Block> getNMostRecentBlocks(int n,  byte[] blockID) throws SQLException;
+
+    /**
      * Get all of the blocks after a certain block or between two blocks, up to a limited number.
      * @param idFrom get blocks after this block ID
      * @param idTo only get blocks before this block ID. Provide null if there is no limit.
