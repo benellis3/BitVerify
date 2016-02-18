@@ -67,7 +67,7 @@ public class Miner implements Runnable{
 	
 	//Test times
 	private int adjustTargetFrequency = 2;
-	private long idealMiningTime = 10000;
+	private long idealMiningTime = 8000;
 	
 	//The block we are currently mining
 	private Block blockMining;
@@ -126,8 +126,8 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 
 				if (mineSuccess(result, this.packedTarget)){
-					//System.out.println("Success");
-					//System.out.println(result);
+					System.out.println("Success");
+					System.out.println("Block Hash: "+result);
 					//System.out.println(blockMining.getNonce());
 					
 					//Add the successful block to the blockchain (it will ensure the entries are no longer unconfirmed)
@@ -159,7 +159,7 @@ public class Miner implements Runnable{
 	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
-		int target = calculatePackedTarget();
+		int target = calculatePackedTarget(dataStore.getMostRecentBlock());
 		setPackedTarget(target);
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
@@ -240,25 +240,31 @@ public class Miner implements Runnable{
 		return result.toString(16);
 	}
 	
+	public static String stringFormat(String s){
+		while (s.length() < 64){
+			s = "0"+s;
+		}
+		return s;
+	}
+	
 	//Reject new blocks that don't adhere to this target
-	public int calculatePackedTarget() throws SQLException{
+	public int calculatePackedTarget(Block b) throws SQLException{
 		
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
-		long blocksCount = dataStore.getBlocksCount();
+		long blocksCount = b.getHeight();
 		
-		//System.out.println("Number of blocks"+blocksCount);
-		
+		// When we can get adjustTargetFrequency before the current
 		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 1)) {
 			List<Block> nMostRecent = dataStore.getNMostRecentBlocks(adjustTargetFrequency + 1);
 			
 			//These datastore retrievals seems to return incorrect blocks
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency-1).getTimeStamp();
+			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 			
 			//System.out.println("Most Recent: "+mostRecentTime);
 			//System.out.println("No ago: "+nAgoTime);
-			//System.out.println("Difference: "+difference);
+			System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
@@ -269,14 +275,14 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			//System.out.println("New Target: "+newTarget);
+			System.out.println("New Target: "+stringFormat(newTarget.toString(16)));
 		
 			return packTarget(newTarget.toString(16));
 		}
-		else if(blocksCount == 0){
+		//else if(blocksCount == 0){
 			//Start with initial target
-			return initialTarget;
-		}
+		//	return initialTarget;
+		//}
 		else{
 			//If not every adjustTargetFrequency blocks then we use the same target as the most recent block
 			return dataStore.getMostRecentBlock().getTarget();
