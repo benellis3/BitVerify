@@ -57,13 +57,13 @@ public class Miner implements Runnable{
 	private static final int byteOffset = 3;	
 	
 	//We recalculate the mining difficulty every adjustTargetFrequency blocks
-	private static final int adjustTargetFrequency = 2;//1008;
+	private static int adjustTargetFrequency = 2;//1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
 	//(we want 1008 blocks to be mined every week/a block every 10 minutes)
-	private static final long idealMiningTime = 15000;//604800000;
+	private static long idealMiningTime = 8000;//604800000;
 	
 	//Proof of mining (we multiply the success target by the scale)
-	private static final int miningProofDifficultyScale = 0x2;
+	private static int miningProofDifficultyScale = 0x2;
 	private int currentMiningProofTarget;
 	
 	//The block we are currently mining
@@ -92,6 +92,34 @@ public class Miner implements Runnable{
 		
 		blockMining.setEntriesList(pool);
 
+	}
+	
+	/**
+     * Constructor for creating a miner for testing (setting constants)
+     *
+     * @param eventBus		instance of the event bus for sending successful blocks/proof of mining 
+     * @param dataStore		instance of the database for the miner
+     * @param adjustTargetFrequency			how many blocks to wait before recalculating the mining difficulty
+     * @param idealMiningTime				the number of milliseconds that 'adjustTargetFrequency' blocks should take to mine
+     * @param miningProofDifficultyScale	amount to multiply the target by to get the proof of mining target
+     */
+	public Miner(Bus eventBus, DataStore dataStore, int adjustTargetFrequency, int idealMiningTime, int miningProofDifficultyScale) throws SQLException, IOException{
+		this.dataStore = dataStore;
+		
+		//Set up the event bus
+		this.eventBus = eventBus;
+		eventBus.register(this);
+		
+		newMiningBlock(new ArrayList<Entry>());
+		
+		//Add unconfirmed entries from the database to the block for mining
+		List<Entry> pool = dataStore.getUnconfirmedEntries();
+		
+		blockMining.setEntriesList(pool);
+
+		Miner.adjustTargetFrequency = adjustTargetFrequency;
+		Miner.idealMiningTime = idealMiningTime;
+		Miner.miningProofDifficultyScale = miningProofDifficultyScale;
 	}
 	
 	/**
@@ -317,18 +345,6 @@ public class Miner implements Runnable{
 	}
 	
 	/**
-     * Make the hex string 64 digits long by adding leading zeros
-     * 
-     *  @param s	the string to format
-     */
-	public static String stringFormat(String s){
-		while (s.length() < 64){
-			s = "0"+s;
-		}
-		return s;
-	}
-	
-	/**
      * Calculate the target for the next block (i.e. the block we are mining, or a block we have received
      * from the network) by looking at the prior blocks. We look at the database and see how long the previous
      * 'adjustTargetFrequency' blocks took to mine, and adjust our target, every 'adjustTargetFrequency' blocks.
@@ -340,17 +356,25 @@ public class Miner implements Runnable{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		long blocksCount = block.getHeight();
 		
-		// We adjust the target every 'adjustTargetFrequency' blocks
-		if ((blocksCount % adjustTargetFrequency == 0) && (blocksCount > 0)) {
+		// We adjust the target after every 'adjustTargetFrequency' blocks
+		// i.e.
+		// adjustTargetFrequency = 2
+		// idealMiningTime = 100
+		// b0 is the genesis block
+		// b0 - b1 - b2 - b3 - b4 - b5 - b6
+		// recalculate on b3 based on the time from b0 to b2 (we want b0 to b2 to take 100 milliseconds)
+		// recalculate on b6 based on time from b3 to b5 (we want b3 to b5 to take 100 milliseconds)
+		if (((blocksCount + 1) % (adjustTargetFrequency + 1) == 0) && (blocksCount > 0)) {
 			List<Block> nMostRecent = ds.getNMostRecentBlocks(adjustTargetFrequency + 1, block);
 			
+			//We require that the timestamp for n blocks ago is earlier than the most recent
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
 			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 			
 			//System.out.println("Most Recent: "+mostRecentTime);
 			//System.out.println("No ago: "+nAgoTime);
-			//System.out.println("Time Difference: "+difference);
+			System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
@@ -368,6 +392,8 @@ public class Miner implements Runnable{
 			return packTarget(newTarget.toString(16));
 		}
 		else{
+			//System.out.println("Using targ: "+stringFormat(unpackTarget(block.getTarget())));
+			
 			//Otherwise use the same target as the most recent block
 			return block.getTarget();
 		}
@@ -386,6 +412,18 @@ public class Miner implements Runnable{
 		proofTarget.add(BigInteger.valueOf(0x70));
 		
 		return packTarget(proofTargetScaled.toString(16));
+	}
+	
+	/**
+     * Make the hex string 64 digits long by adding leading zeros
+     * 
+     *  @param s	the string to format
+     */
+	public static String stringFormat(String s){
+		while (s.length() < 64){
+			s = "0"+s;
+		}
+		return s;
 	}
 	
 	//Temporary method for quick tests
