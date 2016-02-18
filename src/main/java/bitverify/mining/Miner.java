@@ -15,6 +15,7 @@ import com.squareup.otto.ThreadEnforcer;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.NewEntryEvent;
+import bitverify.network.NewMiningProofEvent;
 import bitverify.persistence.DataStore;
 import bitverify.persistence.DatabaseStore;
 
@@ -64,7 +65,11 @@ public class Miner implements Runnable{
 	
 	//Test times
 	private static final int adjustTargetFrequency = 2;
-	private static final long idealMiningTime = 8000;
+	private static final long idealMiningTime = 15000;
+	
+	//Proof of mining targets
+	private static final int miningProofDifficultyScale = 0x2;
+	private int currentMiningProofTarget;
 	
 	//The block we are currently mining
 	private Block blockMining;
@@ -124,10 +129,11 @@ public class Miner implements Runnable{
 
 		//System.out.println("Target is"+unpackTarget(packedTarget));
 		
+		
+		
 		while (mining){
 			try{
 				result = Hex.toHexString(blockMining.hashHeader());
-
 				if (mineSuccess(result, blockMining.getTarget())){
 					System.out.println("Success");
 					System.out.println("Block Hash: "+result);
@@ -139,13 +145,17 @@ public class Miner implements Runnable{
 					eventBus.post(new BlockFoundEvent(blockMining));
 	
 					newMiningBlock(new ArrayList<Entry>());
+					
+					
 				}
-				//else if (mineSuccess(result, this.packedProofTarget)){
+				else if (mineSuccess(result, currentMiningProofTarget)){
 				//	//Application logic must broadcast to peers
 				//	//Must maintain a list of peers in database that have received proof from
 				//	//Reject incoming entries from public IPs not from the list
-				//	eventBus.post(new ProofBlockFoundEvent(blockMining));
-				//}
+					eventBus.post(new NewMiningProofEvent(blockMining));
+					System.out.println("Proof Success");
+					System.out.println("Block Hash: "+result);
+				}
 				
 				//Increment the header's nonce to generate a new hash
 				blockMining.incrementNonce();
@@ -163,7 +173,15 @@ public class Miner implements Runnable{
 		//Create the next block to mine, passing the most recently mined block (it's hash is required for the header)
 		
 		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock());
-		//setPackedTarget(target);
+		
+		BigInteger proofTarget = new BigInteger(unpackTarget(target),16);
+		
+		BigInteger proofTargetScaled = proofTarget.multiply(BigInteger.valueOf(miningProofDifficultyScale));
+		proofTarget.add(BigInteger.valueOf(0x70));
+		
+		this.currentMiningProofTarget = packTarget(proofTargetScaled.toString(16));
+		
+		System.out.println("New Proof Target: "+unpackTarget(currentMiningProofTarget));
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
