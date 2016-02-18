@@ -18,21 +18,27 @@ import bitverify.mining.Miner;
 
 public class BlockTest {
     
-    Block genesis = Block.getGenesisBlock();
-    
     @Test
-    public void createGenesisBlock(){
+    public void createGenesisBlock() throws Exception{
         Block genesis = Block.getGenesisBlock();
         assertTrue(genesis.isVerified());
-        assertEquals(genesis.getNonce(),0);
+        assertTrue(Block.verifyChain(Arrays.asList(genesis)));
+    }
+    
+    @Test
+    public void changedNonceGenesis() throws Exception{
+        Block genesis = Block.getGenesisBlock();
+        genesis.incrementNonce();
+        assertFalse(Block.verifyChain(Arrays.asList(genesis)));
     }
     
     @Test
     public void singleEntrySerialize() throws IOException{
+        Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         
         List<Entry> entries = Arrays.asList(entry1);
-        int target = 0;
+        int target = Integer.MAX_VALUE;
         int nonce = 0;
         Block firstBlock = new Block(genesis,target,nonce,entries);
         byte[] serialBlock = firstBlock.serializeHeader();
@@ -45,9 +51,10 @@ public class BlockTest {
     
     @Test
     public void listTwoValidBlocksVerified() throws Exception{
+        Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         List<Entry> entries1 = Arrays.asList(entry1);
-        int target = 3;
+        int target = Integer.MAX_VALUE;
         int nonce = 0;
         
         Block block1 = new Block(genesis,target,nonce,entries1);
@@ -58,11 +65,12 @@ public class BlockTest {
     
     @Test
     public void listTwoInvalidBlocks() throws Exception{
+        Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         Entry entry2 = EntryTest.generateEntry2();
         List<Entry> entries1 = Arrays.asList(entry1);
         List<Entry> entries2 = Arrays.asList(entry2);
-        int target = 3;
+        int target = Integer.MAX_VALUE;
         int nonce = 0;
         
         Block block1 = new Block(genesis,target,nonce,entries1);
@@ -73,10 +81,11 @@ public class BlockTest {
     
     @Test
     public void setOneEntryValid() throws IOException{
+        Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         
         List<Entry> entries = Arrays.asList(entry1);
-        int target = 3;
+        int target = Integer.MAX_VALUE;
         int nonce = 0;
         Block firstBlock = new Block(genesis,target,nonce,entries);
         byte[] serialBlock = firstBlock.serializeHeader();
@@ -86,11 +95,12 @@ public class BlockTest {
     
     @Test
     public void setOneEntryInvalid() throws IOException{
+        Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
         Entry entry2 = EntryTest.generateEntry2();
         
         List<Entry> entries = Arrays.asList(entry1);
-        int target = 3;
+        int target = Integer.MAX_VALUE;
         int nonce = 0;
         Block firstBlock = new Block(genesis,target,nonce,entries);
         byte[] serialBlock = firstBlock.serializeHeader();
