@@ -14,6 +14,7 @@ message Message {
     optional Version version = 7;
     optional Ack ack = 8;
     optional GetHeadersMessage getHeaders = 9;
+    optional GetBlocksMessage getBlocks = 10;
 }
 message Version {
     required NetAddress listenPort = 1; // address and port on which the sender is listening
@@ -30,6 +31,10 @@ message GetHeadersMessage {
 
 message HeadersMessage {
     repeated bytes headers = 1;
+}
+
+message GetBlocksMessage {
+    required bytes blockID = 1;
 }
 
 message BlockMessage {
