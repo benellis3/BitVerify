@@ -29,11 +29,13 @@ import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.sun.xml.internal.ws.client.sei.ResponseBuilder;
 
 
 /**
  * This class is responsible for co-ordination of network functions.
  * It controls the incoming and outgoing parts of the connection.
+ *
  * @author Ben Ellis, Robert Eady
  */
 public class ConnectionManager {
@@ -44,8 +46,9 @@ public class ConnectionManager {
     private List<PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private BlockProtocol blockProtocol;
+
     // underscore courtesy of Laszlo Makk :p
-    private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException{
+    private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException {
         peers = new CopyOnWriteArrayList<>(); // use addIfAbsent to avoid adding duplicates
         this.bus = bus;
         bus.register(this);
@@ -64,18 +67,15 @@ public class ConnectionManager {
                                 try {
                                     PeerHandler p = new PeerHandler(s, es, ds, bus);
                                     addPeer(p);
-                                }
-                                catch(TimeoutException time) {
+                                } catch (TimeoutException time) {
                                     // this means no response was received
                                     System.out.println("No response received within the time limit");
-                                }
-                                catch(InterruptedException | ExecutionException ie) {
+                                } catch (InterruptedException | ExecutionException ie) {
                                     ie.printStackTrace();
                                 }
                             });
                         }
-                    }
-                    catch (IOException ioe) {
+                    } catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
                 }
@@ -86,15 +86,13 @@ public class ConnectionManager {
         // block.
         es.execute(() -> {
             for (InetSocketAddress peerAddress : initialPeers) {
-                es.execute(()-> {
+                es.execute(() -> {
                     try {
-                        PeerHandler p = new PeerHandler(peerAddress,listenPort,es, ds, bus);
+                        PeerHandler p = new PeerHandler(peerAddress, listenPort, es, ds, bus);
                         peers.add(p);
-                    }
-                    catch(TimeoutException toe) {
+                    } catch (TimeoutException toe) {
                         System.out.println("Failed to contact an initial peer");
-                    }
-                    catch(InterruptedException | ExecutionException | IOException ie) {
+                    } catch (InterruptedException | ExecutionException | IOException ie) {
                         ie.printStackTrace();
                     }
                 });
@@ -105,21 +103,23 @@ public class ConnectionManager {
         });
     }
 
-    public ConnectionManager(int listenPort, DataStore dataStore, Bus bus) throws IOException{
-    	List<InetSocketAddress> initialPeers = getInitialPeers(); // it works!
+    public ConnectionManager(int listenPort, DataStore dataStore, Bus bus) throws IOException {
+        List<InetSocketAddress> initialPeers = getInitialPeers(); // it works!
         _initialise(initialPeers, listenPort, dataStore, bus);
     }
+
     // This is used primarily for testing
     public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort, DataStore dataStore, Bus bus)
-            throws IOException{
+            throws IOException {
         _initialise(initialPeers, listenPort, dataStore, bus);
     }
+
     /**
      * Peers are contacted in the constructor, but this method will send a GETPEERS message
      * to all of the current peers that the class knows about.
      */
     public void getPeers() {
-        for(PeerHandler p : peers) {
+        for (PeerHandler p : peers) {
             GetPeers getPeers = GetPeers.newBuilder().build();
             Message message = Message.newBuilder()
                     .setType(Message.Type.GETPEERS)
@@ -128,16 +128,21 @@ public class ConnectionManager {
             p.send(message);
         }
     }
-    public int getNumPeers() {return peers.size();}
+
+    public int getNumPeers() {
+        return peers.size();
+    }
+
     /**
      * Send the given message to all connected peers
+     *
      * @param block The block to be broadcast
      * @throws IOException in the case that serialization fails
      */
     public void broadcastBlock(Block block) throws IOException {
         List<Entry> entryList = block.getEntriesList();
         List<ByteString> byteStringList = new ArrayList<>();
-        for(Entry e : entryList) {
+        for (Entry e : entryList) {
             byteStringList.add(ByteString.copyFrom(e.serialize()));
         }
 
@@ -151,12 +156,14 @@ public class ConnectionManager {
                 .setBlock(blockMessage)
                 .build();
 
-        for(PeerHandler peer : peers) {
+        for (PeerHandler peer : peers) {
             peer.send(msg);
         }
     }
+
     /**
      * Send the given message to all connected peers.
+     *
      * @param e The entry which must be broadcast
      * @throws IOException in the case that serialization fails
      */
@@ -168,17 +175,22 @@ public class ConnectionManager {
                 .setType(Message.Type.ENTRY)
                 .setEntry(entryMessage)
                 .build();
-        for(PeerHandler peer : peers) {
+        for (PeerHandler peer : peers) {
             peer.send(message);
         }
     }
+
     public void printPeers() {
-        for(PeerHandler p : peers) {
+        for (PeerHandler p : peers) {
             InetSocketAddress address = p.getAddress();
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
-    protected Collection<PeerHandler> peers(){return peers;}
+
+    protected Collection<PeerHandler> peers() {
+        return peers;
+    }
+
     /**
      * For testing only - not relevant to actual version
      */
@@ -187,14 +199,17 @@ public class ConnectionManager {
         // prints the document description
         System.out.println(nee.getNewEntry().getDocDescription());
     }
+
     @Subscribe
     public void onNewBlockEvent(NewBlockEvent nbe) {
         System.out.println(nbe.getNewBlock().getNonce());
     }
+
     /**
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid
      * significant latency.
+     *
      * @param event The GetPeersEvent
      */
     @Subscribe
@@ -204,7 +219,7 @@ public class ConnectionManager {
             InetSocketAddress addressFrom = event.getSocketAddress();
             List<NetAddress> peerAddresses = new ArrayList<>();
             PeerHandler sender = null;
-            for(PeerHandler p : peers) {
+            for (PeerHandler p : peers) {
                 InetSocketAddress peerListenAddress = p.getListenAddress();
                 if (p.getListenAddress().equals(addressFrom)) {
                     sender = p;
@@ -227,46 +242,47 @@ public class ConnectionManager {
      */
     private List<InetSocketAddress> getInitialPeers() {
         URL url;
-		try {
-			// Set up input stream to node server
-			url = new URL(PEER_URL);
-	        URLConnection conn = url.openConnection();
-	        conn.setConnectTimeout(10000);
-	        conn.setReadTimeout(45000);
-	        InputStream input = conn.getInputStream();
-	        
-	        // Convert input to json
-	        Map<String, List<String>> returnedData = new Gson().fromJson(
+        try {
+            // Set up input stream to node server
+            url = new URL(PEER_URL);
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(45000);
+            InputStream input = conn.getInputStream();
+
+            // Convert input to json
+            Map<String, List<String>> returnedData = new Gson().fromJson(
                     new InputStreamReader(input, "UTF-8"),
                     new TypeToken<Map<String, List<String>>>() {
                     }.getType());
-	        
-	        // Get list of nodes
-	        List<String> addresses = returnedData.get("nodes");
-	        
-	        //Convert that list into SocketAddresses
-	        List<InetSocketAddress> socketAddresses = new ArrayList<InetSocketAddress>();
-	        for (String address : addresses) {
-	        	String[] components = address.split(":");
-	        	if (components.length == 2) {
-	        		// TODO checking input here so we don't crash
-	        		socketAddresses.add(new InetSocketAddress(components[0], Integer.parseInt(components[1])));
-	        	}
-	        }
-	        return socketAddresses;
-	        
-		} catch (MalformedURLException e) {
-			//TODO actually handle these exceptions
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-		
+
+            // Get list of nodes
+            List<String> addresses = returnedData.get("nodes");
+
+            //Convert that list into SocketAddresses
+            List<InetSocketAddress> socketAddresses = new ArrayList<InetSocketAddress>();
+            for (String address : addresses) {
+                String[] components = address.split(":");
+                if (components.length == 2) {
+                    // TODO checking input here so we don't crash
+                    socketAddresses.add(new InetSocketAddress(components[0], Integer.parseInt(components[1])));
+                }
+            }
+            return socketAddresses;
+
+        } catch (MalformedURLException e) {
+            //TODO actually handle these exceptions
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
     }
 
     /**
      * Synchronize when adding new peers, allowing the BlockProtocol class to choose a random peer without concurrency issues.
+     *
      * @param p the peer handler
      */
     private void addPeer(PeerHandler p) {
@@ -276,54 +292,33 @@ public class ConnectionManager {
     }
 
 
+    /**
+     * Handles sending a single request for headers to a peer, then awaiting the response.
+     */
+    public class HeadersProtocol {
+        private List<Block> result;
+        private CountDownLatch resultLatch = new CountDownLatch(1);
 
-    public void initiateBlockDownload() {
-        // First obtain block headers from some particular peer: send a GetBlockHeaders message
-        // now validate this sequence of headers: upon receiving a BlockHeaders message
-        // then, in parallel,
-        // - get more headers from same peer
-        // - download blocks from all peers in parallel
-
-
-    }
-
-
-    public class BlockProtocol {
-        private Random rand = new Random();
-        private volatile boolean awaitingHeaders = false;
-
-        BlockProtocol() {
-            // we're always on the lookout for new blocks.
-            bus.register(this);
-        }
-
-        void requestHeaders() throws SQLException{
-            // choose a peer
-            PeerHandler p;
-            synchronized (peers) {
-                int randomIndex = rand.nextInt(peers.size());
-                p = peers.get(randomIndex);
-            }
-
+        void requestHeaders(PeerHandler peer, byte[] fromBlockID) throws SQLException {
             // send a GetBlockHeaders message
             // ask for blocks from our latest known block
-            Block latestKnown = dataStore.getMostRecentBlock();
             GetHeadersMessage getHeadersMessage = GetHeadersMessage.newBuilder()
-                    .setFromBlock(ByteString.copyFrom(latestKnown.getBlockID()))
+                    .setFromBlock(ByteString.copyFrom(fromBlockID))
                     .build();
             Message m = Message.newBuilder()
                     .setType(Type.GET_HEADERS)
                     .setGetHeaders(getHeadersMessage)
                     .build();
 
-            p.send(m);
-            awaitingHeaders = true;
+            peer.send(m);
+            // register for replies once we've sent the request
+            bus.register(this);
         }
 
         @Subscribe
         public void onHeadersMessage(HeadersMessageEvent e) {
-            if (!awaitingHeaders)
-                return;
+            // deregister now we've got our response
+            bus.unregister(this);
 
             List<ByteString> serializedHeaders = e.getHeadersMessage().getHeadersList();
             List<Block> headers = new ArrayList<>(serializedHeaders.size());
@@ -331,19 +326,99 @@ public class ConnectionManager {
             try {
                 for (ByteString bytes : serializedHeaders)
                     headers.add(Block.deserialize(bytes.toByteArray()));
+                result = headers;
             } catch (IOException ex) {
-                // TODO: a header was invalidly formatted, we should discard the sequence and re-request from another peer
-                return;
+                // a header was invalidly formatted, we will discard the sequence and re-request from another peer
             }
 
-            // validate headers sequence
-            if (!Block.verifyChain(headers))
-                return;
-
-
-
-
+            // notify that we got a response (even if it was rubbish)
+            resultLatch.countDown();
         }
+
+        List<Block> getResult() {
+            try {
+                resultLatch.await();
+            } catch (InterruptedException e) {
+                // TODO: what should we do here?
+                e.printStackTrace();
+            }
+            return result;
+        }
+    }
+
+    private static final int MAX_HEADERS = 10000;
+
+    public class BlockProtocol {
+
+        private Random rand = new Random();
+        private List<Block> headers;
+
+        BlockProtocol() {
+            // we're always on the lookout for new blocks.
+            bus.register(this);
+        }
+
+        /**
+         * Performs the initial block download process.
+         * Method will block while waiting for headers to arrive, so should be called on a separate thread.
+         * @throws SQLException A database error occurred.
+         */
+        public void initiateBlockDownload() throws SQLException {
+            // First obtain block headers from some particular peer - send a GetBlockHeaders message
+            // then validate this sequence of headers upon receiving a BlockHeaders message
+            PeerHandler p = chooseNewPeer();
+            byte[] fromBlockID = dataStore.getMostRecentBlock().getBlockID();
+
+            // we will break once we've got all the headers, having dispatched download tasks asynchronously.
+            // for now, if a peer suddenly gives us some invalid headers, we don't cancel previous download
+            // tasks or discard earlier block headers they gave us.
+            while (true) {
+                HeadersProtocol hp = new HeadersProtocol();
+                hp.requestHeaders(p, fromBlockID);
+                List<Block> receivedHeaders = hp.getResult();
+
+                if (receivedHeaders == null) {
+                    // choose a new peer and try again
+                    p = chooseNewPeer();
+                } else {
+                    byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
+                    // first header might be either:
+                    // 1. the header following our requested 'from' block ID
+                    // 2. a header following some older block we have - TODO: on our primary chain
+                    if ((Arrays.equals(fromBlockID, firstPredecessorID) || dataStore.getBlock(firstPredecessorID) != null)
+                            && Block.verifyChain(receivedHeaders)) {
+
+                        headers.addAll(hp.getResult());
+                        // start downloading blocks
+                        es.execute(() -> downloadBlocks(receivedHeaders));
+
+                        if (receivedHeaders.size() < MAX_HEADERS)
+                            break;
+                        else
+                            fromBlockID = receivedHeaders.get(receivedHeaders.size() - 1).getBlockID();
+
+                    } else {
+                        // choose a new peer and try again
+                        p = chooseNewPeer();
+                    }
+                }
+            }
+        }
+
+        private PeerHandler chooseNewPeer() {
+            // TODO: support excluding peers we know are unreliable/have failed us before
+            synchronized (peers) {
+                return peers.get(rand.nextInt(peers.size()));
+            }
+        }
+
+        /**
+         * Download given blocks in a distributed fashion, in parallel.
+         */
+        private void downloadBlocks(List<Block> headers) {
+            // TODO: implement this...
+        }
+
 
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) {
@@ -361,16 +436,16 @@ public class ConnectionManager {
 
                 // verify its hash meets its target
                 // TODO: will be implemented by Niquo
-                /*if (!block.verifyHeader())
-                    return;*/
+                    /*if (!block.verifyHeader())
+                        return;*/
 
                 List<ByteString> entryBytesList = message.getEntriesList();
                 List<Entry> entryList = new ArrayList<>();
-                for(ByteString string : entryBytesList) {
+                for (ByteString string : entryBytesList) {
                     entryList.add(Entry.deserialize(string.toByteArray()));
                 }
 
-                if(block.setEntriesList(entryList)) {
+                if (block.setEntriesList(entryList)) {
                     // TODO: accept blocks which will be orphans
                     if (dataStore.getBlock(block.getPrevBlockHash()) != null) {
                         // parent exists so store this block
@@ -380,20 +455,18 @@ public class ConnectionManager {
                         }
                     }
                 }
-            }
-            catch(IOException ioe) {
+            } catch (IOException ioe) {
                 // error in the serialised block or entries received, so discard the block.
                 ioe.printStackTrace();
-            }
-            catch(SQLException sqle) {
+            } catch (SQLException sqle) {
                 throw new RuntimeException("Error connecting to database :(", sqle);
             }
         }
-
     }
 
     private enum State {WAIT, IDLE}
-    public class PeerProtocol  {
+
+    public class PeerProtocol {
 
         private State state;
         private int listenPort;
@@ -441,17 +514,15 @@ public class ConnectionManager {
                         .map(PeerHandler::getListenAddress)
                         .collect(Collectors.toSet());
 
-                for(InetSocketAddress address : newAddresses) {
-                    if(!peerAddresses.contains(address)) {
+                for (InetSocketAddress address : newAddresses) {
+                    if (!peerAddresses.contains(address)) {
                         es.execute(() -> {
                             try {
-                                PeerHandler p = new PeerHandler(address,listenPort, es, dataStore, bus); // blocks possibly
+                                PeerHandler p = new PeerHandler(address, listenPort, es, dataStore, bus); // blocks possibly
                                 addPeer(p);
-                            }
-                            catch(TimeoutException to) {
+                            } catch (TimeoutException to) {
                                 System.out.println("Timeout when constructing new peer");
-                            }
-                            catch(IOException | InterruptedException | ExecutionException ie) {
+                            } catch (IOException | InterruptedException | ExecutionException ie) {
                                 ie.printStackTrace();
                             }
                         });
@@ -462,3 +533,4 @@ public class ConnectionManager {
     }
 
 }
+
