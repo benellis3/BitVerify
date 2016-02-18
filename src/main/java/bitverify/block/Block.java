@@ -1,6 +1,7 @@
 package bitverify.block;
 
 import bitverify.entries.*;
+import bitverify.mining.Miner;
 import bitverify.crypto.Hash;
 
 import java.io.ByteArrayInputStream;
@@ -135,7 +136,7 @@ public class Block {
         byte[] newEntriesHash = hashEntries();
         if (Arrays.equals(this.entriesHash, newEntriesHash)) {
             this.verifiedEntries = true;
-            return this.verifiedEntries;
+            return Miner.blockHashMeetDifficulty(this);
         }
         return false;
     }
@@ -160,21 +161,27 @@ public class Block {
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
     public static boolean verifyChain(List<Block> blockList) throws Exception {
+        int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
             Exception e = new IllegalStateException();
             throw e;
         } else if (listLen == 1) {
-            return true;
+            Block onlyBlock = blockList.get(FIRST);
+            return Miner.blockHashMeetDifficulty(onlyBlock);
         } else {
             Block prevBlock = blockList.get(0);
             Block currentBlock;
             byte[] prevBlockHash = prevBlock.hashHeader();
             byte[] currentBlockPrevHash;
+            boolean matchingHash;
+            boolean validNonce;
             for (int i = 1; i < listLen; i++) {
                 currentBlock = blockList.get(i);
                 currentBlockPrevHash = currentBlock.getPrevBlockHash();
-                if (!Arrays.equals(prevBlockHash, currentBlockPrevHash)) {
+                matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
+                validNonce = Miner.blockHashMeetDifficulty(currentBlock);
+                if (!matchingHash || !validNonce) {
                     return false;
                 }
                 prevBlock = currentBlock;
