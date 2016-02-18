@@ -184,7 +184,7 @@ public class Identity {
 	
 	public void setDescription(String description){
 		if (description.length() > DESCRIPTION_LENGTH)
-			throw new IllegalArgumentException("Description must be at most " + DESCRIPTION_LENGTH + "characters long.");
+			throw new IllegalArgumentException("Description must be at most " + DESCRIPTION_LENGTH + " characters long.");
 		this.description = description;
 	}
 	

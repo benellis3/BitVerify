@@ -20,15 +20,15 @@ public class EntryTest {
 					Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
 			// --> metadata
 			byte[] docHash = Hash.hashString("imitation of some random file");
-			String linkToDownloadFile = "http://mywebsite.com/file01.txt";
+			String docLink = "http://mywebsite.com/file01.txt";
 			String docName = "The Fall of Humanity";
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] tags = {"cool", "terminator", "random"};
+			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
-			Entry entry = new Entry(uploaderKeyPair, docHash, linkToDownloadFile, docName, docDescription,
-					docGeoLocation, docTimeStamp, tags);
+			Entry entry = new Entry(uploaderKeyPair, docHash, docLink, docName, docDescription,
+					docGeoLocation, docTimeStamp, docTags);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -41,16 +41,16 @@ public class EntryTest {
 					Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
 			// --> metadata
 			byte[] docHash = Hash.hashString("imitation of some random file");
-			String linkToDownloadFile = "http://mywebsite.com/file01.txt";
+			String docLink = "http://mywebsite.com/file01.txt";
 			String docName = "The Fall of Humanity";
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] tags = {"cool", "terminator", "random"};
+			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
 			byte[] receiverID = Asymmetric.stringKeyToByteKey(AsymmetricTest.myPubKey);
-			Entry entry = new Entry(uploaderKeyPair, receiverID, docHash, linkToDownloadFile, docName, docDescription,
-					docGeoLocation, docTimeStamp, tags);
+			Entry entry = new Entry(uploaderKeyPair, receiverID, docHash, docLink, docName, docDescription,
+					docGeoLocation, docTimeStamp, docTags);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -154,8 +154,9 @@ public class EntryTest {
 	}
 	
 	/**
-	 * @return true iff m1 logically equals m2
 	 * note: do NOT use this in production code; testing only
+	 * 
+	 * @return true iff metadata fields in e1 and e2 are equal
 	 */
 	public static boolean compareMetadata(Entry e1, Entry e2){
 		try {
@@ -172,6 +173,9 @@ public class EntryTest {
 				for (int i = 0; i < numTags; i++) {
 					assertEquals(e1.getDocTags()[i], e2.getDocTags()[i]);
 				}
+			} else {
+				//e1.getDocTags() == null
+				assertTrue(null == e2.getDocTags());
 			}
 		} catch (Exception e){
 			return false;

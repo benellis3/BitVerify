@@ -147,6 +147,60 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
+    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {
+        // try to retrieve the starting block from the database.
+        Block startBlock = getBlock(idFrom);
+        if (startBlock == null)
+            return null;
+
+        Where<Block, Void> w = blockDao.queryBuilder()
+                .orderBy("height", true)
+                .orderBy("timeStamp", false)
+                .where();
+
+        if (limit == -1) {
+            w.gt("height", startBlock.getHeight());
+            limit = Integer.MAX_VALUE;
+        } else {
+            long startHeight = startBlock.getHeight() + 1;
+            w.between("height", startHeight, startHeight + limit - 1);
+        }
+
+        CloseableIterator<Block> results = w.iterator();
+
+        List<Block> output = new ArrayList<>();
+        // results will be ordered earliest->latest along the blockchain
+
+        byte[] expectedParentID = startBlock.getBlockID();
+        try {
+            // separate cases depending on whether we must check the end ID on every iteration.
+            if (idTo == null) {
+                while (results.hasNext() && limit > 0) {
+                    Block b = results.next();
+                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                        output.add(b);
+                        expectedParentID = b.getBlockID();
+                    }
+                }
+            } else {
+                while (results.hasNext() && limit > 0) {
+                    Block b = results.next();
+                    // stop before returning the 'to' block
+                    if (Arrays.equals(b.getBlockID(), idTo))
+                        break;
+                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                        output.add(b);
+                        expectedParentID = b.getBlockID();
+                    }
+                }
+            }
+        } finally {
+            results.close();
+        }
+
+        return output;
+    }
+
     public boolean insertBlock(Block b) throws SQLException {
         // TODO: check if we are unorphaning any blocks
 
@@ -285,15 +339,15 @@ public class DatabaseStore implements DataStore {
     }
 
     public List<Entry> searchEntries(String searchQuery) throws SQLException {
-        String likeQuery = "%" + searchQuery + "%";
+        String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
-        w.or(
-            w.like("docName", likeQuery),
-            w.like("docDescription", likeQuery),
-            w.like("docTags", likeQuery)
-        );
-        return w.query();
-
+        for (String query : queries) {
+            String likeQuery = "%" + searchQuery + "%";
+            w.like("docName", likeQuery);
+            w.like("docDescription", likeQuery);
+        }
+        // OR all of our like clauses together
+        return w.or(queries.length * 2).query();
     }
 
     public void insertEntry(Entry e) throws SQLException {
@@ -303,7 +357,8 @@ public class DatabaseStore implements DataStore {
 
 
     public String getProperty(String key) throws SQLException {
-        return propertyDao.queryForId(key).getValue();
+        Property p = propertyDao.queryForId(key);
+        return p == null ? null : p.getValue();
     }
 
     public void setProperty(String key, String value) throws SQLException {
