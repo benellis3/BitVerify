@@ -103,13 +103,8 @@ public class Miner implements Runnable{
 		
 		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
-		
-		if (lessThan){
-			return true;
-		}
-		else{
-			return false;
-		}
+
+		return lessThan;
 	}
 	
 	//Perform mining in a separate thread
