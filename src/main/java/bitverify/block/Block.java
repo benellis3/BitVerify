@@ -173,20 +173,29 @@ public class Block {
             return Miner.blockHashMeetDifficulty(onlyBlock);
         } else {
             Block prevBlock = blockList.get(0);
+            long prevTime = prevBlock.getTimeStamp();
             Block currentBlock;
+            long currentTime;
             byte[] prevBlockHash = prevBlock.hashHeader();
             byte[] currentBlockPrevHash;
             boolean matchingHash;
             boolean validNonce;
+            boolean timeInvar;
+            
             for (int i = 1; i < listLen; i++) {
                 currentBlock = blockList.get(i);
+                currentTime = currentBlock.getTimeStamp();
                 currentBlockPrevHash = currentBlock.getPrevBlockHash();
                 matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
-                if (!matchingHash || !validNonce) {
+                
+                timeInvar = (prevTime < currentTime);
+                if (!matchingHash || !validNonce || !timeInvar) {
                     return false;
                 }
+                
                 prevBlock = currentBlock;
+                prevTime = currentBlock.getTimeStamp();
                 prevBlockHash = prevBlock.hashHeader();
             }
         }
