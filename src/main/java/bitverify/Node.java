@@ -4,9 +4,15 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Scanner;
 
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+
+import bitverify.crypto.Asymmetric;
 import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
+
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -33,7 +39,8 @@ public class Node {
 	private Miner mMiner;
 	private ConnectionManager mConnectionManager;
 	private DataStore mDatabase;
-	private UserInstance mUser;
+	
+	private Identity mIdentity;
 	
 	private Bus mEventBus;
 	
@@ -49,8 +56,8 @@ public class Node {
 			mScanner = new Scanner(System.in);
 			mEventBus = new Bus(ThreadEnforcer.ANY);
 			mEventBus.register(this);
-			setupUser();
 			setupDatabase();
+			setupUser();
 			setupNetwork();
 			userCLISetup();
 		}
@@ -109,9 +116,13 @@ public class Node {
 			stopMiner();
 		}
 		try {
-			mMiner = new Miner(mEventBus);
+			System.out.println(mDatabase);
+			mMiner = new Miner(mEventBus, mDatabase);
 		} catch (SQLException e) {
 			// TODO Handle this
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Handle this as well
 			e.printStackTrace();
 		}
 		
@@ -145,6 +156,9 @@ public class Node {
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
 		
+		System.out.println("Enter recieved id (leave blank if none):");
+		String recieverID = mScanner.nextLine();
+		
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
 		
@@ -158,7 +172,7 @@ public class Node {
 		// Construct metadata and entry objects for file
 		Entry entry;
 		try {
-			entry = new Entry(mUser.getAsymmetricKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
@@ -185,7 +199,21 @@ public class Node {
 	
 	private void setupUser() {
 		System.out.println("Setting up user...");
-		mUser = UserInstance.getInstance();
+		try {
+			List<Identity> identities = mDatabase.getIdentities();
+			if (identities.size() == 0) {
+				System.out.println("Generating new key identity...");
+				AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+				mIdentity = new Identity("default", keyPair);
+				mDatabase.insertIdentity(mIdentity);
+			}
+			else {
+				mIdentity = identities.get(0);
+			}
+		} catch (SQLException e) {
+			// TODO deal with this
+			e.printStackTrace();
+		}
 	}
 	
 	private void setupNetwork() {
@@ -202,10 +230,8 @@ public class Node {
 	private void setupDatabase() {
 		System.out.println("Setting up database...");
 		// create a connection source to an in-memory database
-        ConnectionSource connectionSource;
 		try {
-			connectionSource = new JdbcConnectionSource("jdbc:h2:mem:bitverify");
-			mDatabase = new DatabaseStore(connectionSource);
+			mDatabase = new DatabaseStore("jdbc:h2:mem:bitverify");
 		} catch (SQLException e) {
 			System.out.println("Error setting up database...");
 			exitProgram();
