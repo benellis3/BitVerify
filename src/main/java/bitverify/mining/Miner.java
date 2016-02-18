@@ -178,8 +178,8 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
-					//System.out.println("Success");
-					//System.out.println("Block Hash: "+result);
+					System.out.println("Success");
+					System.out.println("Block Hash: "+result);
 					
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
 					dataStore.insertBlock(blockMining);
@@ -225,7 +225,7 @@ public class Miner implements Runnable{
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
-		//System.out.println("New Proof Target: "+unpackTarget(currentMiningProofTarget));
+		System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
@@ -363,7 +363,7 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			//System.out.println("New Target: "+packTarget(newTarget.toString(16)));
+			System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
 		
 			return packTarget(newTarget.toString(16));
 		}
