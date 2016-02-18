@@ -7,21 +7,11 @@ import java.sql.SQLException;
 
 import org.junit.Test;
 
-import com.squareup.otto.Bus;
-import com.squareup.otto.ThreadEnforcer;
-
-import bitverify.persistence.DataStore;
-import bitverify.persistence.DatabaseStore;
-
 public class MinerTest {
 
-	//Test whether hashes are successful when they should be
+	//Test whether hashes are successful
 	@Test
 	public void testMineSuccess() throws SQLException, IOException{
-		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
-		
-		m.setPackedTarget(0x1f3b20fa);
 		//We have an unpacked target of 003b20fa00000000000000000000000000000000000000000000000000000000
 		
 		String input[] = {
@@ -49,7 +39,7 @@ public class MinerTest {
 		}
 	}
 	
-	//Test whether mining targets are successfully unpacked from the integer representation
+	//Test whether mining targets are successfully unpacked from their integer representation
 	@Test
 	public void testUnpack() throws SQLException, IOException{
 		
@@ -100,7 +90,7 @@ public class MinerTest {
 		}
 	}
 	
-	//Test whether mining targets are successfully packed into the integer representation
+	//Test whether mining targets are successfully packed into their integer representation
 	@Test
 	public void testPack() throws SQLException, IOException{
 		
