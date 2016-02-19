@@ -162,31 +162,39 @@ public class Block {
      * @return boolean to indicate whether the given subchain is valid or not
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
-    public static boolean verifyChain(List<Block> blockList) throws Exception {
+    public static boolean verifyChain(List<Block> blockList){
         int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
-            Exception e = new IllegalStateException();
-            throw e;
+            throw new IllegalStateException();
         } else if (listLen == 1) {
             Block onlyBlock = blockList.get(FIRST);
             return Miner.blockHashMeetDifficulty(onlyBlock);
         } else {
             Block prevBlock = blockList.get(0);
+            long prevTime = prevBlock.getTimeStamp();
             Block currentBlock;
+            long currentTime;
             byte[] prevBlockHash = prevBlock.hashHeader();
             byte[] currentBlockPrevHash;
             boolean matchingHash;
             boolean validNonce;
+            boolean timeInvar;
+            
             for (int i = 1; i < listLen; i++) {
                 currentBlock = blockList.get(i);
+                currentTime = currentBlock.getTimeStamp();
                 currentBlockPrevHash = currentBlock.getPrevBlockHash();
                 matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
-                if (!matchingHash || !validNonce) {
+                
+                timeInvar = (prevTime < currentTime);
+                if (!matchingHash || !validNonce || !timeInvar) {
                     return false;
                 }
+                
                 prevBlock = currentBlock;
+                prevTime = currentBlock.getTimeStamp();
                 prevBlockHash = prevBlock.hashHeader();
             }
         }
@@ -288,12 +296,7 @@ public class Block {
     public boolean equals(Object thatObject){
         if (!(thatObject instanceof Block)) return false;
         Block thatBlock = (Block) thatObject;
-        boolean b1 = Arrays.equals(this.getPrevBlockHash(),thatBlock.getPrevBlockHash());
-        boolean b2 = Arrays.equals(this.getEntriesHash(),thatBlock.getEntriesHash());
-        boolean b3 = (this.getTimeStamp() == thatBlock.getTimeStamp());
-        boolean b4 = (this.getTarget() == thatBlock.getTarget());
-        boolean b5 = (this.getNonce() == thatBlock.getNonce());
-        return b1 && b2 && b3 && b4 && b5;
+        return Arrays.equals(this.hashHeader(), thatBlock.hashHeader());
     }
     
     

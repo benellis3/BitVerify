@@ -97,6 +97,19 @@ public class BlockTest {
     }
     
     @Test
+    public void listTwoInvalidTimeStamps() throws Exception{
+        Block genesis = Block.getGenesisBlock();
+        Entry entry1 = EntryTest.generateEntry1();
+        List<Entry> entries1 = Arrays.asList(entry1);
+        int target = Integer.MAX_VALUE;
+        int nonce = 0;
+        
+        Block block1 = new Block(genesis,1455745984017l,target,nonce,entries1);
+        
+        assertFalse(Block.verifyChain(Arrays.asList(genesis,block1)));
+    }
+    
+    @Test
     public void setOneEntryValid() throws IOException{
         Block genesis = Block.getGenesisBlock();
         Entry entry1 = EntryTest.generateEntry1();
