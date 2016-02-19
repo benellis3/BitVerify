@@ -56,7 +56,7 @@ public interface DataStore {
      * @return true if the block was inserted, false if it was already present.
      * @throws SQLException
      */
-    public boolean insertBlock(Block b) throws SQLException;
+    public InsertBlockResult insertBlock(Block b) throws SQLException;
 
     /**
      * Get a particular block.

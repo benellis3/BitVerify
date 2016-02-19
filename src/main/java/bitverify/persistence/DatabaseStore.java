@@ -206,7 +206,7 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
-    public boolean insertBlock(Block b) throws SQLException {
+    public InsertBlockResult insertBlock(Block b) throws SQLException {
         // TODO: check if we are unorphaning any blocks
 
         return t.callInTransaction(() -> {
@@ -224,12 +224,10 @@ public class DatabaseStore implements DataStore {
 
             } else {
                 // see if this will be the new latest block
-
                 Block parent = getBlock(b.getPrevBlockHash());
                 if (parent == null) {
-                    // orphan block, so it will be inactive.
-                    b.setHeight(-1);
-                    blocksToDeactivate.add(b);
+                    // orphan blocks are not be inserted in the database
+                    return return InsertBlockResult.FAIL_ORPHAN;
 
                 } else {
                     long oldHeight = latestBlock.getHeight();
@@ -301,13 +299,13 @@ public class DatabaseStore implements DataStore {
                     blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
 
                 // block was successfully inserted
-                return true;
+                return InsertBlockResult.SUCCESS;
 
             } catch (SQLException e) {
                 // catch duplicate block error
                 final int DUPLICATE_ERROR = 23001;
                 if (e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR)
-                    return false;
+                    return InsertBlockResult.FAIL_DUPLICATE;
                 else
                     throw e;
             }
