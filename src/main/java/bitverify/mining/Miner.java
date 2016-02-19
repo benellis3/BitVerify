@@ -56,7 +56,7 @@ public class Miner implements Runnable{
 	//Constant used in unpacking targets (it is subtracted from the exponent)
 	private static final int byteOffset = 3;	
 	
-	//We recalculate the mining difficulty every adjustTargetFrequency blocks
+	//We recalculate the mining difficulty after every adjustTargetFrequency blocks
 	private static int adjustTargetFrequency = 2;//1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
 	//(we want 1008 blocks to be mined every week/a block every 10 minutes)
@@ -201,8 +201,8 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
-					System.out.println("Success");
-					System.out.println("Block Hash: "+result);
+					//System.out.println("Success");
+					//System.out.println("Block Hash: "+result);
 					
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
 					dataStore.insertBlock(blockMining);
@@ -218,8 +218,8 @@ public class Miner implements Runnable{
 				//	//Must maintain a list of peers in database that have received proof from
 				//	//Reject incoming entries from public IPs not from the list
 					eventBus.post(new NewMiningProofEvent(blockMining));
-					System.out.println("Proof Success");
-					System.out.println("Block Hash: "+result);
+					//System.out.println("Proof Success");
+					//System.out.println("Block Hash: "+result);
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -248,7 +248,7 @@ public class Miner implements Runnable{
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
-		System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
+		//System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
@@ -342,7 +342,9 @@ public class Miner implements Runnable{
 	/**
      * Calculate the target for the next block (i.e. the block we are mining, or a block we have received
      * from the network) by looking at the prior blocks. We look at the database and see how long the previous
-     * 'adjustTargetFrequency' blocks took to mine, and adjust our target, every 'adjustTargetFrequency' blocks.
+     * 'adjustTargetFrequency' blocks took to mine, and adjust our target, after every 'adjustTargetFrequency' blocks.
+     * i.e. if adjustTargetFrequency = 2 then we recalculate the target for block 3 based on the time to mine blocks 1 and 2,
+     * and then we recalculate for block 6 based on the time to mine blocks 4 and 5 (block 5 timestamp - block 3 timestamp) etc.
      * 
      *  @param ds		the database containing the blockchain
      *  @param block	parent of the block we are finding the target of
@@ -369,7 +371,7 @@ public class Miner implements Runnable{
 			
 			//System.out.println("Most Recent: "+mostRecentTime);
 			//System.out.println("No ago: "+nAgoTime);
-			System.out.println("Time Difference: "+difference);
+			//System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
@@ -382,7 +384,7 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
+			//System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
 		
 			return packTarget(newTarget.toString(16));
 		}
