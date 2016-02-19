@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import bitverify.block.Block;
 import bitverify.entries.Entry;
@@ -23,8 +22,6 @@ import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.GetPeers;
-import bitverify.network.proto.MessageProto.GetHeadersMessage;
-import bitverify.network.proto.MessageProto.Message.Type;
 import bitverify.persistence.InsertBlockResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -151,7 +148,7 @@ public class ConnectionManager {
      */
     public void broadcastBlock(Block block) throws IOException {
         List<Entry> entryList = block.getEntriesList();
-        List<ByteString> byteStringList = new ArrayList<>();
+        List<ByteString> byteStringList = new ArrayList<>(entryList.size());
         for (Entry e : entryList) {
             byteStringList.add(ByteString.copyFrom(e.serialize()));
         }
@@ -291,89 +288,6 @@ public class ConnectionManager {
     }
 
 
-    /**
-     * Handles sending a single request for headers to a peer, then awaiting the response.
-     */
-    public class HeadersFuture implements RunnableFuture<List<Block>> {
-        private List<Block> result;
-        private final CountDownLatch resultLatch = new CountDownLatch(1);
-        private final PeerHandler peer;
-        private final byte[] fromBlockID;
-
-        public HeadersFuture(PeerHandler peer, byte[] fromBlockID) {
-            this.peer = peer;
-            this.fromBlockID = fromBlockID;
-        }
-
-        @Override
-        public void run() {
-            // send a GetBlockHeaders message
-            // ask for blocks from our latest known block
-            GetHeadersMessage getHeadersMessage = GetHeadersMessage.newBuilder()
-                    .setFromBlock(ByteString.copyFrom(fromBlockID))
-                    .build();
-            Message m = Message.newBuilder()
-                    .setType(Type.GET_HEADERS)
-                    .setGetHeaders(getHeadersMessage)
-                    .build();
-
-            peer.send(m);
-            // register for replies once we've sent the request
-            bus.register(this);
-        }
-
-        @Subscribe
-        public void onHeadersMessage(HeadersMessageEvent e) {
-            // deregister now we've got our response
-            bus.unregister(this);
-
-            List<ByteString> serializedHeaders = e.getHeadersMessage().getHeadersList();
-            List<Block> headers = new ArrayList<>(serializedHeaders.size());
-
-            try {
-                for (ByteString bytes : serializedHeaders)
-                    headers.add(Block.deserialize(bytes.toByteArray()));
-                result = headers;
-            } catch (IOException ex) {
-                // a header was invalidly formatted, we will discard the sequence and re-request from another peer
-            }
-
-            // notify that we got a response (even if it was rubbish)
-            resultLatch.countDown();
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return false;
-        }
-
-        @Override
-        public boolean isDone() {
-            return resultLatch.getCount() == 0;
-        }
-
-        @Override
-        public List<Block> get() throws InterruptedException, ExecutionException {
-            resultLatch.await();
-            return result;
-        }
-
-        @Override
-        public List<Block> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            if (resultLatch.await(timeout, unit))
-                return result;
-            else {
-                bus.unregister(this);
-                throw new TimeoutException();
-            }
-        }
-    }
-
     private static final int MAX_HEADERS = 10000;
 
     public class BlockProtocol {
@@ -413,7 +327,7 @@ public class ConnectionManager {
             // for now, if a peer suddenly gives us some invalid headers, we don't cancel previous download
             // tasks or discard earlier block headers they gave us.
             while (true) {
-                HeadersFuture h = new HeadersFuture(p, fromBlockID);
+                HeadersFuture h = new HeadersFuture(p, fromBlockID, bus);
                 h.run();
                 List<Block> receivedHeaders = h.get();
 
