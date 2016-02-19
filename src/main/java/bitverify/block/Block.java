@@ -294,6 +294,11 @@ public class Block {
         boolean b5 = (this.getNonce() == thatBlock.getNonce());
         return b1 && b2 && b3 && b4 && b5;
     }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(blockID);
+    }
     
     
 //  GETTER METHODS
@@ -344,4 +349,6 @@ public class Block {
     public boolean isVerified(){
         return this.verifiedEntries;
     }
+
+
 }
