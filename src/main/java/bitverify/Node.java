@@ -4,9 +4,15 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Scanner;
 
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+
+import bitverify.crypto.Asymmetric;
 import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
+
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
@@ -14,6 +20,7 @@ import com.squareup.otto.ThreadEnforcer;
 import bitverify.block.Block;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
+import bitverify.gui.GUI;
 import bitverify.mining.Miner;
 import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
@@ -33,31 +40,48 @@ public class Node {
 	private Miner mMiner;
 	private ConnectionManager mConnectionManager;
 	private DataStore mDatabase;
-	private UserInstance mUser;
+	
+	private Identity mIdentity;
 	
 	private Bus mEventBus;
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	
-	public Node(String[] args) {
-		handleArgs(args);
+	public enum StartType {CLI, GUI};
+	
+	private GUI mGUI;
+	
+	public Node(StartType startType) {
+		handleType(startType);
 	}
 	
-	private void handleArgs(String[] args) {
-		// If no args, we will just show default prompt to user
-		if (args.length == 0) {
-			mScanner = new Scanner(System.in);
-			mEventBus = new Bus(ThreadEnforcer.ANY);
-			mEventBus.register(this);
-			setupUser();
-			setupDatabase();
-			setupNetwork();
-			userCLISetup();
-		}
-		else {
-			//TODO handle individual commands
+	public Node(GUI gui) {
+		mGUI = gui;
+		handleType(StartType.GUI);
+	}
+	
+	private void handleType(StartType startType) {
+		mEventBus = new Bus(ThreadEnforcer.ANY);
+		mEventBus.register(this);
+		
+		switch (startType) {
+			case CLI:
+				mScanner = new Scanner(System.in);
+				setupDatabase();
+				setupUser();
+				setupNetwork();
+				userCLISetup();
+				break;
+			default:
+				setupDatabase();
+				setupUser();
+				setupNetwork();
+				if (mGUI != null) {
+					mGUI.onNodeSetupComplete();
+				}
 		}
 	}
+	
 	
 	private void userCLISetup() {
 		// Print out the command options for the user
@@ -104,14 +128,17 @@ public class Node {
 			
 	}
 	
-	private void startMiner() {
+	public void startMiner() {
 		while (mMiner != null) {
 			stopMiner();
 		}
 		try {
-			mMiner = new Miner(mEventBus);
+			mMiner = new Miner(mEventBus, mDatabase);
 		} catch (SQLException e) {
 			// TODO Handle this
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Handle this as well
 			e.printStackTrace();
 		}
 		
@@ -120,7 +147,7 @@ public class Node {
 		mOptions[mMiningOptionNum] = "Stop mining";
 	}
 	
-	private void stopMiner() {
+	public void stopMiner() {
 		if (mMiner != null) {
 			mMiner.stopMining(); // best way to handle this I believe.
 			mMiner = null;
@@ -145,6 +172,9 @@ public class Node {
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
 		
+		System.out.println("Enter recieved id (leave blank if none):");
+		String recieverID = mScanner.nextLine();
+		
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
 		
@@ -158,10 +188,12 @@ public class Node {
 		// Construct metadata and entry objects for file
 		Entry entry;
 		try {
-			entry = new Entry(mUser.getAsymmetricKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
+			
+			mConnectionManager.broadcastEntry(entry);
 		} catch (KeyDecodingException | IOException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
@@ -182,12 +214,27 @@ public class Node {
 	}
 	
 	private void setupUser() {
-		System.out.println("Setting up user...");
-		mUser = UserInstance.getInstance();
+		informUserOfProgress("Setting up user...");
+		
+		try {
+			List<Identity> identities = mDatabase.getIdentities();
+			if (identities.size() == 0) {
+				System.out.println("Generating new key identity...");
+				AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+				mIdentity = new Identity("default", keyPair);
+				mDatabase.insertIdentity(mIdentity);
+			}
+			else {
+				mIdentity = identities.get(0);
+			}
+		} catch (SQLException e) {
+			// TODO deal with this
+			e.printStackTrace();
+		}
 	}
 	
 	private void setupNetwork() {
-		System.out.println("Setting up network...");
+		informUserOfProgress("Setting up network...");
 		try {
 			mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 		} catch (IOException e) {
@@ -198,12 +245,10 @@ public class Node {
 	
 	
 	private void setupDatabase() {
-		System.out.println("Setting up database...");
+		informUserOfProgress("Setting up database...");
 		// create a connection source to an in-memory database
-        ConnectionSource connectionSource;
 		try {
-			connectionSource = new JdbcConnectionSource("jdbc:h2:mem:bitverify");
-			mDatabase = new DatabaseStore(connectionSource);
+			mDatabase = new DatabaseStore("jdbc:h2:mem:bitverify");
 		} catch (SQLException e) {
 			System.out.println("Error setting up database...");
 			exitProgram();
@@ -228,6 +273,14 @@ public class Node {
     	Calendar cal = Calendar.getInstance();
     	SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
     	return sdf.format(cal.getTime());
+    }
+    
+    private void informUserOfProgress(String progress) {
+    	if (mGUI == null) {
+    		System.out.println(progress);
+    	} else {
+    		mGUI.changeLoadingText(progress);
+    	}
     }
 
 }
