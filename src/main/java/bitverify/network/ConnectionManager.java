@@ -8,6 +8,7 @@ import java.net.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.GetPeers;
 import bitverify.network.proto.MessageProto.GetHeadersMessage;
 import bitverify.network.proto.MessageProto.Message.Type;
+import bitverify.persistence.InsertBlockResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -43,13 +45,13 @@ public class ConnectionManager {
     private DataStore dataStore;
     private ExecutorService es;
     private Bus bus;
-    private List<PeerHandler> peers;
+    private Map<InetSocketAddress, PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private BlockProtocol blockProtocol;
 
     // underscore courtesy of Laszlo Makk :p
     private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException {
-        peers = new CopyOnWriteArrayList<>(); // use addIfAbsent to avoid adding duplicates
+        peers = new ConcurrentHashMap<>();
         this.bus = bus;
         bus.register(this);
         es = Executors.newCachedThreadPool();
@@ -65,10 +67,11 @@ public class ConnectionManager {
                             // separate thread since it blocks waiting for messages.
                             es.execute(() -> {
                                 try {
-                                    PeerHandler p = new PeerHandler(s, es, ds, bus);
-                                    addPeer(p);
+                                    PeerHandler ph = new PeerHandler(s, es, ds, bus);
+                                    InetSocketAddress address = ph.acceptConnection();
+                                    peers.put(address, ph);
                                 } catch (TimeoutException time) {
-                                    // this means no response was received
+                                    // this means the connection could not be established before timeout
                                     System.out.println("No response received within the time limit");
                                 } catch (InterruptedException | ExecutionException ie) {
                                     ie.printStackTrace();
@@ -88,8 +91,10 @@ public class ConnectionManager {
             for (InetSocketAddress peerAddress : initialPeers) {
                 es.execute(() -> {
                     try {
-                        PeerHandler p = new PeerHandler(peerAddress, listenPort, es, ds, bus);
-                        peers.add(p);
+                        Socket socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
+                        PeerHandler ph = new PeerHandler(socket, es, dataStore, bus);
+                        ph.establishConnection(listenPort, peerAddress);
+                        peers.put(peerAddress, ph);
                     } catch (TimeoutException toe) {
                         System.out.println("Failed to contact an initial peer");
                     } catch (InterruptedException | ExecutionException | IOException ie) {
@@ -119,7 +124,7 @@ public class ConnectionManager {
      * to all of the current peers that the class knows about.
      */
     public void getPeers() {
-        for (PeerHandler p : peers) {
+        for (PeerHandler p : peers.values()) {
             GetPeers getPeers = GetPeers.newBuilder().build();
             Message message = Message.newBuilder()
                     .setType(Message.Type.GETPEERS)
@@ -156,7 +161,7 @@ public class ConnectionManager {
                 .setBlock(blockMessage)
                 .build();
 
-        for (PeerHandler peer : peers) {
+        for (PeerHandler peer : peers.values()) {
             peer.send(msg);
         }
     }
@@ -175,20 +180,20 @@ public class ConnectionManager {
                 .setType(Message.Type.ENTRY)
                 .setEntry(entryMessage)
                 .build();
-        for (PeerHandler peer : peers) {
+        for (PeerHandler peer : peers.values()) {
             peer.send(message);
         }
     }
 
     public void printPeers() {
-        for (PeerHandler p : peers) {
-            InetSocketAddress address = p.getAddress();
+        for (PeerHandler p : peers.values()) {
+            InetSocketAddress address = p.getListenAddress();
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
 
     protected Collection<PeerHandler> peers() {
-        return peers;
+        return peers.values();
     }
 
     /**
@@ -219,7 +224,7 @@ public class ConnectionManager {
             InetSocketAddress addressFrom = event.getSocketAddress();
             List<NetAddress> peerAddresses = new ArrayList<>();
             PeerHandler sender = null;
-            for (PeerHandler p : peers) {
+            for (PeerHandler p : peers.values()) {
                 InetSocketAddress peerListenAddress = p.getListenAddress();
                 if (p.getListenAddress().equals(addressFrom)) {
                     sender = p;
@@ -278,17 +283,6 @@ public class ConnectionManager {
         }
         return null;
 
-    }
-
-    /**
-     * Synchronize when adding new peers, allowing the BlockProtocol class to choose a random peer without concurrency issues.
-     *
-     * @param p the peer handler
-     */
-    private void addPeer(PeerHandler p) {
-        synchronized (peers) {
-            peers.add(p);
-        }
     }
 
 
@@ -378,9 +372,10 @@ public class ConnectionManager {
     private static final int MAX_HEADERS = 10000;
 
     public class BlockProtocol {
+        private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
 
         private Random rand = new Random();
-        private List<Block> headers;
+
 
         BlockProtocol() {
             // we're always on the lookout for new blocks.
@@ -417,9 +412,9 @@ public class ConnectionManager {
                     if ((Arrays.equals(fromBlockID, firstPredecessorID) || dataStore.getBlock(firstPredecessorID) != null)
                             && Block.verifyChain(receivedHeaders)) {
 
-                        headers.addAll(receivedHeaders);
+                        futureBlockHeaders.addAll(receivedHeaders);
                         // start downloading blocks
-                        es.execute(() -> downloadBlocks(receivedHeaders));
+                        downloadQueuedBlocks();
 
                         if (receivedHeaders.size() < MAX_HEADERS)
                             break;
@@ -442,32 +437,68 @@ public class ConnectionManager {
         }
 
 
+        // blocks we are downloading now
+        private Map<InetSocketAddress, AtomicInteger> blocksDownloadedFromPeer = new ConcurrentHashMap<>();
+        private Map<Block, InetSocketAddress> awaitedBlockHeaders = new ConcurrentHashMap();
+        // blocks we will download in the future
+        private Queue<Block> futureBlockHeaders = new ConcurrentLinkedQueue<>();
+
+
+        private static final int DOWNLOAD_INTERVAL_MS = 10000;
+        private Timer timer = new Timer();
+        private Object timerLock = new Object();
 
         /**
-         * Download given blocks in a distributed fashion, in parallel.
+         * Download the blocks in futureBlockHeaders in a distributed fashion, in parallel.
          */
-        private void downloadBlocks(List<Block> headers) {
-            // TODO: implement this...
+        private void downloadQueuedBlocks() {
+            // every N seconds, we take all the headers awaiting download and distribute the work evenly amongst peers,
+            // up to the maximum number of blocks that we're allowed to download from a peer at once.
+            // When a block is received from a peer, we immediately download the next one from the same peer,
+            // so we can assume the work stays evenly distributed.
 
-            // evenly divide up the headers we have amongst our peers
-            int i = 0;
-            while (i < headers.size()) {
-                for (PeerHandler peer : peers) {
-                    MessageProto.GetBlocksMessage gbm = MessageProto.GetBlocksMessage.newBuilder()
-                            .setBlockID(ByteString.copyFrom(headers.get(i).getBlockID()))
-                            .build();
+            synchronized (timerLock) {
+                if (timer != null)
+                    timer.cancel();
+                timer = new Timer();
 
-                    MessageProto.Message message = MessageProto.Message.newBuilder()
-                            .setType(MessageProto.Message.Type.GET_BLOCK)
-                            .setGetBlock(gbm)
-                            .build();
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < MAX_SIMULTANEOUS_BLOCKS_PER_PEER; i++) {
+                            for (PeerHandler peer : peers.values()) {
+                                Block b = futureBlockHeaders.poll();
+                                if (b == null) {
+                                    // no more blocks to get so cancel ourselves
+                                    timer.cancel();
+                                    return;
+                                } else {
+                                    InetSocketAddress address = peer.getListenAddress();
+                                    awaitedBlockHeaders.put(b, address);
+                                    downloadBlock(peer, b.getBlockID());
+                                    // not very efficient, but safe
+                                    blocksDownloadedFromPeer.putIfAbsent(address, new AtomicInteger(0));
+                                }
 
-
-                }
-
-
+                            }
+                        }
+                    }
+                }, 0, DOWNLOAD_INTERVAL_MS);
             }
+        }
 
+
+        private void downloadBlock(PeerHandler peer, byte[] blockID) {
+            MessageProto.GetBlocksMessage gbm = MessageProto.GetBlocksMessage.newBuilder()
+                    .setBlockID(ByteString.copyFrom(blockID))
+                    .build();
+
+            MessageProto.Message message = MessageProto.Message.newBuilder()
+                    .setType(MessageProto.Message.Type.GET_BLOCK)
+                    .setGetBlock(gbm)
+                    .build();
+
+            peer.send(message);
         }
 
 
@@ -480,6 +511,16 @@ public class ConnectionManager {
             try {
                 // deserialize block
                 Block block = Block.deserialize(blockBytes);
+
+                // see if we requested this block from this peer
+                InetSocketAddress a = awaitedBlockHeaders.remove(block);
+                if (e.getPeer().equals(a)) {
+                    // if so can download another block from peer (providing there are more queued up)
+                    blocksDownloadedFromPeer.get(e.getPeer()).incrementAndGet();
+                    Block next = futureBlockHeaders.poll();
+                    if (next != null)
+                        downloadBlock(peers.get(e.getPeer()), next.getBlockID());
+                }
 
                 // check we don't already have it in our store
                 if (dataStore.getBlock(block.getBlockID()) != null)
@@ -496,13 +537,15 @@ public class ConnectionManager {
                 }
 
                 if (block.setEntriesList(entryList)) {
-                    // TODO: accept blocks which will be orphans
-                    if (dataStore.getBlock(block.getPrevBlockHash()) != null) {
-                        // parent exists so store this block
-                        if (dataStore.insertBlock(block)) {
-                            // only notify if we successfully inserted it (not a duplicate).
+                    // parent exists so store this block
+                    InsertBlockResult result = dataStore.insertBlock(block);
+                    switch (result) {
+                        case SUCCESS:
                             bus.post(new NewBlockEvent(block));
-                        }
+                            break;
+                        case FAIL_ORPHAN:
+                            // keep block in memory and try to store it once its parent has been downloaded.
+
                     }
                 }
             } catch (IOException ioe) {
