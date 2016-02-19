@@ -137,6 +137,19 @@ public final class MessageProto {
      * <code>optional .GetBlocksMessage getBlock = 10;</code>
      */
     bitverify.network.proto.MessageProto.GetBlocksMessageOrBuilder getGetBlockOrBuilder();
+
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    boolean hasVersionAck();
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    bitverify.network.proto.MessageProto.VersionAck getVersionAck();
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder();
   }
   /**
    * Protobuf type {@code Message}
@@ -318,6 +331,19 @@ public final class MessageProto {
               bitField0_ |= 0x00000200;
               break;
             }
+            case 90: {
+              bitverify.network.proto.MessageProto.VersionAck.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000400) == 0x00000400)) {
+                subBuilder = versionAck_.toBuilder();
+              }
+              versionAck_ = input.readMessage(bitverify.network.proto.MessageProto.VersionAck.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(versionAck_);
+                versionAck_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000400;
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -398,6 +424,10 @@ public final class MessageProto {
        * <code>GET_BLOCK = 9;</code>
        */
       GET_BLOCK(8, 9),
+      /**
+       * <code>VERSION_ACK = 10;</code>
+       */
+      VERSION_ACK(9, 10),
       ;
 
       /**
@@ -436,6 +466,10 @@ public final class MessageProto {
        * <code>GET_BLOCK = 9;</code>
        */
       public static final int GET_BLOCK_VALUE = 9;
+      /**
+       * <code>VERSION_ACK = 10;</code>
+       */
+      public static final int VERSION_ACK_VALUE = 10;
 
 
       public final int getNumber() { return value; }
@@ -451,6 +485,7 @@ public final class MessageProto {
           case 7: return ACK;
           case 8: return GET_HEADERS;
           case 9: return GET_BLOCK;
+          case 10: return VERSION_ACK;
           default: return null;
         }
       }
@@ -707,6 +742,27 @@ public final class MessageProto {
       return getBlock_;
     }
 
+    public static final int VERSIONACK_FIELD_NUMBER = 11;
+    private bitverify.network.proto.MessageProto.VersionAck versionAck_;
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public boolean hasVersionAck() {
+      return ((bitField0_ & 0x00000400) == 0x00000400);
+    }
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public bitverify.network.proto.MessageProto.VersionAck getVersionAck() {
+      return versionAck_;
+    }
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder() {
+      return versionAck_;
+    }
+
     private void initFields() {
       type_ = bitverify.network.proto.MessageProto.Message.Type.HEADERS;
       headers_ = bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
@@ -718,6 +774,7 @@ public final class MessageProto {
       ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
       getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
       getBlock_ = bitverify.network.proto.MessageProto.GetBlocksMessage.getDefaultInstance();
+      versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -759,12 +816,6 @@ public final class MessageProto {
           return false;
         }
       }
-      if (hasAck()) {
-        if (!getAck().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       if (hasGetHeaders()) {
         if (!getGetHeaders().isInitialized()) {
           memoizedIsInitialized = 0;
@@ -773,6 +824,12 @@ public final class MessageProto {
       }
       if (hasGetBlock()) {
         if (!getGetBlock().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      if (hasVersionAck()) {
+        if (!getVersionAck().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -813,6 +870,9 @@ public final class MessageProto {
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         output.writeMessage(10, getBlock_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        output.writeMessage(11, versionAck_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -862,6 +922,10 @@ public final class MessageProto {
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(10, getBlock_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, versionAck_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -981,6 +1045,7 @@ public final class MessageProto {
           getAckFieldBuilder();
           getGetHeadersFieldBuilder();
           getGetBlockFieldBuilder();
+          getVersionAckFieldBuilder();
         }
       }
       private static Builder create() {
@@ -1045,6 +1110,12 @@ public final class MessageProto {
           getBlockBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000200);
+        if (versionAckBuilder_ == null) {
+          versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+        } else {
+          versionAckBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000400);
         return this;
       }
 
@@ -1149,6 +1220,14 @@ public final class MessageProto {
         } else {
           result.getBlock_ = getBlockBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000400;
+        }
+        if (versionAckBuilder_ == null) {
+          result.versionAck_ = versionAck_;
+        } else {
+          result.versionAck_ = versionAckBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1195,6 +1274,9 @@ public final class MessageProto {
         if (other.hasGetBlock()) {
           mergeGetBlock(other.getGetBlock());
         }
+        if (other.hasVersionAck()) {
+          mergeVersionAck(other.getVersionAck());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -1234,12 +1316,6 @@ public final class MessageProto {
             return false;
           }
         }
-        if (hasAck()) {
-          if (!getAck().isInitialized()) {
-            
-            return false;
-          }
-        }
         if (hasGetHeaders()) {
           if (!getGetHeaders().isInitialized()) {
             
@@ -1248,6 +1324,12 @@ public final class MessageProto {
         }
         if (hasGetBlock()) {
           if (!getGetBlock().isInitialized()) {
+            
+            return false;
+          }
+        }
+        if (hasVersionAck()) {
+          if (!getVersionAck().isInitialized()) {
             
             return false;
           }
@@ -2353,6 +2435,122 @@ public final class MessageProto {
         return getBlockBuilder_;
       }
 
+      private bitverify.network.proto.MessageProto.VersionAck versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder> versionAckBuilder_;
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public boolean hasVersionAck() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAck getVersionAck() {
+        if (versionAckBuilder_ == null) {
+          return versionAck_;
+        } else {
+          return versionAckBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder setVersionAck(bitverify.network.proto.MessageProto.VersionAck value) {
+        if (versionAckBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          versionAck_ = value;
+          onChanged();
+        } else {
+          versionAckBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder setVersionAck(
+          bitverify.network.proto.MessageProto.VersionAck.Builder builderForValue) {
+        if (versionAckBuilder_ == null) {
+          versionAck_ = builderForValue.build();
+          onChanged();
+        } else {
+          versionAckBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder mergeVersionAck(bitverify.network.proto.MessageProto.VersionAck value) {
+        if (versionAckBuilder_ == null) {
+          if (((bitField0_ & 0x00000400) == 0x00000400) &&
+              versionAck_ != bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance()) {
+            versionAck_ =
+              bitverify.network.proto.MessageProto.VersionAck.newBuilder(versionAck_).mergeFrom(value).buildPartial();
+          } else {
+            versionAck_ = value;
+          }
+          onChanged();
+        } else {
+          versionAckBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder clearVersionAck() {
+        if (versionAckBuilder_ == null) {
+          versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+          onChanged();
+        } else {
+          versionAckBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000400);
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAck.Builder getVersionAckBuilder() {
+        bitField0_ |= 0x00000400;
+        onChanged();
+        return getVersionAckFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder() {
+        if (versionAckBuilder_ != null) {
+          return versionAckBuilder_.getMessageOrBuilder();
+        } else {
+          return versionAck_;
+        }
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder> 
+          getVersionAckFieldBuilder() {
+        if (versionAckBuilder_ == null) {
+          versionAckBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder>(
+                  getVersionAck(),
+                  getParentForChildren(),
+                  isClean());
+          versionAck_ = null;
+        }
+        return versionAckBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:Message)
     }
 
@@ -2369,29 +2567,13 @@ public final class MessageProto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
     boolean hasListenPort();
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    bitverify.network.proto.MessageProto.NetAddress getListenPort();
-    /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder();
+    int getListenPort();
   }
   /**
    * Protobuf type {@code Version}
@@ -2445,17 +2627,9 @@ public final class MessageProto {
               }
               break;
             }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = listenPort_.toBuilder();
-              }
-              listenPort_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(listenPort_);
-                listenPort_ = subBuilder.buildPartial();
-              }
+            case 8: {
               bitField0_ |= 0x00000001;
+              listenPort_ = input.readInt32();
               break;
             }
           }
@@ -2499,40 +2673,22 @@ public final class MessageProto {
 
     private int bitField0_;
     public static final int LISTENPORT_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress listenPort_;
+    private int listenPort_;
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
     public boolean hasListenPort() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    public bitverify.network.proto.MessageProto.NetAddress getListenPort() {
-      return listenPort_;
-    }
-    /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder() {
+    public int getListenPort() {
       return listenPort_;
     }
 
     private void initFields() {
-      listenPort_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
+      listenPort_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -2544,10 +2700,6 @@ public final class MessageProto {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (!getListenPort().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -2556,7 +2708,7 @@ public final class MessageProto {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, listenPort_);
+        output.writeInt32(1, listenPort_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2569,7 +2721,7 @@ public final class MessageProto {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, listenPort_);
+          .computeInt32Size(1, listenPort_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2680,7 +2832,6 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getListenPortFieldBuilder();
         }
       }
       private static Builder create() {
@@ -2689,11 +2840,7 @@ public final class MessageProto {
 
       public Builder clear() {
         super.clear();
-        if (listenPortBuilder_ == null) {
-          listenPort_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-        } else {
-          listenPortBuilder_.clear();
-        }
+        listenPort_ = 0;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
@@ -2726,11 +2873,7 @@ public final class MessageProto {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        if (listenPortBuilder_ == null) {
-          result.listenPort_ = listenPort_;
-        } else {
-          result.listenPort_ = listenPortBuilder_.build();
-        }
+        result.listenPort_ = listenPort_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -2748,7 +2891,7 @@ public final class MessageProto {
       public Builder mergeFrom(bitverify.network.proto.MessageProto.Version other) {
         if (other == bitverify.network.proto.MessageProto.Version.getDefaultInstance()) return this;
         if (other.hasListenPort()) {
-          mergeListenPort(other.getListenPort());
+          setListenPort(other.getListenPort());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2756,10 +2899,6 @@ public final class MessageProto {
 
       public final boolean isInitialized() {
         if (!hasListenPort()) {
-          
-          return false;
-        }
-        if (!getListenPort().isInitialized()) {
           
           return false;
         }
@@ -2785,156 +2924,36 @@ public final class MessageProto {
       }
       private int bitField0_;
 
-      private bitverify.network.proto.MessageProto.NetAddress listenPort_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> listenPortBuilder_;
+      private int listenPort_ ;
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
       public boolean hasListenPort() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
-      public bitverify.network.proto.MessageProto.NetAddress getListenPort() {
-        if (listenPortBuilder_ == null) {
-          return listenPort_;
-        } else {
-          return listenPortBuilder_.getMessage();
-        }
+      public int getListenPort() {
+        return listenPort_;
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
-      public Builder setListenPort(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (listenPortBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          listenPort_ = value;
-          onChanged();
-        } else {
-          listenPortBuilder_.setMessage(value);
-        }
+      public Builder setListenPort(int value) {
         bitField0_ |= 0x00000001;
+        listenPort_ = value;
+        onChanged();
         return this;
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public Builder setListenPort(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (listenPortBuilder_ == null) {
-          listenPort_ = builderForValue.build();
-          onChanged();
-        } else {
-          listenPortBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public Builder mergeListenPort(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (listenPortBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              listenPort_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            listenPort_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(listenPort_).mergeFrom(value).buildPartial();
-          } else {
-            listenPort_ = value;
-          }
-          onChanged();
-        } else {
-          listenPortBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
       public Builder clearListenPort() {
-        if (listenPortBuilder_ == null) {
-          listenPort_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-          onChanged();
-        } else {
-          listenPortBuilder_.clear();
-        }
         bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getListenPortBuilder() {
-        bitField0_ |= 0x00000001;
+        listenPort_ = 0;
         onChanged();
-        return getListenPortFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder() {
-        if (listenPortBuilder_ != null) {
-          return listenPortBuilder_.getMessageOrBuilder();
-        } else {
-          return listenPort_;
-        }
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getListenPortFieldBuilder() {
-        if (listenPortBuilder_ == null) {
-          listenPortBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getListenPort(),
-                  getParentForChildren(),
-                  isClean());
-          listenPort_ = null;
-        }
-        return listenPortBuilder_;
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:Version)
@@ -2951,19 +2970,6 @@ public final class MessageProto {
   public interface AckOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Ack)
       com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    boolean hasAddr();
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    bitverify.network.proto.MessageProto.NetAddress getAddr();
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder();
   }
   /**
    * Protobuf type {@code Ack}
@@ -2999,7 +3005,6 @@ public final class MessageProto {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       initFields();
-      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -3015,19 +3020,6 @@ public final class MessageProto {
                                      extensionRegistry, tag)) {
                 done = true;
               }
-              break;
-            }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = addr_.toBuilder();
-              }
-              addr_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(addr_);
-                addr_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000001;
               break;
             }
           }
@@ -3069,30 +3061,7 @@ public final class MessageProto {
       return PARSER;
     }
 
-    private int bitField0_;
-    public static final int ADDR_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress addr_;
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public boolean hasAddr() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public bitverify.network.proto.MessageProto.NetAddress getAddr() {
-      return addr_;
-    }
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder() {
-      return addr_;
-    }
-
     private void initFields() {
-      addr_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -3100,12 +3069,6 @@ public final class MessageProto {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (hasAddr()) {
-        if (!getAddr().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -3113,9 +3076,6 @@ public final class MessageProto {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, addr_);
-      }
       getUnknownFields().writeTo(output);
     }
 
@@ -3125,10 +3085,6 @@ public final class MessageProto {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, addr_);
-      }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -3238,7 +3194,6 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getAddrFieldBuilder();
         }
       }
       private static Builder create() {
@@ -3247,12 +3202,6 @@ public final class MessageProto {
 
       public Builder clear() {
         super.clear();
-        if (addrBuilder_ == null) {
-          addr_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-        } else {
-          addrBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
@@ -3279,17 +3228,6 @@ public final class MessageProto {
 
       public bitverify.network.proto.MessageProto.Ack buildPartial() {
         bitverify.network.proto.MessageProto.Ack result = new bitverify.network.proto.MessageProto.Ack(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (addrBuilder_ == null) {
-          result.addr_ = addr_;
-        } else {
-          result.addr_ = addrBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -3305,20 +3243,11 @@ public final class MessageProto {
 
       public Builder mergeFrom(bitverify.network.proto.MessageProto.Ack other) {
         if (other == bitverify.network.proto.MessageProto.Ack.getDefaultInstance()) return this;
-        if (other.hasAddr()) {
-          mergeAddr(other.getAddr());
-        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (hasAddr()) {
-          if (!getAddr().isInitialized()) {
-            
-            return false;
-          }
-        }
         return true;
       }
 
@@ -3339,123 +3268,6 @@ public final class MessageProto {
         }
         return this;
       }
-      private int bitField0_;
-
-      private bitverify.network.proto.MessageProto.NetAddress addr_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> addrBuilder_;
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public boolean hasAddr() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress getAddr() {
-        if (addrBuilder_ == null) {
-          return addr_;
-        } else {
-          return addrBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder setAddr(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (addrBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          addr_ = value;
-          onChanged();
-        } else {
-          addrBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder setAddr(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (addrBuilder_ == null) {
-          addr_ = builderForValue.build();
-          onChanged();
-        } else {
-          addrBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder mergeAddr(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (addrBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              addr_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            addr_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(addr_).mergeFrom(value).buildPartial();
-          } else {
-            addr_ = value;
-          }
-          onChanged();
-        } else {
-          addrBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder clearAddr() {
-        if (addrBuilder_ == null) {
-          addr_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-          onChanged();
-        } else {
-          addrBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getAddrBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getAddrFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder() {
-        if (addrBuilder_ != null) {
-          return addrBuilder_.getMessageOrBuilder();
-        } else {
-          return addr_;
-        }
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getAddrFieldBuilder() {
-        if (addrBuilder_ == null) {
-          addrBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getAddr(),
-                  getParentForChildren(),
-                  isClean());
-          addr_ = null;
-        }
-        return addrBuilder_;
-      }
 
       // @@protoc_insertion_point(builder_scope:Ack)
     }
@@ -3466,6 +3278,411 @@ public final class MessageProto {
     }
 
     // @@protoc_insertion_point(class_scope:Ack)
+  }
+
+  public interface VersionAckOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:VersionAck)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    boolean hasListenPort();
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    int getListenPort();
+  }
+  /**
+   * Protobuf type {@code VersionAck}
+   */
+  public static final class VersionAck extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:VersionAck)
+      VersionAckOrBuilder {
+    // Use VersionAck.newBuilder() to construct.
+    private VersionAck(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private VersionAck(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final VersionAck defaultInstance;
+    public static VersionAck getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public VersionAck getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private VersionAck(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              listenPort_ = input.readInt32();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return bitverify.network.proto.MessageProto.internal_static_VersionAck_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              bitverify.network.proto.MessageProto.VersionAck.class, bitverify.network.proto.MessageProto.VersionAck.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<VersionAck> PARSER =
+        new com.google.protobuf.AbstractParser<VersionAck>() {
+      public VersionAck parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new VersionAck(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<VersionAck> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int LISTENPORT_FIELD_NUMBER = 1;
+    private int listenPort_;
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    public boolean hasListenPort() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    public int getListenPort() {
+      return listenPort_;
+    }
+
+    private void initFields() {
+      listenPort_ = 0;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasListenPort()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeInt32(1, listenPort_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, listenPort_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.VersionAck prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code VersionAck}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:VersionAck)
+        bitverify.network.proto.MessageProto.VersionAckOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                bitverify.network.proto.MessageProto.VersionAck.class, bitverify.network.proto.MessageProto.VersionAck.Builder.class);
+      }
+
+      // Construct using bitverify.network.proto.MessageProto.VersionAck.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        listenPort_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck build() {
+        bitverify.network.proto.MessageProto.VersionAck result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck buildPartial() {
+        bitverify.network.proto.MessageProto.VersionAck result = new bitverify.network.proto.MessageProto.VersionAck(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.listenPort_ = listenPort_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof bitverify.network.proto.MessageProto.VersionAck) {
+          return mergeFrom((bitverify.network.proto.MessageProto.VersionAck)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.VersionAck other) {
+        if (other == bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance()) return this;
+        if (other.hasListenPort()) {
+          setListenPort(other.getListenPort());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasListenPort()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        bitverify.network.proto.MessageProto.VersionAck parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (bitverify.network.proto.MessageProto.VersionAck) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private int listenPort_ ;
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public boolean hasListenPort() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public int getListenPort() {
+        return listenPort_;
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public Builder setListenPort(int value) {
+        bitField0_ |= 0x00000001;
+        listenPort_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public Builder clearListenPort() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        listenPort_ = 0;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:VersionAck)
+    }
+
+    static {
+      defaultInstance = new VersionAck(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:VersionAck)
   }
 
   public interface GetHeadersMessageOrBuilder extends
@@ -7699,6 +7916,11 @@ public final class MessageProto {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Ack_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_VersionAck_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_VersionAck_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_GetHeadersMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -7747,7 +7969,7 @@ public final class MessageProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rMessage.proto\"\255\003\n\007Message\022\033\n\004type\030\001 \002(" +
+      "\n\rMessage.proto\"\340\003\n\007Message\022\033\n\004type\030\001 \002(" +
       "\0162\r.Message.Type\022 \n\007headers\030\002 \001(\0132\017.Head" +
       "ersMessage\022\034\n\005block\030\003 \001(\0132\r.BlockMessage" +
       "\022\034\n\005entry\030\004 \001(\0132\r.EntryMessage\022\025\n\005peers\030" +
@@ -7755,21 +7977,22 @@ public final class MessageProto {
       "rs\022\031\n\007version\030\007 \001(\0132\010.Version\022\021\n\003ack\030\010 \001" +
       "(\0132\004.Ack\022&\n\ngetHeaders\030\t \001(\0132\022.GetHeader" +
       "sMessage\022#\n\010getBlock\030\n \001(\0132\021.GetBlocksMe" +
-      "ssage\"x\n\004Type\022\013\n\007HEADERS\020\001\022\t\n\005BLOCK\020\002\022\t\n" +
-      "\005ENTRY\020\003\022\t\n\005PEERS\020\004\022\014\n\010GETPEERS\020\005\022\013\n\007VER",
-      "SION\020\006\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\022\r\n\tGET_" +
-      "BLOCK\020\t\"*\n\007Version\022\037\n\nlistenPort\030\001 \002(\0132\013" +
-      ".NetAddress\" \n\003Ack\022\031\n\004addr\030\001 \001(\0132\013.NetAd" +
-      "dress\"7\n\021GetHeadersMessage\022\021\n\tfromBlock\030" +
-      "\001 \002(\014\022\017\n\007toBlock\030\002 \001(\014\"!\n\016HeadersMessage" +
-      "\022\017\n\007headers\030\001 \003(\014\"#\n\020GetBlocksMessage\022\017\n" +
-      "\007blockID\030\001 \002(\014\"3\n\014BlockMessage\022\022\n\nblockB" +
-      "ytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\"\n\014EntryMess" +
-      "age\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n\007addr" +
-      "ess\030\001 \003(\0132\013.NetAddress\",\n\nNetAddress\022\020\n\010",
-      "hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"*\n\010GetPeers" +
-      "\022\036\n\tmyAddress\030\001 \002(\0132\013.NetAddressB\'\n\027bitv" +
-      "erify.network.protoB\014MessageProto"
+      "ssage\022\037\n\nversionAck\030\013 \001(\0132\013.VersionAck\"\211" +
+      "\001\n\004Type\022\013\n\007HEADERS\020\001\022\t\n\005BLOCK\020\002\022\t\n\005ENTRY",
+      "\020\003\022\t\n\005PEERS\020\004\022\014\n\010GETPEERS\020\005\022\013\n\007VERSION\020\006" +
+      "\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\022\r\n\tGET_BLOCK\020" +
+      "\t\022\017\n\013VERSION_ACK\020\n\"\035\n\007Version\022\022\n\nlistenP" +
+      "ort\030\001 \002(\005\"\005\n\003Ack\" \n\nVersionAck\022\022\n\nlisten" +
+      "Port\030\001 \002(\005\"7\n\021GetHeadersMessage\022\021\n\tfromB" +
+      "lock\030\001 \002(\014\022\017\n\007toBlock\030\002 \001(\014\"!\n\016HeadersMe" +
+      "ssage\022\017\n\007headers\030\001 \003(\014\"#\n\020GetBlocksMessa" +
+      "ge\022\017\n\007blockID\030\001 \002(\014\"3\n\014BlockMessage\022\022\n\nb" +
+      "lockBytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\"\n\014Entr" +
+      "yMessage\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n",
+      "\007address\030\001 \003(\0132\013.NetAddress\",\n\nNetAddres" +
+      "s\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"*\n\010Get" +
+      "Peers\022\036\n\tmyAddress\030\001 \002(\0132\013.NetAddressB\'\n" +
+      "\027bitverify.network.protoB\014MessageProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -7788,7 +8011,7 @@ public final class MessageProto {
     internal_static_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Message_descriptor,
-        new java.lang.String[] { "Type", "Headers", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", "GetHeaders", "GetBlock", });
+        new java.lang.String[] { "Type", "Headers", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", "GetHeaders", "GetBlock", "VersionAck", });
     internal_static_Version_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Version_fieldAccessorTable = new
@@ -7800,51 +8023,57 @@ public final class MessageProto {
     internal_static_Ack_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Ack_descriptor,
-        new java.lang.String[] { "Addr", });
-    internal_static_GetHeadersMessage_descriptor =
+        new java.lang.String[] { });
+    internal_static_VersionAck_descriptor =
       getDescriptor().getMessageTypes().get(3);
+    internal_static_VersionAck_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_VersionAck_descriptor,
+        new java.lang.String[] { "ListenPort", });
+    internal_static_GetHeadersMessage_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_GetHeadersMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetHeadersMessage_descriptor,
         new java.lang.String[] { "FromBlock", "ToBlock", });
     internal_static_HeadersMessage_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_HeadersMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_HeadersMessage_descriptor,
         new java.lang.String[] { "Headers", });
     internal_static_GetBlocksMessage_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_GetBlocksMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetBlocksMessage_descriptor,
         new java.lang.String[] { "BlockID", });
     internal_static_BlockMessage_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_BlockMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_BlockMessage_descriptor,
         new java.lang.String[] { "BlockBytes", "Entries", });
     internal_static_EntryMessage_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_EntryMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_EntryMessage_descriptor,
         new java.lang.String[] { "EntryBytes", });
     internal_static_Peers_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_Peers_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Peers_descriptor,
         new java.lang.String[] { "Address", });
     internal_static_NetAddress_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_NetAddress_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_NetAddress_descriptor,
         new java.lang.String[] { "HostName", "Port", });
     internal_static_GetPeers_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_GetPeers_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetPeers_descriptor,
