@@ -206,8 +206,8 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
-					System.out.println("Success");
-					System.out.println("Block Hash: "+result);
+					//System.out.println("Success");
+					//System.out.println("Block Hash: "+result);
 					
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
 					dataStore.insertBlock(blockMining);
@@ -223,8 +223,8 @@ public class Miner implements Runnable{
 				//	//Must maintain a list of peers in database that have received proof from
 				//	//Reject incoming entries from public IPs not from the list
 					eventBus.post(new NewMiningProofEvent(blockMining));
-					System.out.println("Proof Success");
-					System.out.println("Block Hash: "+result);
+					//System.out.println("Proof Success");
+					//System.out.println("Block Hash: "+result);
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -253,7 +253,7 @@ public class Miner implements Runnable{
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
-		System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
+		//System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
 		
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
@@ -374,7 +374,7 @@ public class Miner implements Runnable{
 			
 			//System.out.println("Most Recent: "+mostRecentTime);
 			//System.out.println("No ago: "+nAgoTime);
-			System.out.println("Time Difference: "+difference);
+			//System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
 			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
@@ -387,7 +387,7 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
+			//System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
 		
 			return packTarget(newTarget.toString(16));
 		}

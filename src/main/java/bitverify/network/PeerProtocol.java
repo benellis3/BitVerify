@@ -82,7 +82,7 @@ public class PeerProtocol  {
                             peers.add(p);
                         }
                         catch(TimeoutException to) {
-                            System.out.println("Timeout when constructing new peer");
+                            //System.out.println("Timeout when constructing new peer");
                         }
                         catch(IOException | InterruptedException | ExecutionException ie) {
                             ie.printStackTrace();

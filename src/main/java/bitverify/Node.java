@@ -20,6 +20,7 @@ import com.squareup.otto.ThreadEnforcer;
 import bitverify.block.Block;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
+import bitverify.gui.GUI;
 import bitverify.mining.Miner;
 import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
@@ -46,25 +47,41 @@ public class Node {
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	
-	public Node(String[] args) {
-		handleArgs(args);
+	public enum StartType {CLI, GUI};
+	
+	private GUI mGUI;
+	
+	public Node(StartType startType) {
+		handleType(startType);
 	}
 	
-	private void handleArgs(String[] args) {
-		// If no args, we will just show default prompt to user
-		if (args.length == 0) {
-			mScanner = new Scanner(System.in);
-			mEventBus = new Bus(ThreadEnforcer.ANY);
-			mEventBus.register(this);
-			setupDatabase();
-			setupUser();
-			setupNetwork();
-			userCLISetup();
-		}
-		else {
-			//TODO handle individual commands
+	public Node(GUI gui) {
+		mGUI = gui;
+		handleType(StartType.GUI);
+	}
+	
+	private void handleType(StartType startType) {
+		mEventBus = new Bus(ThreadEnforcer.ANY);
+		mEventBus.register(this);
+		
+		switch (startType) {
+			case CLI:
+				mScanner = new Scanner(System.in);
+				setupDatabase();
+				setupUser();
+				setupNetwork();
+				userCLISetup();
+				break;
+			default:
+				setupDatabase();
+				setupUser();
+				setupNetwork();
+				if (mGUI != null) {
+					mGUI.onNodeSetupComplete();
+				}
 		}
 	}
+	
 	
 	private void userCLISetup() {
 		// Print out the command options for the user
@@ -111,12 +128,11 @@ public class Node {
 			
 	}
 	
-	private void startMiner() {
+	public void startMiner() {
 		while (mMiner != null) {
 			stopMiner();
 		}
 		try {
-			System.out.println(mDatabase);
 			mMiner = new Miner(mEventBus, mDatabase);
 		} catch (SQLException e) {
 			// TODO Handle this
@@ -131,7 +147,7 @@ public class Node {
 		mOptions[mMiningOptionNum] = "Stop mining";
 	}
 	
-	private void stopMiner() {
+	public void stopMiner() {
 		if (mMiner != null) {
 			mMiner.stopMining(); // best way to handle this I believe.
 			mMiner = null;
@@ -198,7 +214,8 @@ public class Node {
 	}
 	
 	private void setupUser() {
-		System.out.println("Setting up user...");
+		informUserOfProgress("Setting up user...");
+		
 		try {
 			List<Identity> identities = mDatabase.getIdentities();
 			if (identities.size() == 0) {
@@ -217,7 +234,7 @@ public class Node {
 	}
 	
 	private void setupNetwork() {
-		System.out.println("Setting up network...");
+		informUserOfProgress("Setting up network...");
 		try {
 			mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 		} catch (IOException e) {
@@ -228,7 +245,7 @@ public class Node {
 	
 	
 	private void setupDatabase() {
-		System.out.println("Setting up database...");
+		informUserOfProgress("Setting up database...");
 		// create a connection source to an in-memory database
 		try {
 			mDatabase = new DatabaseStore("jdbc:h2:mem:bitverify");
@@ -256,6 +273,14 @@ public class Node {
     	Calendar cal = Calendar.getInstance();
     	SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
     	return sdf.format(cal.getTime());
+    }
+    
+    private void informUserOfProgress(String progress) {
+    	if (mGUI == null) {
+    		System.out.println(progress);
+    	} else {
+    		mGUI.changeLoadingText(progress);
+    	}
     }
 
 }

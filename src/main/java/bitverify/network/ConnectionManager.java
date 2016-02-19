@@ -61,7 +61,7 @@ public class ConnectionManager {
                                 }
                                 catch(TimeoutException time) {
                                     // this means no response was received
-                                    System.out.println("No response received within the time limit");
+                                    //System.out.println("No response received within the time limit");
                                 }
                                 catch(InterruptedException | ExecutionException ie) {
                                     ie.printStackTrace();
@@ -86,7 +86,7 @@ public class ConnectionManager {
                         peers.add(p);
                     }
                     catch(TimeoutException toe) {
-                        System.out.println("Failed to contact an initial peer");
+                        //System.out.println("Failed to contact an initial peer");
                     }
                     catch(InterruptedException | ExecutionException | IOException ie) {
                         ie.printStackTrace();
@@ -139,7 +139,7 @@ public class ConnectionManager {
     public void printPeers() {
         for(PeerHandler p : peers) {
             InetSocketAddress address = p.getAddress();
-            System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
+            //System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
     protected Collection<PeerHandler> peers(){return peers;}
@@ -149,7 +149,7 @@ public class ConnectionManager {
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent nee) {
         // prints the document description
-        System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
+        //System.out.println(nee.getNewEntry().getMetadata().getDocDescription());
     }
     /**
      * Create a peers message to send to the sender of the
