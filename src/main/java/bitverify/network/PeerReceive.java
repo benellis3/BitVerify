@@ -1,15 +1,12 @@
 package bitverify.network;
 
-import bitverify.block.Block;
 import bitverify.entries.Entry;
-import bitverify.network.proto.MessageProto.GetPeers;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
 import bitverify.network.proto.MessageProto.BlockMessage;
 import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Peers;
 import bitverify.persistence.DataStore;
-import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 
 import java.io.IOException;
@@ -89,7 +86,7 @@ public class PeerReceive implements Runnable {
 
     private void handleBlockMessage(Message message) {
         BlockMessage m = message.getBlock();
-        eventBus.post(new BlockMessageEvent(m));
+        eventBus.post(new BlockMessageEvent(m, peerListenAddress));
     }
 
     private void handleGetPeers(Message message) {
@@ -100,7 +97,7 @@ public class PeerReceive implements Runnable {
     private void handlePeers(Message message) {
         Peers peers = message.getPeers();
         Collection<NetAddress> netAddressList = peers.getAddressList();
-        // create a list of SocketInetAddresses from the netAddressList
+        // create a list of InetSocketAddresses from the netAddressList
         Set<InetSocketAddress> socketAddressList = ConcurrentHashMap.newKeySet();
         for(NetAddress netAddress : netAddressList) {
             socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
