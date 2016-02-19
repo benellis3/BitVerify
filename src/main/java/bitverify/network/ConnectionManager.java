@@ -48,6 +48,7 @@ public class ConnectionManager {
     private Map<InetSocketAddress, PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private BlockProtocol blockProtocol;
+    private int ourListenPort;
 
     // underscore courtesy of Laszlo Makk :p
     private void _initialise(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) throws IOException {
@@ -57,6 +58,8 @@ public class ConnectionManager {
         es = Executors.newCachedThreadPool();
         blockProtocol = new BlockProtocol();
         dataStore = ds;
+        ourListenPort = listenPort;
+
         // Create new runnable to listen for new connections.
         ServerSocket serverSocket = new ServerSocket(listenPort);
 
@@ -89,18 +92,7 @@ public class ConnectionManager {
         // block.
         es.execute(() -> {
             for (InetSocketAddress peerAddress : initialPeers) {
-                es.execute(() -> {
-                    try {
-                        Socket socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
-                        PeerHandler ph = new PeerHandler(socket, es, dataStore, bus);
-                        ph.establishConnection(listenPort, peerAddress);
-                        peers.put(peerAddress, ph);
-                    } catch (TimeoutException toe) {
-                        System.out.println("Failed to contact an initial peer");
-                    } catch (InterruptedException | ExecutionException | IOException ie) {
-                        ie.printStackTrace();
-                    }
-                });
+                es.execute(() -> connectToPeer(peerAddress));
             }
 
             PeerProtocol peerProtocol = new PeerProtocol(listenPort);
@@ -117,6 +109,19 @@ public class ConnectionManager {
     public ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort, DataStore dataStore, Bus bus)
             throws IOException {
         _initialise(initialPeers, listenPort, dataStore, bus);
+    }
+
+    private void connectToPeer(InetSocketAddress peerAddress) {
+        try {
+            Socket socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
+            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus);
+            ph.establishConnection(ourListenPort, peerAddress);
+            peers.put(peerAddress, ph);
+        } catch (TimeoutException toe) {
+            System.out.println("Failed to contact an initial peer");
+        } catch (InterruptedException | ExecutionException | IOException ie) {
+            ie.printStackTrace();
+        }
     }
 
     /**
@@ -374,6 +379,17 @@ public class ConnectionManager {
     public class BlockProtocol {
         private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
 
+        // blocks we are downloading now
+        private Map<Block, InetSocketAddress> awaitedBlockHeaders = new ConcurrentHashMap();
+        // keep a count of how many blocks we've downloaded from each peer, so we can blacklist ones which don't respond
+        private Map<InetSocketAddress, AtomicInteger> blocksDownloadedFromPeer = new ConcurrentHashMap<>();
+        // blocks we will download in the future
+        private Queue<Block> futureBlockHeaders = new ConcurrentLinkedQueue<>();
+
+        private static final int DOWNLOAD_INTERVAL_MS = 10000;
+        private Timer timer = new Timer();
+        private Object timerLock = new Object();
+
         private Random rand = new Random();
 
 
@@ -437,16 +453,6 @@ public class ConnectionManager {
         }
 
 
-        // blocks we are downloading now
-        private Map<InetSocketAddress, AtomicInteger> blocksDownloadedFromPeer = new ConcurrentHashMap<>();
-        private Map<Block, InetSocketAddress> awaitedBlockHeaders = new ConcurrentHashMap();
-        // blocks we will download in the future
-        private Queue<Block> futureBlockHeaders = new ConcurrentLinkedQueue<>();
-
-
-        private static final int DOWNLOAD_INTERVAL_MS = 10000;
-        private Timer timer = new Timer();
-        private Object timerLock = new Object();
 
         /**
          * Download the blocks in futureBlockHeaders in a distributed fashion, in parallel.
@@ -466,6 +472,7 @@ public class ConnectionManager {
                     @Override
                     public void run() {
                         for (int i = 0; i < MAX_SIMULTANEOUS_BLOCKS_PER_PEER; i++) {
+                            // TODO: blacklist peers which haven't responded previously
                             for (PeerHandler peer : peers.values()) {
                                 Block b = futureBlockHeaders.poll();
                                 if (b == null) {
@@ -572,7 +579,7 @@ public class ConnectionManager {
         }
 
         public void send() {
-            peers.forEach(p -> {
+            peers.values().forEach(p -> {
                 MessageProto.GetPeers getPeers = MessageProto.GetPeers.newBuilder().build();
                 MessageProto.Message message = MessageProto.Message.newBuilder()
                         .setType(MessageProto.Message.Type.GETPEERS)
@@ -602,23 +609,9 @@ public class ConnectionManager {
             es.execute(() -> {
                 state = State.IDLE;
                 Set<InetSocketAddress> newAddresses = pe.getSocketAddresses();
-                // get the InetSocketAddress collection from the peers
-                Set<InetSocketAddress> peerAddresses = peers.parallelStream()
-                        .map(PeerHandler::getListenAddress)
-                        .collect(Collectors.toSet());
-
                 for (InetSocketAddress address : newAddresses) {
-                    if (!peerAddresses.contains(address)) {
-                        es.execute(() -> {
-                            try {
-                                PeerHandler p = new PeerHandler(address, listenPort, es, dataStore, bus); // blocks possibly
-                                addPeer(p);
-                            } catch (TimeoutException to) {
-                                System.out.println("Timeout when constructing new peer");
-                            } catch (IOException | InterruptedException | ExecutionException ie) {
-                                ie.printStackTrace();
-                            }
-                        });
+                    if (!peers.containsKey(address)) {
+                        es.execute(() -> connectToPeer(address));
                     }
                 }
             });
