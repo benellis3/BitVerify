@@ -356,7 +356,7 @@ public class DatabaseStore implements DataStore {
         return  new DatabaseIterator<>(entryDao.closeableIterator());
     }
 
-    public List<Entry> searchEntries(String searchQuery) throws SQLException {
+    public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
         String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         for (String query : queries) {
@@ -365,7 +365,7 @@ public class DatabaseStore implements DataStore {
             w.like("docDescription", likeQuery);
         }
         // OR all of our like clauses together
-        return w.or(queries.length * 2).query();
+        return new DatabaseIterator<>(w.or(queries.length * 2).iterator());
     }
 
     public void insertEntry(Entry e) throws SQLException {

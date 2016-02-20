@@ -97,18 +97,6 @@ public interface DataStore {
     DatabaseIterator<Entry> getAllEntries() throws SQLException;
 
     /**
-     * Get all entries that are confirmed (part of a block on the active blockchain).
-     * @throws SQLException
-     */
-    public DatabaseIterator<Entry> getConfirmedEntries() throws SQLException;
-
-    /**
-     * Get all stored entries.
-     * @throws SQLException
-     */
-    public DatabaseIterator<Entry> getAllEntries() throws SQLException;
-
-    /**
      * Get all entries where one of the string metadata fields partially matches the given query.
      * Query is split on whitespace, so for example searching for "london bridge" will return
      * any entries containing "london" and any entries containing "bridge".
@@ -116,7 +104,7 @@ public interface DataStore {
      * @return all matching entries
      * @throws SQLException
      */
-    List<Entry> searchEntries(String searchQuery) throws SQLException;
+    DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException;
 
     /**
      * Insert an entry into the store.
