@@ -253,9 +253,9 @@ public class GUI extends Application {
 	}
 
 	public String constructLogMessage(String message) {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 		Date date = new Date();
-		return String.format("%s - %s", dateFormat.format(date), message);
+		return String.format("[%s] %s", dateFormat.format(date), message);
 	}
 	
 }

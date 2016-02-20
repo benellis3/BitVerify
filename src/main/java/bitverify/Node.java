@@ -200,10 +200,18 @@ public class Node {
 			tags[i] = tags[i].trim();
 		}
 		
-		// Construct metadata and entry objects for file
+		// Construct entry object 
 		Entry entry;
 		try {
-			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			// RecieverID is optional 
+			if (recieverID.length() > 0) {
+				entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
+						fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			} else {
+				entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
+						fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			}
+			
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
@@ -216,7 +224,8 @@ public class Node {
 	}
 	
 	private void searchEntries() {
-		
+		System.out.println("Enter search query");
+		String 
 	}
 	
 	private void displayStatistics() {
@@ -226,6 +235,7 @@ public class Node {
 	private void exitProgram() {
 		if (mMiner != null)
 			mMiner.stopMining();
+		
 	}
 	
 	private void setupUser() {
