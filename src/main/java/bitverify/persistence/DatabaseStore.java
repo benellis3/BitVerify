@@ -357,6 +357,9 @@ public class DatabaseStore implements DataStore {
     }
 
     public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
+        if (searchQuery.isEmpty())
+            return getAllEntries();
+
         String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         for (String query : queries) {
