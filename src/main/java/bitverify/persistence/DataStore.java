@@ -17,13 +17,13 @@ public interface DataStore {
      * Gets the number of blocks in the store.
      * @throws SQLException
      */
-    public long getBlocksCount() throws SQLException;
+    long getBlocksCount() throws SQLException;
 
     /**
      * Gets the most recent block on the active blockchain.
      * @throws SQLException
      */
-    public Block getMostRecentBlock() throws SQLException;
+    Block getMostRecentBlock() throws SQLException;
 
     /**
      * Gets the N most recent blocks on the active blockchain.
@@ -31,7 +31,7 @@ public interface DataStore {
      * @param n the number of recent-most blocks to get.
      * @throws SQLException
      */
-    public List<Block> getNMostRecentBlocks(int n) throws SQLException;
+    List<Block> getNMostRecentBlocks(int n) throws SQLException;
 
     /**
      * Gets the N most recent blocks, from (including) the given blockID backwards.
@@ -39,7 +39,7 @@ public interface DataStore {
      * @param n the number of recent-most blocks to get.
      * @throws SQLException
      */
-    public List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException;
+    List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException;
 
     /**
      * Get all of the blocks after a certain block or between two blocks, up to a limited number.
@@ -47,7 +47,7 @@ public interface DataStore {
      * @param idTo   only get blocks before this block ID. Provide null if there is no limit.
      * @param limit  the maximum number of block IDs to get. Provide -1 if there is no limit.
      */
-    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
+    List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
 
     /**
      * Inserts the given block into the store, unless it is already present.
@@ -55,34 +55,46 @@ public interface DataStore {
      * @return true if the block was inserted, false if it was already present.
      * @throws SQLException
      */
-    public boolean insertBlock(Block b) throws SQLException;
+    boolean insertBlock(Block b) throws SQLException;
 
     /**
      * Get a particular block.
      * @param blockID the block id
      * @throws SQLException
      */
-    public Block getBlock(byte[] blockID) throws SQLException;
+    Block getBlock(byte[] blockID) throws SQLException;
 
     /**
      * Get a particular entry.
      * @param id the entry id
      * @throws SQLException
      */
-    public Entry getEntry(UUID id) throws SQLException;
+    Entry getEntry(UUID id) throws SQLException;
 
     /**
      * Get all entries matching the given file hash.
      * @param fileHash the file hash
      * @throws SQLException
      */
-    public List<Entry> getEntries(byte[] fileHash) throws SQLException;
+    List<Entry> getEntries(byte[] fileHash) throws SQLException;
 
     /**
      * Get all entries that are unconfirmed (not part of a block on the active blockchain).
      * @throws SQLException
      */
-    public List<Entry> getUnconfirmedEntries() throws SQLException;
+    List<Entry> getUnconfirmedEntries() throws SQLException;
+
+    /**
+     * Get all entries that are confirmed (part of a block on the active blockchain).
+     * @throws SQLException
+     */
+    DatabaseIterator<Entry> getConfirmedEntries() throws SQLException;
+
+    /**
+     * Get all stored entries.
+     * @throws SQLException
+     */
+    DatabaseIterator<Entry> getAllEntries() throws SQLException;
 
     /**
      * Get all entries that are confirmed (part of a block on the active blockchain).
@@ -104,21 +116,21 @@ public interface DataStore {
      * @return all matching entries
      * @throws SQLException
      */
-    public List<Entry> searchEntries(String searchQuery) throws SQLException;
+    List<Entry> searchEntries(String searchQuery) throws SQLException;
 
     /**
      * Insert an entry into the store.
      * @param e the entry
      * @throws SQLException
      */
-    public void insertEntry(Entry e) throws SQLException;
+    void insertEntry(Entry e) throws SQLException;
 
     /**
      * Get a property's value. Will return null if the property is not stored.
      * @param key the property key
      * @throws SQLException
      */
-    public String getProperty(String key) throws SQLException;
+    String getProperty(String key) throws SQLException;
 
     /**
      * Set a property. Its key and value must be at most 255 characters long.
@@ -126,12 +138,12 @@ public interface DataStore {
      * @param value the property value
      * @throws SQLException
      */
-    public void setProperty(String key, String value) throws SQLException;
+    void setProperty(String key, String value) throws SQLException;
 
 
-    public List<Identity> getIdentities() throws SQLException;
+    List<Identity> getIdentities() throws SQLException;
 
-    public void updateIdentity(Identity identity) throws SQLException;
+    void updateIdentity(Identity identity) throws SQLException;
 
-    public void insertIdentity(Identity identity) throws SQLException;
+    void insertIdentity(Identity identity) throws SQLException;
 }
