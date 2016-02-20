@@ -21,10 +21,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -53,6 +55,7 @@ public class GUI extends Application {
 	public void start(Stage stage) throws Exception {
 		AquaFx.style();
 		
+		// Set up loading screen
 		primaryStage = stage;
         primaryStage.setTitle("BitVerify");
         
@@ -102,24 +105,32 @@ public class GUI extends Application {
         
         primaryStage.show();
         
-        (new Thread() {
-        	public void run() {
-        		mNode = new Node(GUI.this);
-        	}
-        }).start();
-        //onNodeSetupComplete();
+        // set up gui node to run in background
+//        (new Thread() {
+//        	public void run() {
+//        		mNode = new Node(GUI.this);
+//        	}
+//        }).start();
+        onNodeSetupComplete();
 	}
 	
 	public void changeLoadingText(String newText) {
-		if (setUpText != null) {
-			setUpText.setText(newText);
-		}
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				if (setUpText != null) {
+					setUpText.setText(newText);
+				}
+			}
+		});
 	}
 	
 	public void onNodeSetupComplete() {
+		// Can't run UI updates on a different thread
 	    Platform.runLater(new Runnable() {
 	        @Override
 	        public void run() {
+	        	// Set up main tab;
 	        	HBox hbox = new HBox();
 	        	hbox.setPadding(new Insets(15));
 	        	
@@ -133,8 +144,7 @@ public class GUI extends Application {
 	        	Tab addEntryTab = new Tab();
 	        	addEntryTab.setText("Add Entry");
 	        	
-	        	Tab searchTab = new Tab();
-	        	searchTab.setText("Search Entries");
+	        	Tab searchTab = getSearchTab();
 	        	
 	        	Tab networkTab = new Tab();
 	        	networkTab.setText("Network");
@@ -167,6 +177,7 @@ public class GUI extends Application {
 		Button minerBtn = new Button("Start Miner");
 		Button resetBtn = new Button("Reset Miner");
 		
+		// Start or stop the miner depending on the action
 		minerBtn.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
 		        String text = minerBtn.getText();
@@ -200,7 +211,7 @@ public class GUI extends Application {
 		messageList.setMouseTransparent( true );
 		messageList.setFocusTraversable( false );
 		
-		minerLog =FXCollections.observableArrayList(constructLogMessage("Miner ready."));
+		minerLog = FXCollections.observableArrayList(constructLogMessage("Miner ready."));
 		messageList.setItems(minerLog);
 		
 		VBox vLay = new VBox();
@@ -212,6 +223,33 @@ public class GUI extends Application {
 		minerTab.setContent(vLay);
 		
 		return minerTab;
+	}
+	
+	public Tab getSearchTab() {
+    	Tab searchTab = new Tab();
+    	searchTab.setText("Search Entries");
+    	
+    	VBox vLay = new VBox();
+    	vLay.setPadding(new Insets(15));
+    	vLay.setSpacing(25);
+    	
+    	HBox hLay = new HBox();
+    	TextField searchField = new TextField();
+    	searchField.setPrefWidth(600);
+    	searchField.setPromptText("Search");
+    	
+    	Button searchButton = new Button("Search");
+    	searchButton.setPrefHeight(searchButton.getHeight());
+    	
+    	HBox.setHgrow(hLay, Priority.ALWAYS);
+    	hLay.getChildren().addAll(searchField, searchButton);
+    	hLay.setAlignment(Pos.TOP_CENTER);
+    	
+    	//Pagination pager = new Pagination();
+    	
+    	vLay.getChildren().addAll(hLay);
+    	searchTab.setContent(vLay);
+    	return searchTab;
 	}
 
 	public String constructLogMessage(String message) {
