@@ -435,12 +435,12 @@ public class ConnectionManager {
 
                 // see if we requested this block from this peer
                 InetSocketAddress a = awaitedBlockHeaders.remove(block);
-                if (e.getPeer().equals(a)) {
+                if (e.getPeerAddress().equals(a)) {
                     // if so can download another block from peer (providing there are more queued up)
-                    blocksDownloadedFromPeer.get(e.getPeer()).incrementAndGet();
+                    blocksDownloadedFromPeer.get(e.getPeerAddress()).incrementAndGet();
                     Block next = futureBlockHeaders.poll();
                     if (next != null)
-                        downloadBlock(peers.get(e.getPeer()), next.getBlockID());
+                        downloadBlock(peers.get(e.getPeerAddress()), next.getBlockID());
                 }
 
                 // check we don't already have it in our store

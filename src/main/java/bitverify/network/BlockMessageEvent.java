@@ -7,18 +7,18 @@ import java.net.InetSocketAddress;
 public class BlockMessageEvent {
 
     private final MessageProto.BlockMessage blockMessage;
-    private final InetSocketAddress peer;
+    private final InetSocketAddress peerAddress;
 
-    public BlockMessageEvent(MessageProto.BlockMessage m, InetSocketAddress peer) {
+    public BlockMessageEvent(MessageProto.BlockMessage m, InetSocketAddress peerAddress) {
         blockMessage = m;
-        this.peer = peer;
+        this.peerAddress = peerAddress;
     }
 
     public MessageProto.BlockMessage getBlockMessage() {
         return blockMessage;
     }
 
-    public InetSocketAddress getPeer() {
-        return peer;
+    public InetSocketAddress getPeerAddress() {
+        return peerAddress;
     }
 }
