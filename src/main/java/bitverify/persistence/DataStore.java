@@ -39,14 +39,13 @@ public interface DataStore {
      * @param n the number of recent-most blocks to get.
      * @throws SQLException
      */
-    public List<Block> getNMostRecentBlocks(int n,  Block fromBlock) throws SQLException;
+    public List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException;
 
     /**
      * Get all of the blocks after a certain block or between two blocks, up to a limited number.
      * @param idFrom get blocks after this block ID
-     * @param idTo only get blocks before this block ID. Provide null if there is no limit.
-     * @param limit the maximum number of block IDs to get. Provide -1 if there is no limit.
-     * @return
+     * @param idTo   only get blocks before this block ID. Provide null if there is no limit.
+     * @param limit  the maximum number of block IDs to get. Provide -1 if there is no limit.
      */
     public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
 
@@ -84,6 +83,18 @@ public interface DataStore {
      * @throws SQLException
      */
     public List<Entry> getUnconfirmedEntries() throws SQLException;
+
+    /**
+     * Get all entries that are confirmed (part of a block on the active blockchain).
+     * @throws SQLException
+     */
+    public DatabaseIterator<Entry> getConfirmedEntries() throws SQLException;
+
+    /**
+     * Get all stored entries.
+     * @throws SQLException
+     */
+    public DatabaseIterator<Entry> getAllEntries() throws SQLException;
 
     /**
      * Get all entries where one of the string metadata fields partially matches the given query.
