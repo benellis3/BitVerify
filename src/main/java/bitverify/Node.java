@@ -30,6 +30,7 @@ import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
 import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseIterator;
 import bitverify.persistence.DatabaseStore;
 
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
@@ -200,32 +201,67 @@ public class Node {
 			tags[i] = tags[i].trim();
 		}
 		
-		// Construct entry object 
-		Entry entry;
 		try {
-			// RecieverID is optional 
-			if (recieverID.length() > 0) {
-				entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
-						fileDescription, fileGeo, System.currentTimeMillis(), tags);
-			} else {
-				entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
-						fileDescription, fileGeo, System.currentTimeMillis(), tags);
-			}
-			
-			// Notify the relevant authorities of this important incident
-			NewEntryEvent event = new NewEntryEvent(entry);
-			mEventBus.post(event);
-			mConnectionManager.broadcastEntry(entry);
-			
+			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tags);
 		} catch (KeyDecodingException | IOException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
 		} 
 	}
 	
+	public void addEntry(byte [] hash, String fileDownload, String fileName, 
+			String recieverID, String fileDescription, String fileGeo, 
+			String[] tags) throws KeyDecodingException, IOException {
+		
+		// Construct entry object 
+		Entry entry;
+		
+		// RecieverID is optional 
+		if (recieverID.length() > 0) {
+			entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		} else {
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		}
+		
+		// Notify the relevant authorities of this important incident
+		NewEntryEvent event = new NewEntryEvent(entry);
+		mEventBus.post(event);
+		mConnectionManager.broadcastEntry(entry);
+		
+	}
+	
 	private void searchEntries() {
 		System.out.println("Enter search query");
-		String 
+		String searchQuery = mScanner.nextLine();
+		
+		// Specify how many entries we want to show to user
+		int entriesAtOnce = 10;
+		if (mDatabase != null) {
+			// We use an iterator to avoid loading entire database in memory
+			try (DatabaseIterator<Entry> di = mDatabase.searchEntries(searchQuery)) {
+				while (true) {
+					for (int i = 0; i < entriesAtOnce; i++) {
+						if (di.moveNext())
+							System.out.println(di.current().toString());
+					}
+				}
+			    while (di.moveNext()) {
+			        Entry entry = di.current();
+			        
+			    }
+			} catch (SQLException ex) {
+				System.out.println("An issue came up with the database. Try to search again.");
+			}
+		} else {
+			System.out.println("An issue came up with the database. Try to search again.");
+		}
+	}
+	
+	public DatabaseIterator<Entry> searchEntries(String searchQuery) {
+		if (mDatabase != null) 
+			return mDatabase.searchEntries(searchQuery);
 	}
 	
 	private void displayStatistics() {
@@ -233,8 +269,11 @@ public class Node {
 	}
 	
 	private void exitProgram() {
+		// Need to stop a few resources before exiting
 		if (mMiner != null)
 			mMiner.stopMining();
+		if (mScanner != null)
+			mScanner.close();
 		
 	}
 	
