@@ -1,17 +1,17 @@
 package bitverify.network;
 
 
-import java.net.InetSocketAddress;
-
 /**
  * Created by benellis on 08/02/2016.
  */
 public class GetPeersEvent {
-    private InetSocketAddress socketAddress;
+    private final PeerHandler peer;
 
-    public GetPeersEvent(InetSocketAddress addr) {
-        socketAddress = addr;
+    public GetPeersEvent(PeerHandler peer) {
+        this.peer = peer;
     }
 
-    public InetSocketAddress getSocketAddress(){return socketAddress;}
+    public PeerHandler getPeer() {
+        return peer;
+    }
 }
