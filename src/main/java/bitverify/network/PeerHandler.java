@@ -163,12 +163,16 @@ public class PeerHandler {
 
     /**
      * This sends a message and does not block.
+     * Returns true if the message was added to the queue to be sent, or false if this peer is being shut down.
      * @param msg The message to send
      */
-    public void send(Message msg) {
-        messageQueue.add(msg); // returns immediately.
-    }
+    public boolean send(Message msg) {
+        if (shutdown)
+            return false;
 
+        messageQueue.add(msg); // returns immediately.
+        return true;
+    }
 
     public Queue<byte[]> getBlocksInFlight() {
         return blocksInFlight;
@@ -182,13 +186,13 @@ public class PeerHandler {
      * Requests the specified block by sending a getBlock message, provided we aren't already
      * awaiting the maximum number of blocks we may simultaneously download from a peer.
      * @param blockID the ID of the block to request
-     * @return true if the request was sent, false if we're already downloading the maximum number of blocks.
+     * @return true if the request was sent, false if we're already downloading the maximum number of blocks or this peer is being shut down.
      */
     public boolean requestBlock(byte[] blockID) {
         if (!blocksInFlight.offer(blockID))
             return false;
 
-        MessageProto.GetBlocksMessage gbm = MessageProto.GetBlocksMessage.newBuilder()
+        MessageProto.GetBlockMessage gbm = MessageProto.GetBlockMessage.newBuilder()
                 .setBlockID(ByteString.copyFrom(blockID))
                 .build();
 
@@ -197,11 +201,14 @@ public class PeerHandler {
                 .setGetBlock(gbm)
                 .build();
 
-        send(message);
 
-        // start timer if not already running
-        blockTimer.start();
-        return true;
+        // if peer is shutting down so message can't be sent, just return false to indicate failure
+        if (send(message)) {
+            blockTimer.start();
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -227,16 +234,18 @@ public class PeerHandler {
                     message = Message.parseDelimitedFrom(is);
                     switch (message.getType()) {
                         case GETPEERS:
-                            handleGetPeers(message);
+                            handleGetPeers(message.getGetPeers());
                             break;
                         case ENTRY:
-                            handleEntryMessage(message);
+                            handleEntryMessage(message.getEntry());
                             break;
                         case BLOCK:
-                            handleBlockMessage(message);
+                            handleBlockMessage(message.getBlock());
                             break;
+                        case BLOCK_NOT_FOUND:
+                            handleBlockNotFoundMessage(message.getBlockNotFound());
                         case PEERS:
-                            handlePeers(message);
+                            handlePeers(message.getPeers());
                             break;
                         default:
                             break;
@@ -250,9 +259,8 @@ public class PeerHandler {
             }
         }
 
-        private void handleEntryMessage(Message message) throws SQLException, IOException {
-            EntryMessage e = message.getEntry();
-            byte[] bytes = e.getEntryBytes().toByteArray();
+        private void handleEntryMessage(EntryMessage message) throws SQLException, IOException {
+            byte[] bytes = message.getEntryBytes().toByteArray();
             Entry entry = Entry.deserialize(bytes);
 
             // check the validity of the entry
@@ -265,20 +273,22 @@ public class PeerHandler {
             }
         }
 
-        private void handleBlockMessage(Message m) {
+        private void handleBlockMessage(BlockMessage m) {
             // create an event which can be handed off to the connection manager.
-            bus.post(new BlockMessageEvent(m.getBlock(), peerAddress));
+            bus.post(new BlockMessageEvent(m, PeerHandler.this));
         }
 
+        private void handleBlockNotFoundMessage(BlockNotFoundMessage m) {
+            bus.post(new BlockNotFoundMessageEvent(m, PeerHandler.this));
+        }
 
-        private void handleGetPeers(Message message) {
+        private void handleGetPeers(GetPeers message) {
             // create an event which can be handed off to the connection manager.
             bus.post(new GetPeersEvent(PeerHandler.this));
         }
 
-        private void handlePeers(Message message) {
-            Peers peers = message.getPeers();
-            Collection<NetAddress> netAddressList = peers.getAddressList();
+        private void handlePeers(Peers message) {
+            Collection<NetAddress> netAddressList = message.getAddressList();
             // create a list of InetSocketAddresses from the netAddressList
             Set<InetSocketAddress> socketAddressList = ConcurrentHashMap.newKeySet();
             for (NetAddress netAddress : netAddressList) {

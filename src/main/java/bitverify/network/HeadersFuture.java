@@ -39,7 +39,10 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
                 .setGetHeaders(getHeadersMessage)
                 .build();
 
-        peer.send(m);
+        // if peer is shut down, return null straight away
+        if (!peer.send(m))
+            resultLatch.countDown();
+
         // register for replies once we've sent the request
         bus.register(this);
     }

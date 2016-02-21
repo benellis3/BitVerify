@@ -1,24 +1,23 @@
 package bitverify.network;
 
-import bitverify.network.proto.MessageProto;
+import bitverify.network.proto.MessageProto.BlockMessage;
 
-import java.net.InetSocketAddress;
 
 public class BlockMessageEvent {
 
-    private final MessageProto.BlockMessage blockMessage;
-    private final InetSocketAddress peerAddress;
+    private final BlockMessage blockMessage;
+    private final PeerHandler peer;
 
-    public BlockMessageEvent(MessageProto.BlockMessage m, InetSocketAddress peerAddress) {
+    public BlockMessageEvent(BlockMessage m, PeerHandler peer) {
         blockMessage = m;
-        this.peerAddress = peerAddress;
+        this.peer = peer;
     }
 
-    public MessageProto.BlockMessage getBlockMessage() {
+    public BlockMessage getBlockMessage() {
         return blockMessage;
     }
 
-    public InetSocketAddress getPeerAddress() {
-        return peerAddress;
+    public PeerHandler getPeer() {
+        return peer;
     }
 }

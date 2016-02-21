@@ -367,13 +367,23 @@ public class ConnectionManager {
         }
 
         /**
-         * Chooses a random peer. Be aware that this peer could have been shut down while we were choosing it!
+         * Makes a copy of the set of peers and chooses one at random. Be aware that this peer could have been shut down while we were choosing it!
          * @return
          */
         private PeerHandler chooseRandomPeer() {
             // make a copy of the peers collection to safely get a random element
             ArrayList<PeerHandler> p = new ArrayList<>(peers.values());
             return p.get(ThreadLocalRandom.current().nextInt(p.size()));
+        }
+
+        /**
+         * Makes a copy of the set of peers and shuffles it.
+         * @return
+         */
+        private List<PeerHandler> shufflePeers() {
+            ArrayList<PeerHandler> p = new ArrayList<>(peers.values());
+            Collections.shuffle(p, ThreadLocalRandom.current());
+            return p;
         }
 
         /**
@@ -406,7 +416,7 @@ public class ConnectionManager {
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) {
             BlockMessage message = e.getBlockMessage();
-            PeerHandler peer = peers.get(e.getPeerAddress());
+            PeerHandler peer = e.getPeer();
 
             byte[] blockBytes = message.getBlockBytes().toByteArray();
 
@@ -471,6 +481,44 @@ public class ConnectionManager {
             }
         }
 
+        @Subscribe
+        public void onBlockNotFoundMessage(BlockNotFoundMessageEvent e) {
+            PeerHandler peer = e.getPeer();
+
+            // see if we requested this block from this peer
+            byte[] blockID = e.getMessage().getBlockID().toByteArray();
+            if (peer.getBlocksInFlight().remove(blockID)) {
+
+                // if so restart the timer for blocks
+                peer.getBlockTimer().stop();
+                peer.getBlockTimer().start();
+
+                // can download another block from peer (providing there are more queued up)
+                byte[] next = futureBlockIDs.poll();
+                if (next == null && peer.getBlocksInFlight().isEmpty()) {
+                    // stop the timer if there are no more blocks in flight
+                    peer.getBlockTimer().stop();
+                } else {
+                    if (!peer.requestBlock(next)) {
+                        // put it back on the queue if we can't download another block (due to a race)
+                        futureBlockIDs.addFirst(next);
+                    }
+                }
+
+                // now ask another peer for this block.
+                // Shuffle in case the first two peers both don't have the block - otherwise we would alternate between them and never obtain it.
+                for (PeerHandler p : shufflePeers()) {
+                    // provide the future headers queue so the peer can obtain more blocks to download when done
+                    if (p != peer && peer.requestBlock(blockID)) {
+                        return;
+                    }
+                }
+                // if we get here, all peers were full, so put this block back on the queue
+                // full peers imply it will be taken and requested at some point without having to trigger a download ourselves
+                futureBlockIDs.addFirst(blockID);
+            }
+        }
+
         private void insertOrphans(byte[] parentBlockID) throws SQLException {
             Block b = orphanBlocks.remove(parentBlockID);
             if (b != null) {
@@ -485,6 +533,7 @@ public class ConnectionManager {
             disconnectPeer(peer);
             // re-request all of that peer's in-flight blocks from other peers.
             futureBlockIDs.addAll(peer.getBlocksInFlight());
+            // these might be the only blocks outstanding so trigger more downloads.
             downloadQueuedBlocks();
         }
 
