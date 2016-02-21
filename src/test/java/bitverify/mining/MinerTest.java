@@ -273,6 +273,8 @@ public class MinerTest {
 	@Test
 	public void testBlockValid(){
 		assertEquals(Miner.blockHashMeetDifficulty(Block.getGenesisBlock()),true);
+		//If a block meets success difficulty it will also meet the mining proof difficulty
+		assertEquals(Miner.miningProofMeetDifficulty(Block.getGenesisBlock()),true);
 	}
 
 }

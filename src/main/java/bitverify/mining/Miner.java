@@ -56,6 +56,8 @@ public class Miner implements Runnable{
 	//Constant used in unpacking targets (it is subtracted from the exponent)
 	private static final int byteOffset = 3;	
 	
+	//The maximum factor that the target may grow or shrink by on each target recalculation
+	private static int growthFactorLimit = 4;
 	//We recalculate the mining difficulty every adjustTargetFrequency blocks
 	private static int adjustTargetFrequency = 2;//1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
@@ -377,8 +379,8 @@ public class Miner implements Runnable{
 			System.out.println("Time Difference: "+difference);
 		
 			//Limit exponential growth
-			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
-			if (difference > idealMiningTime*4) difference = idealMiningTime*4;
+			if (difference < idealMiningTime/growthFactorLimit) difference = idealMiningTime/growthFactorLimit;
+			if (difference > idealMiningTime*growthFactorLimit) difference = idealMiningTime*growthFactorLimit;
 			
 			//Adjust the target by multiplying the previous target by actual time frame/expected time frame
 			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(block.getTarget()),16))).divide(BigInteger.valueOf(idealMiningTime));
