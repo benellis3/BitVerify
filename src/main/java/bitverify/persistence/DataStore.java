@@ -51,9 +51,10 @@ public interface DataStore {
     public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
 
     /**
-     * Inserts the given block into the store, unless it is already present.
+     * Inserts the given block into the store, unless it is already present or would be an orphan.
      * @param b the block
-     * @return true if the block was inserted, false if it was already present.
+     * @return An InsertBlockResult object indicating the result of this operation
+     * - success, or failure due to the block being an orphan, or a duplicate.
      * @throws SQLException
      */
     public InsertBlockResult insertBlock(Block b) throws SQLException;
@@ -96,11 +97,12 @@ public interface DataStore {
     public List<Entry> searchEntries(String searchQuery) throws SQLException;
 
     /**
-     * Insert an entry into the store.
+     * Insert an entry into the store, unless it already exists
      * @param e the entry
+     * @return true if the entry was inserted successfully, false if it is a duplicate.
      * @throws SQLException
      */
-    public void insertEntry(Entry e) throws SQLException;
+    public boolean insertEntry(Entry e) throws SQLException;
 
     /**
      * Get a property's value. Will return null if the property is not stored.

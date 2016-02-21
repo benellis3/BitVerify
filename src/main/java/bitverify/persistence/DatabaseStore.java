@@ -35,6 +35,8 @@ public class DatabaseStore implements DataStore {
 
     private Block latestBlock;
 
+    final int DUPLICATE_ERROR_CODE = 23001;
+
     public DatabaseStore(String databasePath) throws SQLException {
 
         ConnectionSource cs = new JdbcPooledConnectionSource(databasePath);
@@ -227,7 +229,7 @@ public class DatabaseStore implements DataStore {
                 Block parent = getBlock(b.getPrevBlockHash());
                 if (parent == null) {
                     // orphan blocks are not be inserted in the database
-                    return return InsertBlockResult.FAIL_ORPHAN;
+                    return InsertBlockResult.FAIL_ORPHAN;
 
                 } else {
                     long oldHeight = latestBlock.getHeight();
@@ -303,8 +305,7 @@ public class DatabaseStore implements DataStore {
 
             } catch (SQLException e) {
                 // catch duplicate block error
-                final int DUPLICATE_ERROR = 23001;
-                if (e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR)
+                if (isDuplicateError(e))
                     return InsertBlockResult.FAIL_DUPLICATE;
                 else
                     throw e;
@@ -353,9 +354,22 @@ public class DatabaseStore implements DataStore {
         return w.or(queries.length * 2).query();
     }
 
-    public void insertEntry(Entry e) throws SQLException {
+    public boolean insertEntry(Entry entry) throws SQLException {
         // by default, entry will be unconfirmed
-        entryDao.create(e);
+        try {
+            entryDao.create(entry);
+            return true;
+        } catch (SQLException e) {
+            // catch duplicate block error
+            if (isDuplicateError(e))
+                return false;
+            else
+                throw e;
+        }
+    }
+
+    private boolean isDuplicateError(SQLException e) {
+        return e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR_CODE;
     }
 
 
