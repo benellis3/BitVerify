@@ -9,11 +9,14 @@ public class LogEvent {
     private final String message;
     private final LogEventSource source;
     private final Level level;
+    private final long timeStamp;
 
     public LogEvent(String message, LogEventSource source, Level level) {
         this.message = message;
         this.source = source;
         this.level = level;
+
+        this.timeStamp = System.currentTimeMillis();
     }
 
     public Level getLevel() {
@@ -26,6 +29,10 @@ public class LogEvent {
 
     public String getMessage() {
         return message;
+    }
+
+    public long getTimeStamp() {
+        return timeStamp;
     }
 }
 
