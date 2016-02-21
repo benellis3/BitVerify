@@ -16,6 +16,7 @@ import org.junit.internal.runners.statements.Fail;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,14 +55,21 @@ public class NetworkTest {
         ConnectionManager conn1 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
             add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT));}},LARGE_INITIAL_PORT + 1,
                 null, new Bus(ThreadEnforcer.ANY));
-        Thread.sleep(300);
+        Thread.sleep(500);
         boolean success = false;
         Collection<PeerHandler> connPeers = conn.peers();
+        PeerHandler ph = new PeerHandler(null, null, null, null, LARGE_INITIAL_PORT + 2, null);
+        try {
+            ph.establishConnection(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + 1));
+        } catch (NullPointerException e) {
+            // as expected since the executor service was not provided
+            // but we've done enough to set the listen address for testing equals()
+        }
         for(PeerHandler p : connPeers) {
             try {
-                if (p.equals(new PeerHandler(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + 1),
-                        LARGE_INITIAL_PORT, Executors.newFixedThreadPool(5), null, new Bus(ThreadEnforcer.ANY))))
-                    success = true; break;
+                if (p.equals(ph))
+                    success = true;
+                break;
             }
             catch(Exception e) {
                 fail("Timeout");
@@ -111,22 +119,26 @@ public class NetworkTest {
      */
     @Test
     public void LargerNetworkTest() throws Exception {
+        // suppress datastore logging
+        System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
+
         List<InetSocketAddress> addressList = new CopyOnWriteArrayList<>();
         List<ConnectionManager> connectionList = new ArrayList<>();
         // create list of connectionManagers.
         for(int i = 0; i < NUM_CONNECTIONS; i++) {
-                connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i, null,
+                connectionList.add(new ConnectionManager(new ArrayList<>(addressList), LARGE_INITIAL_PORT + i,
+                        new DatabaseStore("jdbc:h2:mem:blockNetworkTest" + i),
                         new Bus(ThreadEnforcer.ANY)));
                 addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
         }
         // sleep to allow connections to be established
-        Thread.sleep(300);
+        Thread.sleep(500);
         // create a simple entry
         Entry e = EntryTest.generateEntry1();
         for(ConnectionManager conn : connectionList) {
             conn.broadcastEntry(e);
         }
-        Thread.sleep(600);
+        Thread.sleep(500);
 
         // create string of appropriate length to be the return.
         int NUM_STRINGS = NUM_CONNECTIONS * (NUM_CONNECTIONS - 1);
@@ -163,7 +175,7 @@ public class NetworkTest {
                 null, new Bus(ThreadEnforcer.ANY));
         Thread.sleep(1000);
         conn.printPeers();
-        assertEquals(cmp, conn.getNumPeers());
+        assertEquals(cmp, conn.peers().size());
     }
 }
 

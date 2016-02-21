@@ -8,9 +8,11 @@ import java.net.*;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.mining.Miner;
@@ -21,7 +23,6 @@ import bitverify.network.proto.MessageProto.Peers;
 import bitverify.network.proto.MessageProto.NetAddress;
 import bitverify.network.proto.MessageProto.Message;
 import bitverify.network.proto.MessageProto.EntryMessage;
-import bitverify.network.proto.MessageProto.GetPeers;
 import bitverify.persistence.InsertBlockResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -34,7 +35,6 @@ import com.squareup.otto.Subscribe;
 /**
  * This class is responsible for co-ordination of network functions.
  * It controls the incoming and outgoing parts of the connection.
- *
  * @author Ben Ellis, Robert Eady
  */
 public class ConnectionManager {
@@ -52,10 +52,19 @@ public class ConnectionManager {
         peers = new ConcurrentHashMap<>();
         this.bus = bus;
         bus.register(this);
-        es = Executors.newCachedThreadPool();
+
         blockProtocol = new BlockProtocol();
         dataStore = ds;
         ourListenPort = listenPort;
+
+        // create a special executor service that makes daemon threads.
+        // this way the application can shut down without having to terminate network threads first.
+        ThreadFactory daemonThreadFactory = runnable -> {
+            Thread t = new Thread(runnable);
+            t.setDaemon(true);
+            return t;
+        };
+        es = Executors.newCachedThreadPool(daemonThreadFactory);
 
         // Create new runnable to listen for new connections.
         ServerSocket serverSocket = new ServerSocket(listenPort);
@@ -66,20 +75,23 @@ public class ConnectionManager {
                             Socket s = serverSocket.accept();
                             // separate thread since it blocks waiting for messages.
                             es.execute(() -> {
+                                PeerHandler ph = new PeerHandler(s, es, ds, bus, ourListenPort, blockProtocol::onBlockTimeout);
                                 try {
-                                    PeerHandler ph = new PeerHandler(s, es, ds, bus);
                                     InetSocketAddress address = ph.acceptConnection();
                                     peers.put(address, ph);
                                 } catch (TimeoutException time) {
                                     // this means the connection could not be established before timeout
-                                    System.out.println("No response received within the time limit");
+                                    log("Did not establish connection to peer within time limit", Level.INFO);
+                                    ph.shutdown();
                                 } catch (InterruptedException | ExecutionException ie) {
-                                    ie.printStackTrace();
+                                    log("An error occurred while establishing connection to peer", Level.INFO);
+                                    ph.shutdown();
                                 }
                             });
                         }
                     } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                        // if the server socket dies, we can still carry on but won't be able to accept new connections.
+                        log("Server socket died: can no longer accept new incoming peer connections", Level.WARNING);
                     }
                 }
         );
@@ -93,6 +105,7 @@ public class ConnectionManager {
             }
 
             PeerProtocol peerProtocol = new PeerProtocol(listenPort);
+            // send some getpeers messages.
             peerProtocol.send();
         });
     }
@@ -109,44 +122,35 @@ public class ConnectionManager {
     }
 
     private void connectToPeer(InetSocketAddress peerAddress) {
+        Socket socket = null;
         try {
-            Socket socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
-            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus);
-            ph.establishConnection(ourListenPort, peerAddress);
-            peers.put(peerAddress, ph);
-        } catch (TimeoutException toe) {
-            System.out.println("Failed to contact an initial peer");
-        } catch (InterruptedException | ExecutionException | IOException ie) {
-            ie.printStackTrace();
+            // may throw IOException
+            socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
+            // safe
+            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenPort, blockProtocol::onBlockTimeout);
+            try {
+                ph.establishConnection(peerAddress);
+                peers.put(peerAddress, ph);
+            } catch (TimeoutException toe) {
+                // this means the connection could not be established before timeout
+                log("Did not establish connection to peer within time limit", Level.INFO);
+                ph.shutdown();
+            } catch (InterruptedException | ExecutionException e) {
+                log("An error occurred while establishing connection to peer", Level.INFO);
+                ph.shutdown();
+            }
+        } catch (IOException e) {
+            log("An error occurred while creating an outgoing socket to a new peer", Level.INFO);
         }
-    }
 
-    /**
-     * Peers are contacted in the constructor, but this method will send a GETPEERS message
-     * to all of the current peers that the class knows about.
-     */
-    public void getPeers() {
-        for (PeerHandler p : peers.values()) {
-            GetPeers getPeers = GetPeers.newBuilder().build();
-            Message message = Message.newBuilder()
-                    .setType(Message.Type.GETPEERS)
-                    .setGetPeers(getPeers)
-                    .build();
-            p.send(message);
-        }
-    }
-
-    public int getNumPeers() {
-        return peers.size();
     }
 
     /**
      * Send the given message to all connected peers
-     *
      * @param block The block to be broadcast
      * @throws IOException in the case that serialization fails
      */
-    public void broadcastBlock(Block block) throws IOException {
+    public void broadcastBlock(Block block) {
         List<Entry> entryList = block.getEntriesList();
         List<ByteString> byteStringList = new ArrayList<>(entryList.size());
         for (Entry e : entryList) {
@@ -170,7 +174,6 @@ public class ConnectionManager {
 
     /**
      * Send the given message to all connected peers.
-     *
      * @param e The entry which must be broadcast
      * @throws IOException in the case that serialization fails
      */
@@ -189,13 +192,13 @@ public class ConnectionManager {
 
     public void printPeers() {
         for (PeerHandler p : peers.values()) {
-            InetSocketAddress address = p.getListenAddress();
+            InetSocketAddress address = p.getPeerAddress();
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
     }
 
-    protected Collection<PeerHandler> peers() {
-        return peers.values();
+    public Collection<PeerHandler> peers() {
+        return Collections.unmodifiableCollection(peers.values());
     }
 
     /**
@@ -216,36 +219,34 @@ public class ConnectionManager {
      * Create a peers message to send to the sender of the
      * received getPeers message. This is sent to the thread pool to execute to avoid
      * significant latency.
-     *
      * @param event The GetPeersEvent
      */
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
         // extract the InetSocketAddresses from the Peers.
         es.execute(() -> {
-            InetSocketAddress addressFrom = event.getSocketAddress();
-            List<NetAddress> peerAddresses = new ArrayList<>();
-            PeerHandler sender = null;
+            InetSocketAddress addressFrom = event.getPeer().getPeerAddress();
+            Peers.Builder peerMessageBuilder = Peers.newBuilder();
             for (PeerHandler p : peers.values()) {
-                InetSocketAddress peerListenAddress = p.getListenAddress();
-                if (p.getListenAddress().equals(addressFrom)) {
-                    sender = p;
-                } else {
-                    peerAddresses.add(NetAddress.newBuilder()
+                InetSocketAddress peerListenAddress = p.getPeerAddress();
+                if (!p.getPeerAddress().equals(addressFrom)) {
+                    peerMessageBuilder.addAddress(NetAddress.newBuilder()
                             .setHostName(peerListenAddress.getHostName())
                             .setPort(peerListenAddress.getPort())
                             .build());
                 }
             }
-            Peers peer = Peers.newBuilder().addAllAddress(peerAddresses).build();
-            Message msg = Message.newBuilder().setType(Message.Type.PEERS).setPeers(peer).build();
-            sender.send(msg);
+            Peers peer = peerMessageBuilder.build();
+            Message msg = Message.newBuilder()
+                    .setType(Message.Type.PEERS)
+                    .setPeers(peer)
+                    .build();
+            event.getPeer().send(msg);
         });
     }
 
     /**
      * @param
-     * @return
      */
     private List<InetSocketAddress> getInitialPeers() {
         URL url;
@@ -287,28 +288,24 @@ public class ConnectionManager {
 
     }
 
-
-    private static final int MAX_HEADERS = 10000;
+    private void log(String message, Level level) {
+        bus.post(new LogEvent(message, LogEventSource.NETWORK, level));
+    }
 
     public class BlockProtocol {
-        private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
 
-        // blocks we are downloading now
-        private Map<Block, InetSocketAddress> awaitedBlockHeaders = new ConcurrentHashMap();
-        // keep a count of how many blocks we've downloaded from each peer, so we can blacklist ones which don't respond
-        private Map<InetSocketAddress, AtomicInteger> blocksDownloadedFromPeer = new ConcurrentHashMap<>();
+        private static final int MAX_HEADERS = 10000;
+        private static final int HEADERS_TIMEOUT_SECONDS = 10;
+
         // blocks we will download in the future
-        private Queue<Block> futureBlockHeaders = new ConcurrentLinkedQueue<>();
+        private Deque<byte[]> futureBlockIDs = new ConcurrentLinkedDeque<>();
 
-        private static final int DOWNLOAD_INTERVAL_MS = 10000;
-        private Timer timer = new Timer();
-        private Object timerLock = new Object();
+        // blocks we've received but don't yet have the parent of
+        // a map from parentID => Block
+        // TODO: limit the size of this collection (like a sliding download window)
+        private Map<byte[], Block> orphanBlocks = new ConcurrentHashMap<>();
 
-        private Random rand = new Random();
-
-
-        BlockProtocol() {
-            // we're always on the lookout for new blocks.
+        public BlockProtocol() {
             bus.register(this);
         }
 
@@ -320,20 +317,28 @@ public class ConnectionManager {
         public void initiateBlockDownload() throws SQLException {
             // First obtain block headers from some particular peer - send a GetBlockHeaders message
             // then validate this sequence of headers upon receiving a BlockHeaders message
-            PeerHandler p = chooseNewPeer();
+            PeerHandler p = chooseRandomPeer();
             byte[] fromBlockID = dataStore.getMostRecentBlock().getBlockID();
 
             // we will break once we've got all the headers, having dispatched download tasks asynchronously.
-            // for now, if a peer suddenly gives us some invalid headers, we don't cancel previous download
+            // for now, if a peer suddenly gives us some invalid headers, we don't shutdown previous download
             // tasks or discard earlier block headers they gave us.
             while (true) {
                 HeadersFuture h = new HeadersFuture(p, fromBlockID, bus);
                 h.run();
-                List<Block> receivedHeaders = h.get();
+                List<Block> receivedHeaders = null;
+                try {
+                    receivedHeaders = h.get(HEADERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    // this ought not to happen but we can just try again.
+                } catch (TimeoutException e) {
+                    // in this case shutdown the peer and try another.
+                    disconnectPeer(p);
+                }
 
                 if (receivedHeaders == null) {
                     // choose a new peer and try again
-                    p = chooseNewPeer();
+                    p = chooseRandomPeer();
                 } else {
                     byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
                     // first header might be either:
@@ -342,8 +347,10 @@ public class ConnectionManager {
                     if ((Arrays.equals(fromBlockID, firstPredecessorID) || dataStore.getBlock(firstPredecessorID) != null)
                             && Block.verifyChain(receivedHeaders)) {
 
-                        futureBlockHeaders.addAll(receivedHeaders);
-                        // start downloading blocks
+                        ArrayList<byte[]> blockIDs = new ArrayList<>(receivedHeaders.size());
+                        for (Block b : receivedHeaders)
+                            blockIDs.add(b.getBlockID());
+                        futureBlockIDs.addAll(blockIDs);
                         downloadQueuedBlocks();
 
                         if (receivedHeaders.size() < MAX_HEADERS)
@@ -353,79 +360,53 @@ public class ConnectionManager {
 
                     } else {
                         // choose a new peer and try again
-                        p = chooseNewPeer();
+                        p = chooseRandomPeer();
                     }
                 }
             }
         }
 
-        private PeerHandler chooseNewPeer() {
-            // TODO: support excluding peers we know are unreliable/have failed us before
-            synchronized (peers) {
-                return peers.get(rand.nextInt(peers.size()));
-            }
+        /**
+         * Chooses a random peer. Be aware that this peer could have been shut down while we were choosing it!
+         * @return
+         */
+        private PeerHandler chooseRandomPeer() {
+            // make a copy of the peers collection to safely get a random element
+            ArrayList<PeerHandler> p = new ArrayList<>(peers.values());
+            return p.get(ThreadLocalRandom.current().nextInt(p.size()));
         }
-
-
 
         /**
-         * Download the blocks in futureBlockHeaders in a distributed fashion, in parallel.
+         * Download the blocks in futureBlockIDs in a distributed fashion, in parallel.
          */
         private void downloadQueuedBlocks() {
-            // every N seconds, we take all the headers awaiting download and distribute the work evenly amongst peers,
-            // up to the maximum number of blocks that we're allowed to download from a peer at once.
-            // When a block is received from a peer, we immediately download the next one from the same peer,
-            // so we can assume the work stays evenly distributed.
+            // distribute future blocks across peers, until all peers have a full queue or we run out of blocks.
 
-            synchronized (timerLock) {
-                if (timer != null)
-                    timer.cancel();
-                timer = new Timer();
+            byte[] b = futureBlockIDs.pollFirst();
+            boolean allPeersFull = false;
 
-                timer.scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        for (int i = 0; i < MAX_SIMULTANEOUS_BLOCKS_PER_PEER; i++) {
-                            // TODO: blacklist peers which haven't responded previously
-                            for (PeerHandler peer : peers.values()) {
-                                Block b = futureBlockHeaders.poll();
-                                if (b == null) {
-                                    // no more blocks to get so cancel ourselves
-                                    timer.cancel();
-                                    return;
-                                } else {
-                                    InetSocketAddress address = peer.getListenAddress();
-                                    awaitedBlockHeaders.put(b, address);
-                                    downloadBlock(peer, b.getBlockID());
-                                    // not very efficient, but safe
-                                    blocksDownloadedFromPeer.putIfAbsent(address, new AtomicInteger(0));
-                                }
-
-                            }
-                        }
+            while (b != null && !allPeersFull) {
+                // if all peers won't accept another block request, stop.
+                allPeersFull = true;
+                for (PeerHandler peer : peers.values()) {
+                    // provide the future headers queue so the peer can obtain more blocks to download when done
+                    if (peer.requestBlock(b)) {
+                        allPeersFull = false;
+                        // take the next block
+                        b = futureBlockIDs.pollFirst();
                     }
-                }, 0, DOWNLOAD_INTERVAL_MS);
+                }
             }
-        }
-
-
-        private void downloadBlock(PeerHandler peer, byte[] blockID) {
-            MessageProto.GetBlocksMessage gbm = MessageProto.GetBlocksMessage.newBuilder()
-                    .setBlockID(ByteString.copyFrom(blockID))
-                    .build();
-
-            MessageProto.Message message = MessageProto.Message.newBuilder()
-                    .setType(MessageProto.Message.Type.GET_BLOCK)
-                    .setGetBlock(gbm)
-                    .build();
-
-            peer.send(message);
+            // the last block was never requested (unless it's null) so put it back on the queue
+            if (b != null)
+                futureBlockIDs.addFirst(b);
         }
 
 
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) {
-            MessageProto.BlockMessage message = e.getBlockMessage();
+            BlockMessage message = e.getBlockMessage();
+            PeerHandler peer = peers.get(e.getPeerAddress());
 
             byte[] blockBytes = message.getBlockBytes().toByteArray();
 
@@ -434,13 +415,23 @@ public class ConnectionManager {
                 Block block = Block.deserialize(blockBytes);
 
                 // see if we requested this block from this peer
-                InetSocketAddress a = awaitedBlockHeaders.remove(block);
-                if (e.getPeerAddress().equals(a)) {
-                    // if so can download another block from peer (providing there are more queued up)
-                    blocksDownloadedFromPeer.get(e.getPeerAddress()).incrementAndGet();
-                    Block next = futureBlockHeaders.poll();
-                    if (next != null)
-                        downloadBlock(peers.get(e.getPeerAddress()), next.getBlockID());
+                if (peer.getBlocksInFlight().remove(block.getBlockID())) {
+
+                    // if so restart the timer for blocks
+                    peer.getBlockTimer().stop();
+                    peer.getBlockTimer().start();
+
+                    // can download another block from peer (providing there are more queued up)
+                    byte[] next = futureBlockIDs.poll();
+                    if (next == null && peer.getBlocksInFlight().isEmpty()) {
+                        // stop the timer if there are no more blocks in flight
+                        peer.getBlockTimer().stop();
+                    } else {
+                        if (!peer.requestBlock(next)) {
+                            // put it back on the queue if we can't download another block (due to a race)
+                            futureBlockIDs.addFirst(next);
+                        }
+                    }
                 }
 
                 // check we don't already have it in our store
@@ -463,9 +454,12 @@ public class ConnectionManager {
                     switch (result) {
                         case SUCCESS:
                             bus.post(new NewBlockEvent(block));
+                            // may now be able to insert orphan blocks
+                            insertOrphans(block.getBlockID());
                             break;
                         case FAIL_ORPHAN:
                             // keep block in memory and try to store it once its parent has been downloaded.
+                            orphanBlocks.put(block.getPrevBlockHash(), block);
 
                     }
                 }
@@ -475,6 +469,35 @@ public class ConnectionManager {
             } catch (SQLException sqle) {
                 throw new RuntimeException("Error connecting to database :(", sqle);
             }
+        }
+
+        private void insertOrphans(byte[] parentBlockID) throws SQLException {
+            Block b = orphanBlocks.remove(parentBlockID);
+            if (b != null) {
+                // could fail due to duplicate, but if so we don't care, we've still unorphaned it
+                dataStore.insertBlock(b);
+                // now see if this allows us to unorphan any more blocks
+                insertOrphans(b.getBlockID());
+            }
+        }
+
+        private void onBlockTimeout(PeerHandler peer) {
+            disconnectPeer(peer);
+            // re-request all of that peer's in-flight blocks from other peers.
+            futureBlockIDs.addAll(peer.getBlocksInFlight());
+            downloadQueuedBlocks();
+        }
+
+        @Subscribe
+        public void onPeerError(PeerErrorEvent e) {
+            disconnectPeer(e.getPeer());
+        }
+
+        private void disconnectPeer(PeerHandler peer) {
+            // harmless if the peer never established a connection (although that shouldn't happen).
+            peers.remove(peer.getPeerAddress());
+            // disconnect the peer
+            peer.shutdown();
         }
     }
 
