@@ -80,13 +80,13 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
     }
 
     @Override
-    public List<Block> get() throws InterruptedException, ExecutionException {
+    public List<Block> get() throws InterruptedException {
         resultLatch.await();
         return result;
     }
 
     @Override
-    public List<Block> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public List<Block> get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
         if (resultLatch.await(timeout, unit))
             return result;
         else {
