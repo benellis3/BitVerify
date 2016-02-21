@@ -35,8 +35,10 @@ public class RestartableTimer {
      * Stop the timer.
      */
     public synchronized void stop() {
-        future.cancel(true);
-        future = null;
+        if (future != null) {
+            future.cancel(true);
+            future = null;
+        }
     }
 
     /**
