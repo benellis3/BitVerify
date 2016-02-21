@@ -237,9 +237,14 @@ public class Entry {
 		_serialize(out, true);
 	}
 	
-	public byte[] serialize() throws IOException {
+	public byte[] serialize() {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		serialize(out);
+		try {
+			serialize(out);
+		} catch (IOException e) {
+			// we are in control of creating the stream here so this will never happen, but just in case...
+			e.printStackTrace();
+		}
 		return out.toByteArray();
 	}
 	
@@ -247,9 +252,14 @@ public class Entry {
 		_serialize(out, false);
 	}
 
-	private byte[] hashEntry() throws IOException{
+	private byte[] hashEntry() {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		serializeForHashing(out);
+		try {
+			serializeForHashing(out);
+		} catch (IOException e) {
+			// we are in control of creating the stream here so this will never happen, but just in case...
+			e.printStackTrace();
+		}
 		byte[] serialisedEntry = out.toByteArray();
 		return Hash.hashBytes(serialisedEntry);
 	}
@@ -265,7 +275,7 @@ public class Entry {
 		}
 	}
 	
-	public boolean testEntryHashSignature() throws IOException{
+	public boolean testEntryHashSignature() {
 		//calculate hash
 		byte[] calculatedEntryHash = hashEntry();
 		//decode stored hash
