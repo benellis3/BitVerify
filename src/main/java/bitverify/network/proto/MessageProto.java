@@ -804,12 +804,6 @@ public final class MessageProto {
           return false;
         }
       }
-      if (hasGetPeers()) {
-        if (!getGetPeers().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       if (hasVersion()) {
         if (!getVersion().isInitialized()) {
           memoizedIsInitialized = 0;
@@ -1300,12 +1294,6 @@ public final class MessageProto {
         }
         if (hasPeers()) {
           if (!getPeers().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasGetPeers()) {
-          if (!getGetPeers().isInitialized()) {
             
             return false;
           }
@@ -7319,31 +7307,6 @@ public final class MessageProto {
   public interface GetPeersOrBuilder extends
       // @@protoc_insertion_point(interface_extends:GetPeers)
       com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    boolean hasMyAddress();
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddress getMyAddress();
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder();
   }
   /**
    * Protobuf type {@code GetPeers}
@@ -7379,7 +7342,6 @@ public final class MessageProto {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       initFields();
-      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -7395,19 +7357,6 @@ public final class MessageProto {
                                      extensionRegistry, tag)) {
                 done = true;
               }
-              break;
-            }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = myAddress_.toBuilder();
-              }
-              myAddress_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(myAddress_);
-                myAddress_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000001;
               break;
             }
           }
@@ -7449,42 +7398,7 @@ public final class MessageProto {
       return PARSER;
     }
 
-    private int bitField0_;
-    public static final int MYADDRESS_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress myAddress_;
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public boolean hasMyAddress() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
-      return myAddress_;
-    }
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
-      return myAddress_;
-    }
-
     private void initFields() {
-      myAddress_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -7492,14 +7406,6 @@ public final class MessageProto {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasMyAddress()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getMyAddress().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -7507,9 +7413,6 @@ public final class MessageProto {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, myAddress_);
-      }
       getUnknownFields().writeTo(output);
     }
 
@@ -7519,10 +7422,6 @@ public final class MessageProto {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, myAddress_);
-      }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -7632,7 +7531,6 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getMyAddressFieldBuilder();
         }
       }
       private static Builder create() {
@@ -7641,12 +7539,6 @@ public final class MessageProto {
 
       public Builder clear() {
         super.clear();
-        if (myAddressBuilder_ == null) {
-          myAddress_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-        } else {
-          myAddressBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
@@ -7673,17 +7565,6 @@ public final class MessageProto {
 
       public bitverify.network.proto.MessageProto.GetPeers buildPartial() {
         bitverify.network.proto.MessageProto.GetPeers result = new bitverify.network.proto.MessageProto.GetPeers(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (myAddressBuilder_ == null) {
-          result.myAddress_ = myAddress_;
-        } else {
-          result.myAddress_ = myAddressBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -7699,22 +7580,11 @@ public final class MessageProto {
 
       public Builder mergeFrom(bitverify.network.proto.MessageProto.GetPeers other) {
         if (other == bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance()) return this;
-        if (other.hasMyAddress()) {
-          mergeMyAddress(other.getMyAddress());
-        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasMyAddress()) {
-          
-          return false;
-        }
-        if (!getMyAddress().isInitialized()) {
-          
-          return false;
-        }
         return true;
       }
 
@@ -7734,159 +7604,6 @@ public final class MessageProto {
           }
         }
         return this;
-      }
-      private int bitField0_;
-
-      private bitverify.network.proto.MessageProto.NetAddress myAddress_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> myAddressBuilder_;
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public boolean hasMyAddress() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
-        if (myAddressBuilder_ == null) {
-          return myAddress_;
-        } else {
-          return myAddressBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder setMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (myAddressBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          myAddress_ = value;
-          onChanged();
-        } else {
-          myAddressBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder setMyAddress(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (myAddressBuilder_ == null) {
-          myAddress_ = builderForValue.build();
-          onChanged();
-        } else {
-          myAddressBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder mergeMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (myAddressBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              myAddress_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            myAddress_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(myAddress_).mergeFrom(value).buildPartial();
-          } else {
-            myAddress_ = value;
-          }
-          onChanged();
-        } else {
-          myAddressBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder clearMyAddress() {
-        if (myAddressBuilder_ == null) {
-          myAddress_ = bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance();
-          onChanged();
-        } else {
-          myAddressBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getMyAddressBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getMyAddressFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
-        if (myAddressBuilder_ != null) {
-          return myAddressBuilder_.getMessageOrBuilder();
-        } else {
-          return myAddress_;
-        }
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getMyAddressFieldBuilder() {
-        if (myAddressBuilder_ == null) {
-          myAddressBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getMyAddress(),
-                  getParentForChildren(),
-                  isClean());
-          myAddress_ = null;
-        }
-        return myAddressBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:GetPeers)
@@ -7990,9 +7707,9 @@ public final class MessageProto {
       "lockBytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\"\n\014Entr" +
       "yMessage\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n",
       "\007address\030\001 \003(\0132\013.NetAddress\",\n\nNetAddres" +
-      "s\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"*\n\010Get" +
-      "Peers\022\036\n\tmyAddress\030\001 \002(\0132\013.NetAddressB\'\n" +
-      "\027bitverify.network.protoB\014MessageProto"
+      "s\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"\n\n\010Get" +
+      "PeersB\'\n\027bitverify.network.protoB\014Messag" +
+      "eProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -8077,7 +7794,7 @@ public final class MessageProto {
     internal_static_GetPeers_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetPeers_descriptor,
-        new java.lang.String[] { "MyAddress", });
+        new java.lang.String[] { });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

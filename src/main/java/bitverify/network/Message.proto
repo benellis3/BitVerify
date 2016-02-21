@@ -64,6 +64,5 @@ message NetAddress {
 }
 
 message GetPeers {
-    required NetAddress myAddress = 1; // include own address
 }
 
