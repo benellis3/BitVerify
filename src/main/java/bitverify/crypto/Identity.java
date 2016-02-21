@@ -173,7 +173,6 @@ public class Identity {
 			}
 			decryptedPrivateKey = tmp;
 		} catch (InvalidCipherTextException e) {
-			e.printStackTrace();
 			throw new NotMatchingKeyException("wrong password");
 		}
 	}

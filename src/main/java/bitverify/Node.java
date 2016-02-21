@@ -1,5 +1,9 @@
 package bitverify;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -159,9 +163,20 @@ public class Node {
 	private void addEntry() {
 		// Get input from user
 		//TODO Input validation
-		System.out.println("Enter file path:");
-		String filePath = mScanner.nextLine();
-		byte[] hash = Hash.hashBytes(new byte[0]);
+		FileInputStream inputStream = null;
+		byte[] hash = null;
+		while (hash == null) {
+			System.out.println("Enter file path:");
+			String filePath = mScanner.nextLine();
+			File inputFile = new File(filePath);
+			
+			try {
+				inputStream = new FileInputStream(inputFile);
+				hash = Hash.hashStream(inputStream);
+			} catch (IOException e1) {
+				System.out.println(String.format("'%s' is not a valid file", filePath));
+			}
+		}
 		
 		System.out.println("Enter file download:");
 		String fileDownload = mScanner.nextLine();
@@ -192,8 +207,8 @@ public class Node {
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
-			
 			mConnectionManager.broadcastEntry(entry);
+			
 		} catch (KeyDecodingException | IOException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;

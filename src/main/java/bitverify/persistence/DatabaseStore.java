@@ -17,8 +17,10 @@ import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
+
 import java.sql.SQLException;
 import java.util.*;
+
 
 public class DatabaseStore implements DataStore {
 
@@ -120,7 +122,7 @@ public class DatabaseStore implements DataStore {
         return entryDao.query(entriesForBlockQuery);
     }
 
-    public List<Block> getNMostRecentBlocks(int n,  Block fromBlock) throws SQLException {
+    public List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException {
         // Sorted with the recent block at (or near) the header of the block
         // n = 2 means return the most recent block and the one before
         CloseableIterator<Block> initialResults = blockDao.queryBuilder()
@@ -342,7 +344,18 @@ public class DatabaseStore implements DataStore {
         return entryDao.queryForEq("confirmed", false);
     }
 
-    public List<Entry> searchEntries(String searchQuery) throws SQLException {
+    public DatabaseIterator<Entry> getConfirmedEntries() throws SQLException {
+        return new DatabaseIterator<>(entryDao.queryBuilder().where().eq("confirmed", true).iterator());
+    }
+
+    public DatabaseIterator<Entry> getAllEntries() throws SQLException {
+        return  new DatabaseIterator<>(entryDao.closeableIterator());
+    }
+
+    public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
+        if (searchQuery.isEmpty())
+            return getAllEntries();
+
         String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         for (String query : queries) {
@@ -351,7 +364,7 @@ public class DatabaseStore implements DataStore {
             w.like("docDescription", likeQuery);
         }
         // OR all of our like clauses together
-        return w.or(queries.length * 2).query();
+        return new DatabaseIterator<>(w.or(queries.length * 2).iterator());
     }
 
     public boolean insertEntry(Entry entry) throws SQLException {
@@ -395,6 +408,5 @@ public class DatabaseStore implements DataStore {
     public void insertIdentity(Identity identity) throws SQLException {
         identityDao.create(identity);
     }
-
 
 }
