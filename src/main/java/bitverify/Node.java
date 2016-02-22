@@ -121,15 +121,6 @@ public class Node {
 			userCLISetup();
 	}
 	
-	/*
-	 * "Start mining",
-		"Add entry",
-		"List confirmed entries",
-		"List unconfirmed entries",
-		"List connected peers",
-		"List blocks",
-		"Exit",
-	 */
 	private boolean handleUserInput(int commandNum) {
 		switch (commandNum){
 			case 0:
@@ -248,6 +239,7 @@ public class Node {
 	private void listConfirmedEntries() {
 		try (DatabaseIterator<Entry> di = mDatabase.getConfirmedEntries()) {
 			int entryCount = 0;
+			System.out.println("######################################");
 			System.out.println("Confirmed entries:");
 		    while (di.moveNext()) {
 		    	entryCount++;
@@ -256,6 +248,7 @@ public class Node {
 						entry.getEntryID().toString(), Base64.encode(entry.getUploaderID()) );
 		    }
 		    System.out.println("There are "+entryCount+" confirmed entries.");
+		    System.out.println("######################################");
 		} catch (SQLException e) {
 		    e.printStackTrace();
 		}
@@ -264,6 +257,7 @@ public class Node {
 	private void listUnconfirmedEntries() {
 		try {
 			List<Entry> entries = mDatabase.getUnconfirmedEntries();
+			System.out.println("######################################");
 			System.out.println("Unconfirmed entries:");
 			for (int i=0; i<entries.size(); i++){
 		        System.out.printf("entryID: %s, UploaderID: %s\n",
@@ -271,19 +265,22 @@ public class Node {
 		        		Base64.encode(entries.get(i).getUploaderID()) );
 		    }
 			System.out.println("There are "+entries.size()+" unconfirmed entries.");
+			System.out.println("######################################");
 		} catch (SQLException e) {
 		    e.printStackTrace();
 		}
 	}
 	
 	private void listConnectedPeers() {
-		System.out.println("Connected peers:");
+		System.out.println("######################################");
 		mConnectionManager.printPeers();
+		System.out.println("######################################");
 	}
 	
 	private void listBlocks() {
 		try {
 			List<Block> blocks = mDatabase.getNMostRecentBlocks(2000); //TODO cheating here for now...
+			System.out.println("######################################");
 			System.out.println("Blocks on the primary chain:");
 			for (int i=0; i<blocks.size(); i++){
 				System.out.printf("height: %d, blockID: %s, entriesHash: %s\n",
@@ -291,6 +288,7 @@ public class Node {
 						Base64.encode(blocks.get(i).getEntriesHash()) );
 			}
 			System.out.println("There are "+blocks.size()+" blocks on the primary chain.");
+			System.out.println("######################################");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;
