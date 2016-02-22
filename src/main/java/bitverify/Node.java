@@ -228,9 +228,10 @@ public class Node {
 			// Notify the relevant authorities of this important incident
 			NewEntryEvent event = new NewEntryEvent(entry);
 			mEventBus.post(event);
+			mDatabase.insertEntry(entry);
 			mConnectionManager.broadcastEntry(entry);
 			
-		} catch (KeyDecodingException | IOException e) {
+		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
 		} 
