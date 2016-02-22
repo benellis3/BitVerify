@@ -149,9 +149,6 @@ public class IdentityTest {
 		try {
 			myID2.decrypt("wrong password here");
 		} catch (NotMatchingKeyException e) {
-			//note: the underlying library prints a stack trace here unfortunately
-			//so currently seeing a stack trace but having no errors in the tests is
-			//the expected behaviour
 			exceptionThrown = true;
 		}
 		assertTrue(exceptionThrown);

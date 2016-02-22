@@ -1,5 +1,7 @@
 package bitverify.network;
 
+import java.net.InetSocketAddress;
+
 import bitverify.entries.Entry;
 
 /**
@@ -7,6 +9,16 @@ import bitverify.entries.Entry;
  */
 public class NewEntryEvent {
     private Entry newEntry;
-    public NewEntryEvent(Entry e) {newEntry = e;}
+    private InetSocketAddress address;
+    
+    public NewEntryEvent(Entry e) {
+    	newEntry = e;
+    	address = null;
+    }
+    public NewEntryEvent(Entry e, InetSocketAddress address){
+    	newEntry = e;
+    	this.address = address;
+    }
     public Entry getNewEntry() {return newEntry;}
+    public InetSocketAddress getInetSocketAddress() {return address;}
 }

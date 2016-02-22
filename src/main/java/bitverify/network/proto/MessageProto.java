@@ -22,17 +22,17 @@ public final class MessageProto {
     bitverify.network.proto.MessageProto.Message.Type getType();
 
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    boolean hasGetBlock();
+    boolean hasHeaders();
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    bitverify.network.proto.MessageProto.GetBlock getGetBlock();
+    bitverify.network.proto.MessageProto.HeadersMessage getHeaders();
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    bitverify.network.proto.MessageProto.GetBlockOrBuilder getGetBlockOrBuilder();
+    bitverify.network.proto.MessageProto.HeadersMessageOrBuilder getHeadersOrBuilder();
 
     /**
      * <code>optional .BlockMessage block = 3;</code>
@@ -111,31 +111,93 @@ public final class MessageProto {
      * <code>optional .Ack ack = 8;</code>
      */
     bitverify.network.proto.MessageProto.AckOrBuilder getAckOrBuilder();
+
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    boolean hasGetHeaders();
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    bitverify.network.proto.MessageProto.GetHeadersMessage getGetHeaders();
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder getGetHeadersOrBuilder();
+
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    boolean hasGetBlock();
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    bitverify.network.proto.MessageProto.GetBlockMessage getGetBlock();
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder getGetBlockOrBuilder();
+
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    boolean hasVersionAck();
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    bitverify.network.proto.MessageProto.VersionAck getVersionAck();
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder();
+
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    boolean hasBlockNotFound();
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    bitverify.network.proto.MessageProto.BlockNotFoundMessage getBlockNotFound();
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder getBlockNotFoundOrBuilder();
   }
   /**
    * Protobuf type {@code Message}
    */
-  public  static final class Message extends
+  public static final class Message extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:Message)
       MessageOrBuilder {
     // Use Message.newBuilder() to construct.
     private Message(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private Message() {
-      type_ = 1;
+    private Message(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Message defaultInstance;
+    public static Message getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public Message getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private Message(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -161,19 +223,19 @@ public final class MessageProto {
                 unknownFields.mergeVarintField(1, rawValue);
               } else {
                 bitField0_ |= 0x00000001;
-                type_ = rawValue;
+                type_ = value;
               }
               break;
             }
             case 18: {
-              bitverify.network.proto.MessageProto.GetBlock.Builder subBuilder = null;
+              bitverify.network.proto.MessageProto.HeadersMessage.Builder subBuilder = null;
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
-                subBuilder = getBlock_.toBuilder();
+                subBuilder = headers_.toBuilder();
               }
-              getBlock_ = input.readMessage(bitverify.network.proto.MessageProto.GetBlock.parser(), extensionRegistry);
+              headers_ = input.readMessage(bitverify.network.proto.MessageProto.HeadersMessage.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(getBlock_);
-                getBlock_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(headers_);
+                headers_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000002;
               break;
@@ -183,7 +245,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000004) == 0x00000004)) {
                 subBuilder = block_.toBuilder();
               }
-              block_ = input.readMessage(bitverify.network.proto.MessageProto.BlockMessage.parser(), extensionRegistry);
+              block_ = input.readMessage(bitverify.network.proto.MessageProto.BlockMessage.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(block_);
                 block_ = subBuilder.buildPartial();
@@ -196,7 +258,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000008) == 0x00000008)) {
                 subBuilder = entry_.toBuilder();
               }
-              entry_ = input.readMessage(bitverify.network.proto.MessageProto.EntryMessage.parser(), extensionRegistry);
+              entry_ = input.readMessage(bitverify.network.proto.MessageProto.EntryMessage.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(entry_);
                 entry_ = subBuilder.buildPartial();
@@ -209,7 +271,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000010) == 0x00000010)) {
                 subBuilder = peers_.toBuilder();
               }
-              peers_ = input.readMessage(bitverify.network.proto.MessageProto.Peers.parser(), extensionRegistry);
+              peers_ = input.readMessage(bitverify.network.proto.MessageProto.Peers.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(peers_);
                 peers_ = subBuilder.buildPartial();
@@ -222,7 +284,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000020) == 0x00000020)) {
                 subBuilder = getPeers_.toBuilder();
               }
-              getPeers_ = input.readMessage(bitverify.network.proto.MessageProto.GetPeers.parser(), extensionRegistry);
+              getPeers_ = input.readMessage(bitverify.network.proto.MessageProto.GetPeers.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(getPeers_);
                 getPeers_ = subBuilder.buildPartial();
@@ -235,7 +297,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000040) == 0x00000040)) {
                 subBuilder = version_.toBuilder();
               }
-              version_ = input.readMessage(bitverify.network.proto.MessageProto.Version.parser(), extensionRegistry);
+              version_ = input.readMessage(bitverify.network.proto.MessageProto.Version.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(version_);
                 version_ = subBuilder.buildPartial();
@@ -248,7 +310,7 @@ public final class MessageProto {
               if (((bitField0_ & 0x00000080) == 0x00000080)) {
                 subBuilder = ack_.toBuilder();
               }
-              ack_ = input.readMessage(bitverify.network.proto.MessageProto.Ack.parser(), extensionRegistry);
+              ack_ = input.readMessage(bitverify.network.proto.MessageProto.Ack.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(ack_);
                 ack_ = subBuilder.buildPartial();
@@ -256,14 +318,65 @@ public final class MessageProto {
               bitField0_ |= 0x00000080;
               break;
             }
+            case 74: {
+              bitverify.network.proto.MessageProto.GetHeadersMessage.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000100) == 0x00000100)) {
+                subBuilder = getHeaders_.toBuilder();
+              }
+              getHeaders_ = input.readMessage(bitverify.network.proto.MessageProto.GetHeadersMessage.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(getHeaders_);
+                getHeaders_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000100;
+              break;
+            }
+            case 82: {
+              bitverify.network.proto.MessageProto.GetBlockMessage.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000200) == 0x00000200)) {
+                subBuilder = getBlock_.toBuilder();
+              }
+              getBlock_ = input.readMessage(bitverify.network.proto.MessageProto.GetBlockMessage.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(getBlock_);
+                getBlock_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000200;
+              break;
+            }
+            case 90: {
+              bitverify.network.proto.MessageProto.VersionAck.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000400) == 0x00000400)) {
+                subBuilder = versionAck_.toBuilder();
+              }
+              versionAck_ = input.readMessage(bitverify.network.proto.MessageProto.VersionAck.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(versionAck_);
+                versionAck_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000400;
+              break;
+            }
+            case 98: {
+              bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000800) == 0x00000800)) {
+                subBuilder = blockNotFound_.toBuilder();
+              }
+              blockNotFound_ = input.readMessage(bitverify.network.proto.MessageProto.BlockNotFoundMessage.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(blockNotFound_);
+                blockNotFound_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000800;
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -281,15 +394,30 @@ public final class MessageProto {
               bitverify.network.proto.MessageProto.Message.class, bitverify.network.proto.MessageProto.Message.Builder.class);
     }
 
+    public static com.google.protobuf.Parser<Message> PARSER =
+        new com.google.protobuf.AbstractParser<Message>() {
+      public Message parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Message(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Message> getParserForType() {
+      return PARSER;
+    }
+
     /**
      * Protobuf enum {@code Message.Type}
      */
     public enum Type
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
-       * <code>GETBLOCK = 1;</code>
+       * <code>HEADERS = 1;</code>
        */
-      GETBLOCK(0, 1),
+      HEADERS(0, 1),
       /**
        * <code>BLOCK = 2;</code>
        */
@@ -314,12 +442,28 @@ public final class MessageProto {
        * <code>ACK = 7;</code>
        */
       ACK(6, 7),
+      /**
+       * <code>GET_HEADERS = 8;</code>
+       */
+      GET_HEADERS(7, 8),
+      /**
+       * <code>GET_BLOCK = 9;</code>
+       */
+      GET_BLOCK(8, 9),
+      /**
+       * <code>VERSION_ACK = 10;</code>
+       */
+      VERSION_ACK(9, 10),
+      /**
+       * <code>BLOCK_NOT_FOUND = 11;</code>
+       */
+      BLOCK_NOT_FOUND(10, 11),
       ;
 
       /**
-       * <code>GETBLOCK = 1;</code>
+       * <code>HEADERS = 1;</code>
        */
-      public static final int GETBLOCK_VALUE = 1;
+      public static final int HEADERS_VALUE = 1;
       /**
        * <code>BLOCK = 2;</code>
        */
@@ -344,21 +488,39 @@ public final class MessageProto {
        * <code>ACK = 7;</code>
        */
       public static final int ACK_VALUE = 7;
+      /**
+       * <code>GET_HEADERS = 8;</code>
+       */
+      public static final int GET_HEADERS_VALUE = 8;
+      /**
+       * <code>GET_BLOCK = 9;</code>
+       */
+      public static final int GET_BLOCK_VALUE = 9;
+      /**
+       * <code>VERSION_ACK = 10;</code>
+       */
+      public static final int VERSION_ACK_VALUE = 10;
+      /**
+       * <code>BLOCK_NOT_FOUND = 11;</code>
+       */
+      public static final int BLOCK_NOT_FOUND_VALUE = 11;
 
 
-      public final int getNumber() {
-        return value;
-      }
+      public final int getNumber() { return value; }
 
       public static Type valueOf(int value) {
         switch (value) {
-          case 1: return GETBLOCK;
+          case 1: return HEADERS;
           case 2: return BLOCK;
           case 3: return ENTRY;
           case 4: return PEERS;
           case 5: return GETPEERS;
           case 6: return VERSION;
           case 7: return ACK;
+          case 8: return GET_HEADERS;
+          case 9: return GET_BLOCK;
+          case 10: return VERSION_ACK;
+          case 11: return BLOCK_NOT_FOUND;
           default: return null;
         }
       }
@@ -367,8 +529,8 @@ public final class MessageProto {
           internalGetValueMap() {
         return internalValueMap;
       }
-      private static final com.google.protobuf.Internal.EnumLiteMap<
-          Type> internalValueMap =
+      private static com.google.protobuf.Internal.EnumLiteMap<Type>
+          internalValueMap =
             new com.google.protobuf.Internal.EnumLiteMap<Type>() {
               public Type findValueByNumber(int number) {
                 return Type.valueOf(number);
@@ -412,7 +574,7 @@ public final class MessageProto {
 
     private int bitField0_;
     public static final int TYPE_FIELD_NUMBER = 1;
-    private int type_;
+    private bitverify.network.proto.MessageProto.Message.Type type_;
     /**
      * <code>required .Message.Type type = 1;</code>
      */
@@ -423,29 +585,28 @@ public final class MessageProto {
      * <code>required .Message.Type type = 1;</code>
      */
     public bitverify.network.proto.MessageProto.Message.Type getType() {
-      bitverify.network.proto.MessageProto.Message.Type result = bitverify.network.proto.MessageProto.Message.Type.valueOf(type_);
-      return result == null ? bitverify.network.proto.MessageProto.Message.Type.GETBLOCK : result;
+      return type_;
     }
 
-    public static final int GETBLOCK_FIELD_NUMBER = 2;
-    private bitverify.network.proto.MessageProto.GetBlock getBlock_;
+    public static final int HEADERS_FIELD_NUMBER = 2;
+    private bitverify.network.proto.MessageProto.HeadersMessage headers_;
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    public boolean hasGetBlock() {
+    public boolean hasHeaders() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    public bitverify.network.proto.MessageProto.GetBlock getGetBlock() {
-      return getBlock_ == null ? bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance() : getBlock_;
+    public bitverify.network.proto.MessageProto.HeadersMessage getHeaders() {
+      return headers_;
     }
     /**
-     * <code>optional .GetBlock getBlock = 2;</code>
+     * <code>optional .HeadersMessage headers = 2;</code>
      */
-    public bitverify.network.proto.MessageProto.GetBlockOrBuilder getGetBlockOrBuilder() {
-      return getBlock_ == null ? bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance() : getBlock_;
+    public bitverify.network.proto.MessageProto.HeadersMessageOrBuilder getHeadersOrBuilder() {
+      return headers_;
     }
 
     public static final int BLOCK_FIELD_NUMBER = 3;
@@ -460,13 +621,13 @@ public final class MessageProto {
      * <code>optional .BlockMessage block = 3;</code>
      */
     public bitverify.network.proto.MessageProto.BlockMessage getBlock() {
-      return block_ == null ? bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance() : block_;
+      return block_;
     }
     /**
      * <code>optional .BlockMessage block = 3;</code>
      */
     public bitverify.network.proto.MessageProto.BlockMessageOrBuilder getBlockOrBuilder() {
-      return block_ == null ? bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance() : block_;
+      return block_;
     }
 
     public static final int ENTRY_FIELD_NUMBER = 4;
@@ -481,13 +642,13 @@ public final class MessageProto {
      * <code>optional .EntryMessage entry = 4;</code>
      */
     public bitverify.network.proto.MessageProto.EntryMessage getEntry() {
-      return entry_ == null ? bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance() : entry_;
+      return entry_;
     }
     /**
      * <code>optional .EntryMessage entry = 4;</code>
      */
     public bitverify.network.proto.MessageProto.EntryMessageOrBuilder getEntryOrBuilder() {
-      return entry_ == null ? bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance() : entry_;
+      return entry_;
     }
 
     public static final int PEERS_FIELD_NUMBER = 5;
@@ -502,13 +663,13 @@ public final class MessageProto {
      * <code>optional .Peers peers = 5;</code>
      */
     public bitverify.network.proto.MessageProto.Peers getPeers() {
-      return peers_ == null ? bitverify.network.proto.MessageProto.Peers.getDefaultInstance() : peers_;
+      return peers_;
     }
     /**
      * <code>optional .Peers peers = 5;</code>
      */
     public bitverify.network.proto.MessageProto.PeersOrBuilder getPeersOrBuilder() {
-      return peers_ == null ? bitverify.network.proto.MessageProto.Peers.getDefaultInstance() : peers_;
+      return peers_;
     }
 
     public static final int GETPEERS_FIELD_NUMBER = 6;
@@ -523,13 +684,13 @@ public final class MessageProto {
      * <code>optional .GetPeers getPeers = 6;</code>
      */
     public bitverify.network.proto.MessageProto.GetPeers getGetPeers() {
-      return getPeers_ == null ? bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance() : getPeers_;
+      return getPeers_;
     }
     /**
      * <code>optional .GetPeers getPeers = 6;</code>
      */
     public bitverify.network.proto.MessageProto.GetPeersOrBuilder getGetPeersOrBuilder() {
-      return getPeers_ == null ? bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance() : getPeers_;
+      return getPeers_;
     }
 
     public static final int VERSION_FIELD_NUMBER = 7;
@@ -544,13 +705,13 @@ public final class MessageProto {
      * <code>optional .Version version = 7;</code>
      */
     public bitverify.network.proto.MessageProto.Version getVersion() {
-      return version_ == null ? bitverify.network.proto.MessageProto.Version.getDefaultInstance() : version_;
+      return version_;
     }
     /**
      * <code>optional .Version version = 7;</code>
      */
     public bitverify.network.proto.MessageProto.VersionOrBuilder getVersionOrBuilder() {
-      return version_ == null ? bitverify.network.proto.MessageProto.Version.getDefaultInstance() : version_;
+      return version_;
     }
 
     public static final int ACK_FIELD_NUMBER = 8;
@@ -565,15 +726,113 @@ public final class MessageProto {
      * <code>optional .Ack ack = 8;</code>
      */
     public bitverify.network.proto.MessageProto.Ack getAck() {
-      return ack_ == null ? bitverify.network.proto.MessageProto.Ack.getDefaultInstance() : ack_;
+      return ack_;
     }
     /**
      * <code>optional .Ack ack = 8;</code>
      */
     public bitverify.network.proto.MessageProto.AckOrBuilder getAckOrBuilder() {
-      return ack_ == null ? bitverify.network.proto.MessageProto.Ack.getDefaultInstance() : ack_;
+      return ack_;
     }
 
+    public static final int GETHEADERS_FIELD_NUMBER = 9;
+    private bitverify.network.proto.MessageProto.GetHeadersMessage getHeaders_;
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    public boolean hasGetHeaders() {
+      return ((bitField0_ & 0x00000100) == 0x00000100);
+    }
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    public bitverify.network.proto.MessageProto.GetHeadersMessage getGetHeaders() {
+      return getHeaders_;
+    }
+    /**
+     * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+     */
+    public bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder getGetHeadersOrBuilder() {
+      return getHeaders_;
+    }
+
+    public static final int GETBLOCK_FIELD_NUMBER = 10;
+    private bitverify.network.proto.MessageProto.GetBlockMessage getBlock_;
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    public boolean hasGetBlock() {
+      return ((bitField0_ & 0x00000200) == 0x00000200);
+    }
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    public bitverify.network.proto.MessageProto.GetBlockMessage getGetBlock() {
+      return getBlock_;
+    }
+    /**
+     * <code>optional .GetBlockMessage getBlock = 10;</code>
+     */
+    public bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder getGetBlockOrBuilder() {
+      return getBlock_;
+    }
+
+    public static final int VERSIONACK_FIELD_NUMBER = 11;
+    private bitverify.network.proto.MessageProto.VersionAck versionAck_;
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public boolean hasVersionAck() {
+      return ((bitField0_ & 0x00000400) == 0x00000400);
+    }
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public bitverify.network.proto.MessageProto.VersionAck getVersionAck() {
+      return versionAck_;
+    }
+    /**
+     * <code>optional .VersionAck versionAck = 11;</code>
+     */
+    public bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder() {
+      return versionAck_;
+    }
+
+    public static final int BLOCKNOTFOUND_FIELD_NUMBER = 12;
+    private bitverify.network.proto.MessageProto.BlockNotFoundMessage blockNotFound_;
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    public boolean hasBlockNotFound() {
+      return ((bitField0_ & 0x00000800) == 0x00000800);
+    }
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    public bitverify.network.proto.MessageProto.BlockNotFoundMessage getBlockNotFound() {
+      return blockNotFound_;
+    }
+    /**
+     * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+     */
+    public bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder getBlockNotFoundOrBuilder() {
+      return blockNotFound_;
+    }
+
+    private void initFields() {
+      type_ = bitverify.network.proto.MessageProto.Message.Type.HEADERS;
+      headers_ = bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
+      block_ = bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance();
+      entry_ = bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance();
+      peers_ = bitverify.network.proto.MessageProto.Peers.getDefaultInstance();
+      getPeers_ = bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance();
+      version_ = bitverify.network.proto.MessageProto.Version.getDefaultInstance();
+      ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
+      getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
+      getBlock_ = bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance();
+      versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+      blockNotFound_ = bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance();
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -583,12 +842,6 @@ public final class MessageProto {
       if (!hasType()) {
         memoizedIsInitialized = 0;
         return false;
-      }
-      if (hasGetBlock()) {
-        if (!getGetBlock().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
       }
       if (hasBlock()) {
         if (!getBlock().isInitialized()) {
@@ -608,20 +861,26 @@ public final class MessageProto {
           return false;
         }
       }
-      if (hasGetPeers()) {
-        if (!getGetPeers().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       if (hasVersion()) {
         if (!getVersion().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
       }
-      if (hasAck()) {
-        if (!getAck().isInitialized()) {
+      if (hasGetBlock()) {
+        if (!getGetBlock().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      if (hasVersionAck()) {
+        if (!getVersionAck().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      if (hasBlockNotFound()) {
+        if (!getBlockNotFound().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -632,76 +891,112 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(1, type_);
+        output.writeEnum(1, type_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeMessage(2, getGetBlock());
+        output.writeMessage(2, headers_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(3, getBlock());
+        output.writeMessage(3, block_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeMessage(4, getEntry());
+        output.writeMessage(4, entry_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeMessage(5, getPeers());
+        output.writeMessage(5, peers_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeMessage(6, getGetPeers());
+        output.writeMessage(6, getPeers_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeMessage(7, getVersion());
+        output.writeMessage(7, version_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeMessage(8, getAck());
+        output.writeMessage(8, ack_);
       }
-      unknownFields.writeTo(output);
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        output.writeMessage(9, getHeaders_);
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        output.writeMessage(10, getBlock_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        output.writeMessage(11, versionAck_);
+      }
+      if (((bitField0_ & 0x00000800) == 0x00000800)) {
+        output.writeMessage(12, blockNotFound_);
+      }
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, type_);
+          .computeEnumSize(1, type_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, getGetBlock());
+          .computeMessageSize(2, headers_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(3, getBlock());
+          .computeMessageSize(3, block_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(4, getEntry());
+          .computeMessageSize(4, entry_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, getPeers());
+          .computeMessageSize(5, peers_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, getGetPeers());
+          .computeMessageSize(6, getPeers_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, getVersion());
+          .computeMessageSize(7, version_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(8, getAck());
+          .computeMessageSize(8, ack_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(9, getHeaders_);
+      }
+      if (((bitField0_ & 0x00000200) == 0x00000200)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(10, getBlock_);
+      }
+      if (((bitField0_ & 0x00000400) == 0x00000400)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(11, versionAck_);
+      }
+      if (((bitField0_ & 0x00000800) == 0x00000800)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(12, blockNotFound_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.Message parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -755,17 +1050,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.Message prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -804,62 +1094,98 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getGetBlockFieldBuilder();
+          getHeadersFieldBuilder();
           getBlockFieldBuilder();
           getEntryFieldBuilder();
           getPeersFieldBuilder();
           getGetPeersFieldBuilder();
           getVersionFieldBuilder();
           getAckFieldBuilder();
+          getGetHeadersFieldBuilder();
+          getGetBlockFieldBuilder();
+          getVersionAckFieldBuilder();
+          getBlockNotFoundFieldBuilder();
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
-        type_ = 1;
+        type_ = bitverify.network.proto.MessageProto.Message.Type.HEADERS;
         bitField0_ = (bitField0_ & ~0x00000001);
-        if (getBlockBuilder_ == null) {
-          getBlock_ = null;
+        if (headersBuilder_ == null) {
+          headers_ = bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
         } else {
-          getBlockBuilder_.clear();
+          headersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
         if (blockBuilder_ == null) {
-          block_ = null;
+          block_ = bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance();
         } else {
           blockBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000004);
         if (entryBuilder_ == null) {
-          entry_ = null;
+          entry_ = bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance();
         } else {
           entryBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000008);
         if (peersBuilder_ == null) {
-          peers_ = null;
+          peers_ = bitverify.network.proto.MessageProto.Peers.getDefaultInstance();
         } else {
           peersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000010);
         if (getPeersBuilder_ == null) {
-          getPeers_ = null;
+          getPeers_ = bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance();
         } else {
           getPeersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000020);
         if (versionBuilder_ == null) {
-          version_ = null;
+          version_ = bitverify.network.proto.MessageProto.Version.getDefaultInstance();
         } else {
           versionBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000040);
         if (ackBuilder_ == null) {
-          ack_ = null;
+          ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
         } else {
           ackBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000080);
+        if (getHeadersBuilder_ == null) {
+          getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
+        } else {
+          getHeadersBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000100);
+        if (getBlockBuilder_ == null) {
+          getBlock_ = bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance();
+        } else {
+          getBlockBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000200);
+        if (versionAckBuilder_ == null) {
+          versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+        } else {
+          versionAckBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000400);
+        if (blockNotFoundBuilder_ == null) {
+          blockNotFound_ = bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance();
+        } else {
+          blockNotFoundBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000800);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -890,10 +1216,10 @@ public final class MessageProto {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        if (getBlockBuilder_ == null) {
-          result.getBlock_ = getBlock_;
+        if (headersBuilder_ == null) {
+          result.headers_ = headers_;
         } else {
-          result.getBlock_ = getBlockBuilder_.build();
+          result.headers_ = headersBuilder_.build();
         }
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
@@ -943,6 +1269,38 @@ public final class MessageProto {
         } else {
           result.ack_ = ackBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000100;
+        }
+        if (getHeadersBuilder_ == null) {
+          result.getHeaders_ = getHeaders_;
+        } else {
+          result.getHeaders_ = getHeadersBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
+          to_bitField0_ |= 0x00000200;
+        }
+        if (getBlockBuilder_ == null) {
+          result.getBlock_ = getBlock_;
+        } else {
+          result.getBlock_ = getBlockBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
+          to_bitField0_ |= 0x00000400;
+        }
+        if (versionAckBuilder_ == null) {
+          result.versionAck_ = versionAck_;
+        } else {
+          result.versionAck_ = versionAckBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
+          to_bitField0_ |= 0x00000800;
+        }
+        if (blockNotFoundBuilder_ == null) {
+          result.blockNotFound_ = blockNotFound_;
+        } else {
+          result.blockNotFound_ = blockNotFoundBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -962,8 +1320,8 @@ public final class MessageProto {
         if (other.hasType()) {
           setType(other.getType());
         }
-        if (other.hasGetBlock()) {
-          mergeGetBlock(other.getGetBlock());
+        if (other.hasHeaders()) {
+          mergeHeaders(other.getHeaders());
         }
         if (other.hasBlock()) {
           mergeBlock(other.getBlock());
@@ -983,47 +1341,66 @@ public final class MessageProto {
         if (other.hasAck()) {
           mergeAck(other.getAck());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        if (other.hasGetHeaders()) {
+          mergeGetHeaders(other.getGetHeaders());
+        }
+        if (other.hasGetBlock()) {
+          mergeGetBlock(other.getGetBlock());
+        }
+        if (other.hasVersionAck()) {
+          mergeVersionAck(other.getVersionAck());
+        }
+        if (other.hasBlockNotFound()) {
+          mergeBlockNotFound(other.getBlockNotFound());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasType()) {
+          
           return false;
-        }
-        if (hasGetBlock()) {
-          if (!getGetBlock().isInitialized()) {
-            return false;
-          }
         }
         if (hasBlock()) {
           if (!getBlock().isInitialized()) {
+            
             return false;
           }
         }
         if (hasEntry()) {
           if (!getEntry().isInitialized()) {
+            
             return false;
           }
         }
         if (hasPeers()) {
           if (!getPeers().isInitialized()) {
-            return false;
-          }
-        }
-        if (hasGetPeers()) {
-          if (!getGetPeers().isInitialized()) {
+            
             return false;
           }
         }
         if (hasVersion()) {
           if (!getVersion().isInitialized()) {
+            
             return false;
           }
         }
-        if (hasAck()) {
-          if (!getAck().isInitialized()) {
+        if (hasGetBlock()) {
+          if (!getGetBlock().isInitialized()) {
+            
+            return false;
+          }
+        }
+        if (hasVersionAck()) {
+          if (!getVersionAck().isInitialized()) {
+            
+            return false;
+          }
+        }
+        if (hasBlockNotFound()) {
+          if (!getBlockNotFound().isInitialized()) {
+            
             return false;
           }
         }
@@ -1049,7 +1426,7 @@ public final class MessageProto {
       }
       private int bitField0_;
 
-      private int type_ = 1;
+      private bitverify.network.proto.MessageProto.Message.Type type_ = bitverify.network.proto.MessageProto.Message.Type.HEADERS;
       /**
        * <code>required .Message.Type type = 1;</code>
        */
@@ -1060,8 +1437,7 @@ public final class MessageProto {
        * <code>required .Message.Type type = 1;</code>
        */
       public bitverify.network.proto.MessageProto.Message.Type getType() {
-        bitverify.network.proto.MessageProto.Message.Type result = bitverify.network.proto.MessageProto.Message.Type.valueOf(type_);
-        return result == null ? bitverify.network.proto.MessageProto.Message.Type.GETBLOCK : result;
+        return type_;
       }
       /**
        * <code>required .Message.Type type = 1;</code>
@@ -1071,7 +1447,7 @@ public final class MessageProto {
           throw new NullPointerException();
         }
         bitField0_ |= 0x00000001;
-        type_ = value.getNumber();
+        type_ = value;
         onChanged();
         return this;
       }
@@ -1080,130 +1456,128 @@ public final class MessageProto {
        */
       public Builder clearType() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        type_ = 1;
+        type_ = bitverify.network.proto.MessageProto.Message.Type.HEADERS;
         onChanged();
         return this;
       }
 
-      private bitverify.network.proto.MessageProto.GetBlock getBlock_ = null;
+      private bitverify.network.proto.MessageProto.HeadersMessage headers_ = bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.GetBlock, bitverify.network.proto.MessageProto.GetBlock.Builder, bitverify.network.proto.MessageProto.GetBlockOrBuilder> getBlockBuilder_;
+          bitverify.network.proto.MessageProto.HeadersMessage, bitverify.network.proto.MessageProto.HeadersMessage.Builder, bitverify.network.proto.MessageProto.HeadersMessageOrBuilder> headersBuilder_;
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public boolean hasGetBlock() {
+      public boolean hasHeaders() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlock getGetBlock() {
-        if (getBlockBuilder_ == null) {
-          return getBlock_ == null ? bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance() : getBlock_;
+      public bitverify.network.proto.MessageProto.HeadersMessage getHeaders() {
+        if (headersBuilder_ == null) {
+          return headers_;
         } else {
-          return getBlockBuilder_.getMessage();
+          return headersBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public Builder setGetBlock(bitverify.network.proto.MessageProto.GetBlock value) {
-        if (getBlockBuilder_ == null) {
+      public Builder setHeaders(bitverify.network.proto.MessageProto.HeadersMessage value) {
+        if (headersBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          getBlock_ = value;
+          headers_ = value;
           onChanged();
         } else {
-          getBlockBuilder_.setMessage(value);
+          headersBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public Builder setGetBlock(
-          bitverify.network.proto.MessageProto.GetBlock.Builder builderForValue) {
-        if (getBlockBuilder_ == null) {
-          getBlock_ = builderForValue.build();
+      public Builder setHeaders(
+          bitverify.network.proto.MessageProto.HeadersMessage.Builder builderForValue) {
+        if (headersBuilder_ == null) {
+          headers_ = builderForValue.build();
           onChanged();
         } else {
-          getBlockBuilder_.setMessage(builderForValue.build());
+          headersBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public Builder mergeGetBlock(bitverify.network.proto.MessageProto.GetBlock value) {
-        if (getBlockBuilder_ == null) {
+      public Builder mergeHeaders(bitverify.network.proto.MessageProto.HeadersMessage value) {
+        if (headersBuilder_ == null) {
           if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              getBlock_ != null &&
-              getBlock_ != bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance()) {
-            getBlock_ =
-              bitverify.network.proto.MessageProto.GetBlock.newBuilder(getBlock_).mergeFrom(value).buildPartial();
+              headers_ != bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance()) {
+            headers_ =
+              bitverify.network.proto.MessageProto.HeadersMessage.newBuilder(headers_).mergeFrom(value).buildPartial();
           } else {
-            getBlock_ = value;
+            headers_ = value;
           }
           onChanged();
         } else {
-          getBlockBuilder_.mergeFrom(value);
+          headersBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public Builder clearGetBlock() {
-        if (getBlockBuilder_ == null) {
-          getBlock_ = null;
+      public Builder clearHeaders() {
+        if (headersBuilder_ == null) {
+          headers_ = bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
           onChanged();
         } else {
-          getBlockBuilder_.clear();
+          headersBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlock.Builder getGetBlockBuilder() {
+      public bitverify.network.proto.MessageProto.HeadersMessage.Builder getHeadersBuilder() {
         bitField0_ |= 0x00000002;
         onChanged();
-        return getGetBlockFieldBuilder().getBuilder();
+        return getHeadersFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
-      public bitverify.network.proto.MessageProto.GetBlockOrBuilder getGetBlockOrBuilder() {
-        if (getBlockBuilder_ != null) {
-          return getBlockBuilder_.getMessageOrBuilder();
+      public bitverify.network.proto.MessageProto.HeadersMessageOrBuilder getHeadersOrBuilder() {
+        if (headersBuilder_ != null) {
+          return headersBuilder_.getMessageOrBuilder();
         } else {
-          return getBlock_ == null ?
-              bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance() : getBlock_;
+          return headers_;
         }
       }
       /**
-       * <code>optional .GetBlock getBlock = 2;</code>
+       * <code>optional .HeadersMessage headers = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.GetBlock, bitverify.network.proto.MessageProto.GetBlock.Builder, bitverify.network.proto.MessageProto.GetBlockOrBuilder> 
-          getGetBlockFieldBuilder() {
-        if (getBlockBuilder_ == null) {
-          getBlockBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.GetBlock, bitverify.network.proto.MessageProto.GetBlock.Builder, bitverify.network.proto.MessageProto.GetBlockOrBuilder>(
-                  getGetBlock(),
+          bitverify.network.proto.MessageProto.HeadersMessage, bitverify.network.proto.MessageProto.HeadersMessage.Builder, bitverify.network.proto.MessageProto.HeadersMessageOrBuilder> 
+          getHeadersFieldBuilder() {
+        if (headersBuilder_ == null) {
+          headersBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.HeadersMessage, bitverify.network.proto.MessageProto.HeadersMessage.Builder, bitverify.network.proto.MessageProto.HeadersMessageOrBuilder>(
+                  getHeaders(),
                   getParentForChildren(),
                   isClean());
-          getBlock_ = null;
+          headers_ = null;
         }
-        return getBlockBuilder_;
+        return headersBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.BlockMessage block_ = null;
+      private bitverify.network.proto.MessageProto.BlockMessage block_ = bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.BlockMessage, bitverify.network.proto.MessageProto.BlockMessage.Builder, bitverify.network.proto.MessageProto.BlockMessageOrBuilder> blockBuilder_;
       /**
@@ -1217,7 +1591,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.BlockMessage getBlock() {
         if (blockBuilder_ == null) {
-          return block_ == null ? bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance() : block_;
+          return block_;
         } else {
           return blockBuilder_.getMessage();
         }
@@ -1258,7 +1632,6 @@ public final class MessageProto {
       public Builder mergeBlock(bitverify.network.proto.MessageProto.BlockMessage value) {
         if (blockBuilder_ == null) {
           if (((bitField0_ & 0x00000004) == 0x00000004) &&
-              block_ != null &&
               block_ != bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance()) {
             block_ =
               bitverify.network.proto.MessageProto.BlockMessage.newBuilder(block_).mergeFrom(value).buildPartial();
@@ -1277,7 +1650,7 @@ public final class MessageProto {
        */
       public Builder clearBlock() {
         if (blockBuilder_ == null) {
-          block_ = null;
+          block_ = bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance();
           onChanged();
         } else {
           blockBuilder_.clear();
@@ -1300,8 +1673,7 @@ public final class MessageProto {
         if (blockBuilder_ != null) {
           return blockBuilder_.getMessageOrBuilder();
         } else {
-          return block_ == null ?
-              bitverify.network.proto.MessageProto.BlockMessage.getDefaultInstance() : block_;
+          return block_;
         }
       }
       /**
@@ -1321,7 +1693,7 @@ public final class MessageProto {
         return blockBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.EntryMessage entry_ = null;
+      private bitverify.network.proto.MessageProto.EntryMessage entry_ = bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.EntryMessage, bitverify.network.proto.MessageProto.EntryMessage.Builder, bitverify.network.proto.MessageProto.EntryMessageOrBuilder> entryBuilder_;
       /**
@@ -1335,7 +1707,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.EntryMessage getEntry() {
         if (entryBuilder_ == null) {
-          return entry_ == null ? bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance() : entry_;
+          return entry_;
         } else {
           return entryBuilder_.getMessage();
         }
@@ -1376,7 +1748,6 @@ public final class MessageProto {
       public Builder mergeEntry(bitverify.network.proto.MessageProto.EntryMessage value) {
         if (entryBuilder_ == null) {
           if (((bitField0_ & 0x00000008) == 0x00000008) &&
-              entry_ != null &&
               entry_ != bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance()) {
             entry_ =
               bitverify.network.proto.MessageProto.EntryMessage.newBuilder(entry_).mergeFrom(value).buildPartial();
@@ -1395,7 +1766,7 @@ public final class MessageProto {
        */
       public Builder clearEntry() {
         if (entryBuilder_ == null) {
-          entry_ = null;
+          entry_ = bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance();
           onChanged();
         } else {
           entryBuilder_.clear();
@@ -1418,8 +1789,7 @@ public final class MessageProto {
         if (entryBuilder_ != null) {
           return entryBuilder_.getMessageOrBuilder();
         } else {
-          return entry_ == null ?
-              bitverify.network.proto.MessageProto.EntryMessage.getDefaultInstance() : entry_;
+          return entry_;
         }
       }
       /**
@@ -1439,7 +1809,7 @@ public final class MessageProto {
         return entryBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.Peers peers_ = null;
+      private bitverify.network.proto.MessageProto.Peers peers_ = bitverify.network.proto.MessageProto.Peers.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.Peers, bitverify.network.proto.MessageProto.Peers.Builder, bitverify.network.proto.MessageProto.PeersOrBuilder> peersBuilder_;
       /**
@@ -1453,7 +1823,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.Peers getPeers() {
         if (peersBuilder_ == null) {
-          return peers_ == null ? bitverify.network.proto.MessageProto.Peers.getDefaultInstance() : peers_;
+          return peers_;
         } else {
           return peersBuilder_.getMessage();
         }
@@ -1494,7 +1864,6 @@ public final class MessageProto {
       public Builder mergePeers(bitverify.network.proto.MessageProto.Peers value) {
         if (peersBuilder_ == null) {
           if (((bitField0_ & 0x00000010) == 0x00000010) &&
-              peers_ != null &&
               peers_ != bitverify.network.proto.MessageProto.Peers.getDefaultInstance()) {
             peers_ =
               bitverify.network.proto.MessageProto.Peers.newBuilder(peers_).mergeFrom(value).buildPartial();
@@ -1513,7 +1882,7 @@ public final class MessageProto {
        */
       public Builder clearPeers() {
         if (peersBuilder_ == null) {
-          peers_ = null;
+          peers_ = bitverify.network.proto.MessageProto.Peers.getDefaultInstance();
           onChanged();
         } else {
           peersBuilder_.clear();
@@ -1536,8 +1905,7 @@ public final class MessageProto {
         if (peersBuilder_ != null) {
           return peersBuilder_.getMessageOrBuilder();
         } else {
-          return peers_ == null ?
-              bitverify.network.proto.MessageProto.Peers.getDefaultInstance() : peers_;
+          return peers_;
         }
       }
       /**
@@ -1557,7 +1925,7 @@ public final class MessageProto {
         return peersBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.GetPeers getPeers_ = null;
+      private bitverify.network.proto.MessageProto.GetPeers getPeers_ = bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.GetPeers, bitverify.network.proto.MessageProto.GetPeers.Builder, bitverify.network.proto.MessageProto.GetPeersOrBuilder> getPeersBuilder_;
       /**
@@ -1571,7 +1939,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.GetPeers getGetPeers() {
         if (getPeersBuilder_ == null) {
-          return getPeers_ == null ? bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance() : getPeers_;
+          return getPeers_;
         } else {
           return getPeersBuilder_.getMessage();
         }
@@ -1612,7 +1980,6 @@ public final class MessageProto {
       public Builder mergeGetPeers(bitverify.network.proto.MessageProto.GetPeers value) {
         if (getPeersBuilder_ == null) {
           if (((bitField0_ & 0x00000020) == 0x00000020) &&
-              getPeers_ != null &&
               getPeers_ != bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance()) {
             getPeers_ =
               bitverify.network.proto.MessageProto.GetPeers.newBuilder(getPeers_).mergeFrom(value).buildPartial();
@@ -1631,7 +1998,7 @@ public final class MessageProto {
        */
       public Builder clearGetPeers() {
         if (getPeersBuilder_ == null) {
-          getPeers_ = null;
+          getPeers_ = bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance();
           onChanged();
         } else {
           getPeersBuilder_.clear();
@@ -1654,8 +2021,7 @@ public final class MessageProto {
         if (getPeersBuilder_ != null) {
           return getPeersBuilder_.getMessageOrBuilder();
         } else {
-          return getPeers_ == null ?
-              bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance() : getPeers_;
+          return getPeers_;
         }
       }
       /**
@@ -1675,7 +2041,7 @@ public final class MessageProto {
         return getPeersBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.Version version_ = null;
+      private bitverify.network.proto.MessageProto.Version version_ = bitverify.network.proto.MessageProto.Version.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.Version, bitverify.network.proto.MessageProto.Version.Builder, bitverify.network.proto.MessageProto.VersionOrBuilder> versionBuilder_;
       /**
@@ -1689,7 +2055,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.Version getVersion() {
         if (versionBuilder_ == null) {
-          return version_ == null ? bitverify.network.proto.MessageProto.Version.getDefaultInstance() : version_;
+          return version_;
         } else {
           return versionBuilder_.getMessage();
         }
@@ -1730,7 +2096,6 @@ public final class MessageProto {
       public Builder mergeVersion(bitverify.network.proto.MessageProto.Version value) {
         if (versionBuilder_ == null) {
           if (((bitField0_ & 0x00000040) == 0x00000040) &&
-              version_ != null &&
               version_ != bitverify.network.proto.MessageProto.Version.getDefaultInstance()) {
             version_ =
               bitverify.network.proto.MessageProto.Version.newBuilder(version_).mergeFrom(value).buildPartial();
@@ -1749,7 +2114,7 @@ public final class MessageProto {
        */
       public Builder clearVersion() {
         if (versionBuilder_ == null) {
-          version_ = null;
+          version_ = bitverify.network.proto.MessageProto.Version.getDefaultInstance();
           onChanged();
         } else {
           versionBuilder_.clear();
@@ -1772,8 +2137,7 @@ public final class MessageProto {
         if (versionBuilder_ != null) {
           return versionBuilder_.getMessageOrBuilder();
         } else {
-          return version_ == null ?
-              bitverify.network.proto.MessageProto.Version.getDefaultInstance() : version_;
+          return version_;
         }
       }
       /**
@@ -1793,7 +2157,7 @@ public final class MessageProto {
         return versionBuilder_;
       }
 
-      private bitverify.network.proto.MessageProto.Ack ack_ = null;
+      private bitverify.network.proto.MessageProto.Ack ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           bitverify.network.proto.MessageProto.Ack, bitverify.network.proto.MessageProto.Ack.Builder, bitverify.network.proto.MessageProto.AckOrBuilder> ackBuilder_;
       /**
@@ -1807,7 +2171,7 @@ public final class MessageProto {
        */
       public bitverify.network.proto.MessageProto.Ack getAck() {
         if (ackBuilder_ == null) {
-          return ack_ == null ? bitverify.network.proto.MessageProto.Ack.getDefaultInstance() : ack_;
+          return ack_;
         } else {
           return ackBuilder_.getMessage();
         }
@@ -1848,7 +2212,6 @@ public final class MessageProto {
       public Builder mergeAck(bitverify.network.proto.MessageProto.Ack value) {
         if (ackBuilder_ == null) {
           if (((bitField0_ & 0x00000080) == 0x00000080) &&
-              ack_ != null &&
               ack_ != bitverify.network.proto.MessageProto.Ack.getDefaultInstance()) {
             ack_ =
               bitverify.network.proto.MessageProto.Ack.newBuilder(ack_).mergeFrom(value).buildPartial();
@@ -1867,7 +2230,7 @@ public final class MessageProto {
        */
       public Builder clearAck() {
         if (ackBuilder_ == null) {
-          ack_ = null;
+          ack_ = bitverify.network.proto.MessageProto.Ack.getDefaultInstance();
           onChanged();
         } else {
           ackBuilder_.clear();
@@ -1890,8 +2253,7 @@ public final class MessageProto {
         if (ackBuilder_ != null) {
           return ackBuilder_.getMessageOrBuilder();
         } else {
-          return ack_ == null ?
-              bitverify.network.proto.MessageProto.Ack.getDefaultInstance() : ack_;
+          return ack_;
         }
       }
       /**
@@ -1911,51 +2273,479 @@ public final class MessageProto {
         return ackBuilder_;
       }
 
+      private bitverify.network.proto.MessageProto.GetHeadersMessage getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.GetHeadersMessage, bitverify.network.proto.MessageProto.GetHeadersMessage.Builder, bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder> getHeadersBuilder_;
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public boolean hasGetHeaders() {
+        return ((bitField0_ & 0x00000100) == 0x00000100);
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetHeadersMessage getGetHeaders() {
+        if (getHeadersBuilder_ == null) {
+          return getHeaders_;
+        } else {
+          return getHeadersBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public Builder setGetHeaders(bitverify.network.proto.MessageProto.GetHeadersMessage value) {
+        if (getHeadersBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          getHeaders_ = value;
+          onChanged();
+        } else {
+          getHeadersBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000100;
+        return this;
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public Builder setGetHeaders(
+          bitverify.network.proto.MessageProto.GetHeadersMessage.Builder builderForValue) {
+        if (getHeadersBuilder_ == null) {
+          getHeaders_ = builderForValue.build();
+          onChanged();
+        } else {
+          getHeadersBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000100;
+        return this;
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public Builder mergeGetHeaders(bitverify.network.proto.MessageProto.GetHeadersMessage value) {
+        if (getHeadersBuilder_ == null) {
+          if (((bitField0_ & 0x00000100) == 0x00000100) &&
+              getHeaders_ != bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance()) {
+            getHeaders_ =
+              bitverify.network.proto.MessageProto.GetHeadersMessage.newBuilder(getHeaders_).mergeFrom(value).buildPartial();
+          } else {
+            getHeaders_ = value;
+          }
+          onChanged();
+        } else {
+          getHeadersBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000100;
+        return this;
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public Builder clearGetHeaders() {
+        if (getHeadersBuilder_ == null) {
+          getHeaders_ = bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
+          onChanged();
+        } else {
+          getHeadersBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000100);
+        return this;
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetHeadersMessage.Builder getGetHeadersBuilder() {
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return getGetHeadersFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder getGetHeadersOrBuilder() {
+        if (getHeadersBuilder_ != null) {
+          return getHeadersBuilder_.getMessageOrBuilder();
+        } else {
+          return getHeaders_;
+        }
+      }
+      /**
+       * <code>optional .GetHeadersMessage getHeaders = 9;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.GetHeadersMessage, bitverify.network.proto.MessageProto.GetHeadersMessage.Builder, bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder> 
+          getGetHeadersFieldBuilder() {
+        if (getHeadersBuilder_ == null) {
+          getHeadersBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.GetHeadersMessage, bitverify.network.proto.MessageProto.GetHeadersMessage.Builder, bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder>(
+                  getGetHeaders(),
+                  getParentForChildren(),
+                  isClean());
+          getHeaders_ = null;
+        }
+        return getHeadersBuilder_;
+      }
+
+      private bitverify.network.proto.MessageProto.GetBlockMessage getBlock_ = bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.GetBlockMessage, bitverify.network.proto.MessageProto.GetBlockMessage.Builder, bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder> getBlockBuilder_;
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public boolean hasGetBlock() {
+        return ((bitField0_ & 0x00000200) == 0x00000200);
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetBlockMessage getGetBlock() {
+        if (getBlockBuilder_ == null) {
+          return getBlock_;
+        } else {
+          return getBlockBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public Builder setGetBlock(bitverify.network.proto.MessageProto.GetBlockMessage value) {
+        if (getBlockBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          getBlock_ = value;
+          onChanged();
+        } else {
+          getBlockBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000200;
+        return this;
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public Builder setGetBlock(
+          bitverify.network.proto.MessageProto.GetBlockMessage.Builder builderForValue) {
+        if (getBlockBuilder_ == null) {
+          getBlock_ = builderForValue.build();
+          onChanged();
+        } else {
+          getBlockBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000200;
+        return this;
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public Builder mergeGetBlock(bitverify.network.proto.MessageProto.GetBlockMessage value) {
+        if (getBlockBuilder_ == null) {
+          if (((bitField0_ & 0x00000200) == 0x00000200) &&
+              getBlock_ != bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance()) {
+            getBlock_ =
+              bitverify.network.proto.MessageProto.GetBlockMessage.newBuilder(getBlock_).mergeFrom(value).buildPartial();
+          } else {
+            getBlock_ = value;
+          }
+          onChanged();
+        } else {
+          getBlockBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000200;
+        return this;
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public Builder clearGetBlock() {
+        if (getBlockBuilder_ == null) {
+          getBlock_ = bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance();
+          onChanged();
+        } else {
+          getBlockBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000200);
+        return this;
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetBlockMessage.Builder getGetBlockBuilder() {
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return getGetBlockFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      public bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder getGetBlockOrBuilder() {
+        if (getBlockBuilder_ != null) {
+          return getBlockBuilder_.getMessageOrBuilder();
+        } else {
+          return getBlock_;
+        }
+      }
+      /**
+       * <code>optional .GetBlockMessage getBlock = 10;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.GetBlockMessage, bitverify.network.proto.MessageProto.GetBlockMessage.Builder, bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder> 
+          getGetBlockFieldBuilder() {
+        if (getBlockBuilder_ == null) {
+          getBlockBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.GetBlockMessage, bitverify.network.proto.MessageProto.GetBlockMessage.Builder, bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder>(
+                  getGetBlock(),
+                  getParentForChildren(),
+                  isClean());
+          getBlock_ = null;
+        }
+        return getBlockBuilder_;
+      }
+
+      private bitverify.network.proto.MessageProto.VersionAck versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder> versionAckBuilder_;
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public boolean hasVersionAck() {
+        return ((bitField0_ & 0x00000400) == 0x00000400);
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAck getVersionAck() {
+        if (versionAckBuilder_ == null) {
+          return versionAck_;
+        } else {
+          return versionAckBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder setVersionAck(bitverify.network.proto.MessageProto.VersionAck value) {
+        if (versionAckBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          versionAck_ = value;
+          onChanged();
+        } else {
+          versionAckBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder setVersionAck(
+          bitverify.network.proto.MessageProto.VersionAck.Builder builderForValue) {
+        if (versionAckBuilder_ == null) {
+          versionAck_ = builderForValue.build();
+          onChanged();
+        } else {
+          versionAckBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder mergeVersionAck(bitverify.network.proto.MessageProto.VersionAck value) {
+        if (versionAckBuilder_ == null) {
+          if (((bitField0_ & 0x00000400) == 0x00000400) &&
+              versionAck_ != bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance()) {
+            versionAck_ =
+              bitverify.network.proto.MessageProto.VersionAck.newBuilder(versionAck_).mergeFrom(value).buildPartial();
+          } else {
+            versionAck_ = value;
+          }
+          onChanged();
+        } else {
+          versionAckBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000400;
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public Builder clearVersionAck() {
+        if (versionAckBuilder_ == null) {
+          versionAck_ = bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+          onChanged();
+        } else {
+          versionAckBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000400);
+        return this;
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAck.Builder getVersionAckBuilder() {
+        bitField0_ |= 0x00000400;
+        onChanged();
+        return getVersionAckFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      public bitverify.network.proto.MessageProto.VersionAckOrBuilder getVersionAckOrBuilder() {
+        if (versionAckBuilder_ != null) {
+          return versionAckBuilder_.getMessageOrBuilder();
+        } else {
+          return versionAck_;
+        }
+      }
+      /**
+       * <code>optional .VersionAck versionAck = 11;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder> 
+          getVersionAckFieldBuilder() {
+        if (versionAckBuilder_ == null) {
+          versionAckBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.VersionAck, bitverify.network.proto.MessageProto.VersionAck.Builder, bitverify.network.proto.MessageProto.VersionAckOrBuilder>(
+                  getVersionAck(),
+                  getParentForChildren(),
+                  isClean());
+          versionAck_ = null;
+        }
+        return versionAckBuilder_;
+      }
+
+      private bitverify.network.proto.MessageProto.BlockNotFoundMessage blockNotFound_ = bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.BlockNotFoundMessage, bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder, bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder> blockNotFoundBuilder_;
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public boolean hasBlockNotFound() {
+        return ((bitField0_ & 0x00000800) == 0x00000800);
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessage getBlockNotFound() {
+        if (blockNotFoundBuilder_ == null) {
+          return blockNotFound_;
+        } else {
+          return blockNotFoundBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public Builder setBlockNotFound(bitverify.network.proto.MessageProto.BlockNotFoundMessage value) {
+        if (blockNotFoundBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          blockNotFound_ = value;
+          onChanged();
+        } else {
+          blockNotFoundBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000800;
+        return this;
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public Builder setBlockNotFound(
+          bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder builderForValue) {
+        if (blockNotFoundBuilder_ == null) {
+          blockNotFound_ = builderForValue.build();
+          onChanged();
+        } else {
+          blockNotFoundBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000800;
+        return this;
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public Builder mergeBlockNotFound(bitverify.network.proto.MessageProto.BlockNotFoundMessage value) {
+        if (blockNotFoundBuilder_ == null) {
+          if (((bitField0_ & 0x00000800) == 0x00000800) &&
+              blockNotFound_ != bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance()) {
+            blockNotFound_ =
+              bitverify.network.proto.MessageProto.BlockNotFoundMessage.newBuilder(blockNotFound_).mergeFrom(value).buildPartial();
+          } else {
+            blockNotFound_ = value;
+          }
+          onChanged();
+        } else {
+          blockNotFoundBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000800;
+        return this;
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public Builder clearBlockNotFound() {
+        if (blockNotFoundBuilder_ == null) {
+          blockNotFound_ = bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance();
+          onChanged();
+        } else {
+          blockNotFoundBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000800);
+        return this;
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder getBlockNotFoundBuilder() {
+        bitField0_ |= 0x00000800;
+        onChanged();
+        return getBlockNotFoundFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder getBlockNotFoundOrBuilder() {
+        if (blockNotFoundBuilder_ != null) {
+          return blockNotFoundBuilder_.getMessageOrBuilder();
+        } else {
+          return blockNotFound_;
+        }
+      }
+      /**
+       * <code>optional .BlockNotFoundMessage blockNotFound = 12;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          bitverify.network.proto.MessageProto.BlockNotFoundMessage, bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder, bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder> 
+          getBlockNotFoundFieldBuilder() {
+        if (blockNotFoundBuilder_ == null) {
+          blockNotFoundBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              bitverify.network.proto.MessageProto.BlockNotFoundMessage, bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder, bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder>(
+                  getBlockNotFound(),
+                  getParentForChildren(),
+                  isClean());
+          blockNotFound_ = null;
+        }
+        return blockNotFoundBuilder_;
+      }
+
       // @@protoc_insertion_point(builder_scope:Message)
     }
 
-    // @@protoc_insertion_point(class_scope:Message)
-    private static final bitverify.network.proto.MessageProto.Message DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.Message();
+      defaultInstance = new Message(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.Message getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Message>
-        PARSER = new com.google.protobuf.AbstractParser<Message>() {
-      public Message parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new Message(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<Message> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Message> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.Message getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:Message)
   }
 
   public interface VersionOrBuilder extends
@@ -1963,53 +2753,48 @@ public final class MessageProto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
     boolean hasListenPort();
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    bitverify.network.proto.MessageProto.NetAddress getListenPort();
-    /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder();
+    int getListenPort();
   }
   /**
    * Protobuf type {@code Version}
    */
-  public  static final class Version extends
+  public static final class Version extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:Version)
       VersionOrBuilder {
     // Use Version.newBuilder() to construct.
     private Version(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private Version() {
+    private Version(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Version defaultInstance;
+    public static Version getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public Version getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private Version(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -2028,27 +2813,18 @@ public final class MessageProto {
               }
               break;
             }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = listenPort_.toBuilder();
-              }
-              listenPort_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(listenPort_);
-                listenPort_ = subBuilder.buildPartial();
-              }
+            case 8: {
               bitField0_ |= 0x00000001;
+              listenPort_ = input.readInt32();
               break;
             }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -2066,40 +2842,40 @@ public final class MessageProto {
               bitverify.network.proto.MessageProto.Version.class, bitverify.network.proto.MessageProto.Version.Builder.class);
     }
 
+    public static com.google.protobuf.Parser<Version> PARSER =
+        new com.google.protobuf.AbstractParser<Version>() {
+      public Version parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Version(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Version> getParserForType() {
+      return PARSER;
+    }
+
     private int bitField0_;
     public static final int LISTENPORT_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress listenPort_;
+    private int listenPort_;
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
     public boolean hasListenPort() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    public bitverify.network.proto.MessageProto.NetAddress getListenPort() {
-      return listenPort_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : listenPort_;
-    }
-    /**
-     * <code>required .NetAddress listenPort = 1;</code>
-     *
-     * <pre>
-     * address and port on which the sender is listening
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder() {
-      return listenPort_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : listenPort_;
+    public int getListenPort() {
+      return listenPort_;
     }
 
+    private void initFields() {
+      listenPort_ = 0;
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -2110,37 +2886,41 @@ public final class MessageProto {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (!getListenPort().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, getListenPort());
+        output.writeInt32(1, listenPort_);
       }
-      unknownFields.writeTo(output);
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getListenPort());
+          .computeInt32Size(1, listenPort_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.Version parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2194,17 +2974,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.Version prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -2243,18 +3018,21 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getListenPortFieldBuilder();
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
-        if (listenPortBuilder_ == null) {
-          listenPort_ = null;
-        } else {
-          listenPortBuilder_.clear();
-        }
+        listenPort_ = 0;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -2281,11 +3059,7 @@ public final class MessageProto {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        if (listenPortBuilder_ == null) {
-          result.listenPort_ = listenPort_;
-        } else {
-          result.listenPort_ = listenPortBuilder_.build();
-        }
+        result.listenPort_ = listenPort_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -2303,18 +3077,15 @@ public final class MessageProto {
       public Builder mergeFrom(bitverify.network.proto.MessageProto.Version other) {
         if (other == bitverify.network.proto.MessageProto.Version.getDefaultInstance()) return this;
         if (other.hasListenPort()) {
-          mergeListenPort(other.getListenPort());
+          setListenPort(other.getListenPort());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasListenPort()) {
-          return false;
-        }
-        if (!getListenPort().isInitialized()) {
+          
           return false;
         }
         return true;
@@ -2339,248 +3110,87 @@ public final class MessageProto {
       }
       private int bitField0_;
 
-      private bitverify.network.proto.MessageProto.NetAddress listenPort_ = null;
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> listenPortBuilder_;
+      private int listenPort_ ;
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
       public boolean hasListenPort() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
-      public bitverify.network.proto.MessageProto.NetAddress getListenPort() {
-        if (listenPortBuilder_ == null) {
-          return listenPort_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : listenPort_;
-        } else {
-          return listenPortBuilder_.getMessage();
-        }
+      public int getListenPort() {
+        return listenPort_;
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
-      public Builder setListenPort(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (listenPortBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          listenPort_ = value;
-          onChanged();
-        } else {
-          listenPortBuilder_.setMessage(value);
-        }
+      public Builder setListenPort(int value) {
         bitField0_ |= 0x00000001;
+        listenPort_ = value;
+        onChanged();
         return this;
       }
       /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public Builder setListenPort(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (listenPortBuilder_ == null) {
-          listenPort_ = builderForValue.build();
-          onChanged();
-        } else {
-          listenPortBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public Builder mergeListenPort(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (listenPortBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              listenPort_ != null &&
-              listenPort_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            listenPort_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(listenPort_).mergeFrom(value).buildPartial();
-          } else {
-            listenPort_ = value;
-          }
-          onChanged();
-        } else {
-          listenPortBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
+       * <code>required int32 listenPort = 1;</code>
        */
       public Builder clearListenPort() {
-        if (listenPortBuilder_ == null) {
-          listenPort_ = null;
-          onChanged();
-        } else {
-          listenPortBuilder_.clear();
-        }
         bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getListenPortBuilder() {
-        bitField0_ |= 0x00000001;
+        listenPort_ = 0;
         onChanged();
-        return getListenPortFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getListenPortOrBuilder() {
-        if (listenPortBuilder_ != null) {
-          return listenPortBuilder_.getMessageOrBuilder();
-        } else {
-          return listenPort_ == null ?
-              bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : listenPort_;
-        }
-      }
-      /**
-       * <code>required .NetAddress listenPort = 1;</code>
-       *
-       * <pre>
-       * address and port on which the sender is listening
-       * </pre>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getListenPortFieldBuilder() {
-        if (listenPortBuilder_ == null) {
-          listenPortBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getListenPort(),
-                  getParentForChildren(),
-                  isClean());
-          listenPort_ = null;
-        }
-        return listenPortBuilder_;
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:Version)
     }
 
-    // @@protoc_insertion_point(class_scope:Version)
-    private static final bitverify.network.proto.MessageProto.Version DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.Version();
+      defaultInstance = new Version(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.Version getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Version>
-        PARSER = new com.google.protobuf.AbstractParser<Version>() {
-      public Version parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new Version(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<Version> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Version> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.Version getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:Version)
   }
 
   public interface AckOrBuilder extends
       // @@protoc_insertion_point(interface_extends:Ack)
       com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    boolean hasAddr();
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    bitverify.network.proto.MessageProto.NetAddress getAddr();
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder();
   }
   /**
    * Protobuf type {@code Ack}
    */
-  public  static final class Ack extends
+  public static final class Ack extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:Ack)
       AckOrBuilder {
     // Use Ack.newBuilder() to construct.
     private Ack(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private Ack() {
+    private Ack(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Ack defaultInstance;
+    public static Ack getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public Ack getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private Ack(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
-      int mutable_bitField0_ = 0;
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -2598,27 +3208,13 @@ public final class MessageProto {
               }
               break;
             }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = addr_.toBuilder();
-              }
-              addr_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(addr_);
-                addr_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000001;
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -2636,67 +3232,57 @@ public final class MessageProto {
               bitverify.network.proto.MessageProto.Ack.class, bitverify.network.proto.MessageProto.Ack.Builder.class);
     }
 
-    private int bitField0_;
-    public static final int ADDR_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress addr_;
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public boolean hasAddr() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public bitverify.network.proto.MessageProto.NetAddress getAddr() {
-      return addr_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : addr_;
-    }
-    /**
-     * <code>optional .NetAddress addr = 1;</code>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder() {
-      return addr_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : addr_;
+    public static com.google.protobuf.Parser<Ack> PARSER =
+        new com.google.protobuf.AbstractParser<Ack>() {
+      public Ack parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Ack(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Ack> getParserForType() {
+      return PARSER;
     }
 
+    private void initFields() {
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (hasAddr()) {
-        if (!getAddr().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, getAddr());
-      }
-      unknownFields.writeTo(output);
+      getSerializedSize();
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getAddr());
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.Ack parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2750,17 +3336,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.Ack prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -2799,18 +3380,19 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getAddrFieldBuilder();
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
-        if (addrBuilder_ == null) {
-          addr_ = null;
-        } else {
-          addrBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -2832,17 +3414,6 @@ public final class MessageProto {
 
       public bitverify.network.proto.MessageProto.Ack buildPartial() {
         bitverify.network.proto.MessageProto.Ack result = new bitverify.network.proto.MessageProto.Ack(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (addrBuilder_ == null) {
-          result.addr_ = addr_;
-        } else {
-          result.addr_ = addrBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -2858,20 +3429,11 @@ public final class MessageProto {
 
       public Builder mergeFrom(bitverify.network.proto.MessageProto.Ack other) {
         if (other == bitverify.network.proto.MessageProto.Ack.getDefaultInstance()) return this;
-        if (other.hasAddr()) {
-          mergeAddr(other.getAddr());
-        }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (hasAddr()) {
-          if (!getAddr().isInitialized()) {
-            return false;
-          }
-        }
         return true;
       }
 
@@ -2892,220 +3454,1398 @@ public final class MessageProto {
         }
         return this;
       }
-      private int bitField0_;
-
-      private bitverify.network.proto.MessageProto.NetAddress addr_ = null;
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> addrBuilder_;
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public boolean hasAddr() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress getAddr() {
-        if (addrBuilder_ == null) {
-          return addr_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : addr_;
-        } else {
-          return addrBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder setAddr(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (addrBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          addr_ = value;
-          onChanged();
-        } else {
-          addrBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder setAddr(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (addrBuilder_ == null) {
-          addr_ = builderForValue.build();
-          onChanged();
-        } else {
-          addrBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder mergeAddr(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (addrBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              addr_ != null &&
-              addr_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            addr_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(addr_).mergeFrom(value).buildPartial();
-          } else {
-            addr_ = value;
-          }
-          onChanged();
-        } else {
-          addrBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public Builder clearAddr() {
-        if (addrBuilder_ == null) {
-          addr_ = null;
-          onChanged();
-        } else {
-          addrBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getAddrBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getAddrFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getAddrOrBuilder() {
-        if (addrBuilder_ != null) {
-          return addrBuilder_.getMessageOrBuilder();
-        } else {
-          return addr_ == null ?
-              bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : addr_;
-        }
-      }
-      /**
-       * <code>optional .NetAddress addr = 1;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getAddrFieldBuilder() {
-        if (addrBuilder_ == null) {
-          addrBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getAddr(),
-                  getParentForChildren(),
-                  isClean());
-          addr_ = null;
-        }
-        return addrBuilder_;
-      }
 
       // @@protoc_insertion_point(builder_scope:Ack)
     }
 
-    // @@protoc_insertion_point(class_scope:Ack)
-    private static final bitverify.network.proto.MessageProto.Ack DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.Ack();
+      defaultInstance = new Ack(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.Ack getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Ack>
-        PARSER = new com.google.protobuf.AbstractParser<Ack>() {
-      public Ack parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new Ack(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<Ack> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Ack> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.Ack getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:Ack)
   }
 
-  public interface GetBlockOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:GetBlock)
+  public interface VersionAckOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:VersionAck)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required bytes currentBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    boolean hasCurrentBlock();
+    boolean hasListenPort();
     /**
-     * <code>required bytes currentBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>required int32 listenPort = 1;</code>
      */
-    com.google.protobuf.ByteString getCurrentBlock();
+    int getListenPort();
   }
   /**
-   * Protobuf type {@code GetBlock}
+   * Protobuf type {@code VersionAck}
    */
-  public  static final class GetBlock extends
+  public static final class VersionAck extends
       com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:GetBlock)
-      GetBlockOrBuilder {
-    // Use GetBlock.newBuilder() to construct.
-    private GetBlock(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      // @@protoc_insertion_point(message_implements:VersionAck)
+      VersionAckOrBuilder {
+    // Use VersionAck.newBuilder() to construct.
+    private VersionAck(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private GetBlock() {
-      currentBlock_ = com.google.protobuf.ByteString.EMPTY;
+    private VersionAck(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final VersionAck defaultInstance;
+    public static VersionAck getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public VersionAck getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
-    private GetBlock(
+    private VersionAck(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              listenPort_ = input.readInt32();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return bitverify.network.proto.MessageProto.internal_static_VersionAck_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              bitverify.network.proto.MessageProto.VersionAck.class, bitverify.network.proto.MessageProto.VersionAck.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<VersionAck> PARSER =
+        new com.google.protobuf.AbstractParser<VersionAck>() {
+      public VersionAck parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new VersionAck(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<VersionAck> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int LISTENPORT_FIELD_NUMBER = 1;
+    private int listenPort_;
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    public boolean hasListenPort() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required int32 listenPort = 1;</code>
+     */
+    public int getListenPort() {
+      return listenPort_;
+    }
+
+    private void initFields() {
+      listenPort_ = 0;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasListenPort()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeInt32(1, listenPort_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, listenPort_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.VersionAck parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.VersionAck prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code VersionAck}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:VersionAck)
+        bitverify.network.proto.MessageProto.VersionAckOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                bitverify.network.proto.MessageProto.VersionAck.class, bitverify.network.proto.MessageProto.VersionAck.Builder.class);
+      }
+
+      // Construct using bitverify.network.proto.MessageProto.VersionAck.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        listenPort_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return bitverify.network.proto.MessageProto.internal_static_VersionAck_descriptor;
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance();
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck build() {
+        bitverify.network.proto.MessageProto.VersionAck result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public bitverify.network.proto.MessageProto.VersionAck buildPartial() {
+        bitverify.network.proto.MessageProto.VersionAck result = new bitverify.network.proto.MessageProto.VersionAck(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.listenPort_ = listenPort_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof bitverify.network.proto.MessageProto.VersionAck) {
+          return mergeFrom((bitverify.network.proto.MessageProto.VersionAck)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.VersionAck other) {
+        if (other == bitverify.network.proto.MessageProto.VersionAck.getDefaultInstance()) return this;
+        if (other.hasListenPort()) {
+          setListenPort(other.getListenPort());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasListenPort()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        bitverify.network.proto.MessageProto.VersionAck parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (bitverify.network.proto.MessageProto.VersionAck) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private int listenPort_ ;
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public boolean hasListenPort() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public int getListenPort() {
+        return listenPort_;
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public Builder setListenPort(int value) {
+        bitField0_ |= 0x00000001;
+        listenPort_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required int32 listenPort = 1;</code>
+       */
+      public Builder clearListenPort() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        listenPort_ = 0;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:VersionAck)
+    }
+
+    static {
+      defaultInstance = new VersionAck(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:VersionAck)
+  }
+
+  public interface GetHeadersMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:GetHeadersMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getFromList();
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    int getFromCount();
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    com.google.protobuf.ByteString getFrom(int index);
+  }
+  /**
+   * Protobuf type {@code GetHeadersMessage}
+   */
+  public static final class GetHeadersMessage extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:GetHeadersMessage)
+      GetHeadersMessageOrBuilder {
+    // Use GetHeadersMessage.newBuilder() to construct.
+    private GetHeadersMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private GetHeadersMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final GetHeadersMessage defaultInstance;
+    public static GetHeadersMessage getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public GetHeadersMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private GetHeadersMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                from_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              from_.add(input.readBytes());
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = java.util.Collections.unmodifiableList(from_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return bitverify.network.proto.MessageProto.internal_static_GetHeadersMessage_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return bitverify.network.proto.MessageProto.internal_static_GetHeadersMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              bitverify.network.proto.MessageProto.GetHeadersMessage.class, bitverify.network.proto.MessageProto.GetHeadersMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<GetHeadersMessage> PARSER =
+        new com.google.protobuf.AbstractParser<GetHeadersMessage>() {
+      public GetHeadersMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GetHeadersMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetHeadersMessage> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int FROM_FIELD_NUMBER = 1;
+    private java.util.List<com.google.protobuf.ByteString> from_;
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getFromList() {
+      return from_;
+    }
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    public int getFromCount() {
+      return from_.size();
+    }
+    /**
+     * <code>repeated bytes from = 1;</code>
+     */
+    public com.google.protobuf.ByteString getFrom(int index) {
+      return from_.get(index);
+    }
+
+    private void initFields() {
+      from_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < from_.size(); i++) {
+        output.writeBytes(1, from_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < from_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(from_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getFromList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.GetHeadersMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.GetHeadersMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code GetHeadersMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:GetHeadersMessage)
+        bitverify.network.proto.MessageProto.GetHeadersMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return bitverify.network.proto.MessageProto.internal_static_GetHeadersMessage_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return bitverify.network.proto.MessageProto.internal_static_GetHeadersMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                bitverify.network.proto.MessageProto.GetHeadersMessage.class, bitverify.network.proto.MessageProto.GetHeadersMessage.Builder.class);
+      }
+
+      // Construct using bitverify.network.proto.MessageProto.GetHeadersMessage.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        from_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return bitverify.network.proto.MessageProto.internal_static_GetHeadersMessage_descriptor;
+      }
+
+      public bitverify.network.proto.MessageProto.GetHeadersMessage getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance();
+      }
+
+      public bitverify.network.proto.MessageProto.GetHeadersMessage build() {
+        bitverify.network.proto.MessageProto.GetHeadersMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public bitverify.network.proto.MessageProto.GetHeadersMessage buildPartial() {
+        bitverify.network.proto.MessageProto.GetHeadersMessage result = new bitverify.network.proto.MessageProto.GetHeadersMessage(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = java.util.Collections.unmodifiableList(from_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.from_ = from_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof bitverify.network.proto.MessageProto.GetHeadersMessage) {
+          return mergeFrom((bitverify.network.proto.MessageProto.GetHeadersMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.GetHeadersMessage other) {
+        if (other == bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance()) return this;
+        if (!other.from_.isEmpty()) {
+          if (from_.isEmpty()) {
+            from_ = other.from_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureFromIsMutable();
+            from_.addAll(other.from_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        bitverify.network.proto.MessageProto.GetHeadersMessage parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (bitverify.network.proto.MessageProto.GetHeadersMessage) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.google.protobuf.ByteString> from_ = java.util.Collections.emptyList();
+      private void ensureFromIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = new java.util.ArrayList<com.google.protobuf.ByteString>(from_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getFromList() {
+        return java.util.Collections.unmodifiableList(from_);
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public int getFromCount() {
+        return from_.size();
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public com.google.protobuf.ByteString getFrom(int index) {
+        return from_.get(index);
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder setFrom(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFromIsMutable();
+        from_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder addFrom(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFromIsMutable();
+        from_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder addAllFrom(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureFromIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, from_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder clearFrom() {
+        from_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:GetHeadersMessage)
+    }
+
+    static {
+      defaultInstance = new GetHeadersMessage(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:GetHeadersMessage)
+  }
+
+  public interface HeadersMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:HeadersMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getHeadersList();
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    int getHeadersCount();
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    com.google.protobuf.ByteString getHeaders(int index);
+  }
+  /**
+   * Protobuf type {@code HeadersMessage}
+   */
+  public static final class HeadersMessage extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:HeadersMessage)
+      HeadersMessageOrBuilder {
+    // Use HeadersMessage.newBuilder() to construct.
+    private HeadersMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private HeadersMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final HeadersMessage defaultInstance;
+    public static HeadersMessage getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public HeadersMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private HeadersMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                headers_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              headers_.add(input.readBytes());
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          headers_ = java.util.Collections.unmodifiableList(headers_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return bitverify.network.proto.MessageProto.internal_static_HeadersMessage_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return bitverify.network.proto.MessageProto.internal_static_HeadersMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              bitverify.network.proto.MessageProto.HeadersMessage.class, bitverify.network.proto.MessageProto.HeadersMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<HeadersMessage> PARSER =
+        new com.google.protobuf.AbstractParser<HeadersMessage>() {
+      public HeadersMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new HeadersMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<HeadersMessage> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int HEADERS_FIELD_NUMBER = 1;
+    private java.util.List<com.google.protobuf.ByteString> headers_;
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getHeadersList() {
+      return headers_;
+    }
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    public int getHeadersCount() {
+      return headers_.size();
+    }
+    /**
+     * <code>repeated bytes headers = 1;</code>
+     */
+    public com.google.protobuf.ByteString getHeaders(int index) {
+      return headers_.get(index);
+    }
+
+    private void initFields() {
+      headers_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < headers_.size(); i++) {
+        output.writeBytes(1, headers_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < headers_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(headers_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getHeadersList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.HeadersMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.HeadersMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code HeadersMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:HeadersMessage)
+        bitverify.network.proto.MessageProto.HeadersMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return bitverify.network.proto.MessageProto.internal_static_HeadersMessage_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return bitverify.network.proto.MessageProto.internal_static_HeadersMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                bitverify.network.proto.MessageProto.HeadersMessage.class, bitverify.network.proto.MessageProto.HeadersMessage.Builder.class);
+      }
+
+      // Construct using bitverify.network.proto.MessageProto.HeadersMessage.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        headers_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return bitverify.network.proto.MessageProto.internal_static_HeadersMessage_descriptor;
+      }
+
+      public bitverify.network.proto.MessageProto.HeadersMessage getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance();
+      }
+
+      public bitverify.network.proto.MessageProto.HeadersMessage build() {
+        bitverify.network.proto.MessageProto.HeadersMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public bitverify.network.proto.MessageProto.HeadersMessage buildPartial() {
+        bitverify.network.proto.MessageProto.HeadersMessage result = new bitverify.network.proto.MessageProto.HeadersMessage(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          headers_ = java.util.Collections.unmodifiableList(headers_);
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.headers_ = headers_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof bitverify.network.proto.MessageProto.HeadersMessage) {
+          return mergeFrom((bitverify.network.proto.MessageProto.HeadersMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.HeadersMessage other) {
+        if (other == bitverify.network.proto.MessageProto.HeadersMessage.getDefaultInstance()) return this;
+        if (!other.headers_.isEmpty()) {
+          if (headers_.isEmpty()) {
+            headers_ = other.headers_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureHeadersIsMutable();
+            headers_.addAll(other.headers_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        bitverify.network.proto.MessageProto.HeadersMessage parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (bitverify.network.proto.MessageProto.HeadersMessage) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.google.protobuf.ByteString> headers_ = java.util.Collections.emptyList();
+      private void ensureHeadersIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          headers_ = new java.util.ArrayList<com.google.protobuf.ByteString>(headers_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getHeadersList() {
+        return java.util.Collections.unmodifiableList(headers_);
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public int getHeadersCount() {
+        return headers_.size();
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public com.google.protobuf.ByteString getHeaders(int index) {
+        return headers_.get(index);
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public Builder setHeaders(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureHeadersIsMutable();
+        headers_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public Builder addHeaders(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureHeadersIsMutable();
+        headers_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public Builder addAllHeaders(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureHeadersIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, headers_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes headers = 1;</code>
+       */
+      public Builder clearHeaders() {
+        headers_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:HeadersMessage)
+    }
+
+    static {
+      defaultInstance = new HeadersMessage(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:HeadersMessage)
+  }
+
+  public interface GetBlockMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:GetBlockMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    boolean hasBlockID();
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    com.google.protobuf.ByteString getBlockID();
+  }
+  /**
+   * Protobuf type {@code GetBlockMessage}
+   */
+  public static final class GetBlockMessage extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:GetBlockMessage)
+      GetBlockMessageOrBuilder {
+    // Use GetBlockMessage.newBuilder() to construct.
+    private GetBlockMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private GetBlockMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final GetBlockMessage defaultInstance;
+    public static GetBlockMessage getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public GetBlockMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private GetBlockMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -3126,17 +4866,16 @@ public final class MessageProto {
             }
             case 10: {
               bitField0_ |= 0x00000001;
-              currentBlock_ = input.readBytes();
+              blockID_ = input.readBytes();
               break;
             }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -3144,49 +4883,57 @@ public final class MessageProto {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return bitverify.network.proto.MessageProto.internal_static_GetBlock_descriptor;
+      return bitverify.network.proto.MessageProto.internal_static_GetBlockMessage_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return bitverify.network.proto.MessageProto.internal_static_GetBlock_fieldAccessorTable
+      return bitverify.network.proto.MessageProto.internal_static_GetBlockMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              bitverify.network.proto.MessageProto.GetBlock.class, bitverify.network.proto.MessageProto.GetBlock.Builder.class);
+              bitverify.network.proto.MessageProto.GetBlockMessage.class, bitverify.network.proto.MessageProto.GetBlockMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<GetBlockMessage> PARSER =
+        new com.google.protobuf.AbstractParser<GetBlockMessage>() {
+      public GetBlockMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GetBlockMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetBlockMessage> getParserForType() {
+      return PARSER;
     }
 
     private int bitField0_;
-    public static final int CURRENTBLOCK_FIELD_NUMBER = 1;
-    private com.google.protobuf.ByteString currentBlock_;
+    public static final int BLOCKID_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString blockID_;
     /**
-     * <code>required bytes currentBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>required bytes blockID = 1;</code>
      */
-    public boolean hasCurrentBlock() {
+    public boolean hasBlockID() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>required bytes currentBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>required bytes blockID = 1;</code>
      */
-    public com.google.protobuf.ByteString getCurrentBlock() {
-      return currentBlock_;
+    public com.google.protobuf.ByteString getBlockID() {
+      return blockID_;
     }
 
+    private void initFields() {
+      blockID_ = com.google.protobuf.ByteString.EMPTY;
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasCurrentBlock()) {
+      if (!hasBlockID()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -3196,91 +4943,94 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, currentBlock_);
+        output.writeBytes(1, blockID_);
       }
-      unknownFields.writeTo(output);
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, currentBlock_);
+          .computeBytesSize(1, blockID_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(byte[] data)
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(java.io.InputStream input)
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseDelimitedFrom(java.io.InputStream input)
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseDelimitedFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static bitverify.network.proto.MessageProto.GetBlock parseFrom(
+    public static bitverify.network.proto.MessageProto.GetBlockMessage parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.GetBlockMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
     }
-    public static Builder newBuilder(bitverify.network.proto.MessageProto.GetBlock prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -3289,25 +5039,25 @@ public final class MessageProto {
       return builder;
     }
     /**
-     * Protobuf type {@code GetBlock}
+     * Protobuf type {@code GetBlockMessage}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:GetBlock)
-        bitverify.network.proto.MessageProto.GetBlockOrBuilder {
+        // @@protoc_insertion_point(builder_implements:GetBlockMessage)
+        bitverify.network.proto.MessageProto.GetBlockMessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return bitverify.network.proto.MessageProto.internal_static_GetBlock_descriptor;
+        return bitverify.network.proto.MessageProto.internal_static_GetBlockMessage_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return bitverify.network.proto.MessageProto.internal_static_GetBlock_fieldAccessorTable
+        return bitverify.network.proto.MessageProto.internal_static_GetBlockMessage_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                bitverify.network.proto.MessageProto.GetBlock.class, bitverify.network.proto.MessageProto.GetBlock.Builder.class);
+                bitverify.network.proto.MessageProto.GetBlockMessage.class, bitverify.network.proto.MessageProto.GetBlockMessage.Builder.class);
       }
 
-      // Construct using bitverify.network.proto.MessageProto.GetBlock.newBuilder()
+      // Construct using bitverify.network.proto.MessageProto.GetBlockMessage.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -3321,64 +5071,72 @@ public final class MessageProto {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
-        currentBlock_ = com.google.protobuf.ByteString.EMPTY;
+        blockID_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return bitverify.network.proto.MessageProto.internal_static_GetBlock_descriptor;
+        return bitverify.network.proto.MessageProto.internal_static_GetBlockMessage_descriptor;
       }
 
-      public bitverify.network.proto.MessageProto.GetBlock getDefaultInstanceForType() {
-        return bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance();
+      public bitverify.network.proto.MessageProto.GetBlockMessage getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance();
       }
 
-      public bitverify.network.proto.MessageProto.GetBlock build() {
-        bitverify.network.proto.MessageProto.GetBlock result = buildPartial();
+      public bitverify.network.proto.MessageProto.GetBlockMessage build() {
+        bitverify.network.proto.MessageProto.GetBlockMessage result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public bitverify.network.proto.MessageProto.GetBlock buildPartial() {
-        bitverify.network.proto.MessageProto.GetBlock result = new bitverify.network.proto.MessageProto.GetBlock(this);
+      public bitverify.network.proto.MessageProto.GetBlockMessage buildPartial() {
+        bitverify.network.proto.MessageProto.GetBlockMessage result = new bitverify.network.proto.MessageProto.GetBlockMessage(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.currentBlock_ = currentBlock_;
+        result.blockID_ = blockID_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof bitverify.network.proto.MessageProto.GetBlock) {
-          return mergeFrom((bitverify.network.proto.MessageProto.GetBlock)other);
+        if (other instanceof bitverify.network.proto.MessageProto.GetBlockMessage) {
+          return mergeFrom((bitverify.network.proto.MessageProto.GetBlockMessage)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(bitverify.network.proto.MessageProto.GetBlock other) {
-        if (other == bitverify.network.proto.MessageProto.GetBlock.getDefaultInstance()) return this;
-        if (other.hasCurrentBlock()) {
-          setCurrentBlock(other.getCurrentBlock());
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.GetBlockMessage other) {
+        if (other == bitverify.network.proto.MessageProto.GetBlockMessage.getDefaultInstance()) return this;
+        if (other.hasBlockID()) {
+          setBlockID(other.getBlockID());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasCurrentBlock()) {
+        if (!hasBlockID()) {
+          
           return false;
         }
         return true;
@@ -3388,11 +5146,11 @@ public final class MessageProto {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        bitverify.network.proto.MessageProto.GetBlock parsedMessage = null;
+        bitverify.network.proto.MessageProto.GetBlockMessage parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (bitverify.network.proto.MessageProto.GetBlock) e.getUnfinishedMessage();
+          parsedMessage = (bitverify.network.proto.MessageProto.GetBlockMessage) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -3403,106 +5161,50 @@ public final class MessageProto {
       }
       private int bitField0_;
 
-      private com.google.protobuf.ByteString currentBlock_ = com.google.protobuf.ByteString.EMPTY;
+      private com.google.protobuf.ByteString blockID_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>required bytes currentBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>required bytes blockID = 1;</code>
        */
-      public boolean hasCurrentBlock() {
+      public boolean hasBlockID() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>required bytes currentBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>required bytes blockID = 1;</code>
        */
-      public com.google.protobuf.ByteString getCurrentBlock() {
-        return currentBlock_;
+      public com.google.protobuf.ByteString getBlockID() {
+        return blockID_;
       }
       /**
-       * <code>required bytes currentBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>required bytes blockID = 1;</code>
        */
-      public Builder setCurrentBlock(com.google.protobuf.ByteString value) {
+      public Builder setBlockID(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000001;
-        currentBlock_ = value;
+        blockID_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>required bytes currentBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>required bytes blockID = 1;</code>
        */
-      public Builder clearCurrentBlock() {
+      public Builder clearBlockID() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        currentBlock_ = getDefaultInstance().getCurrentBlock();
+        blockID_ = getDefaultInstance().getBlockID();
         onChanged();
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:GetBlock)
+      // @@protoc_insertion_point(builder_scope:GetBlockMessage)
     }
 
-    // @@protoc_insertion_point(class_scope:GetBlock)
-    private static final bitverify.network.proto.MessageProto.GetBlock DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.GetBlock();
+      defaultInstance = new GetBlockMessage(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.GetBlock getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<GetBlock>
-        PARSER = new com.google.protobuf.AbstractParser<GetBlock>() {
-      public GetBlock parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new GetBlock(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<GetBlock> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<GetBlock> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.GetBlock getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:GetBlockMessage)
   }
 
   public interface BlockMessageOrBuilder extends
@@ -3517,31 +5219,54 @@ public final class MessageProto {
      * <code>required bytes blockBytes = 1;</code>
      */
     com.google.protobuf.ByteString getBlockBytes();
+
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    java.util.List<com.google.protobuf.ByteString> getEntriesList();
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    int getEntriesCount();
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    com.google.protobuf.ByteString getEntries(int index);
   }
   /**
    * Protobuf type {@code BlockMessage}
    */
-  public  static final class BlockMessage extends
+  public static final class BlockMessage extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:BlockMessage)
       BlockMessageOrBuilder {
     // Use BlockMessage.newBuilder() to construct.
     private BlockMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private BlockMessage() {
-      blockBytes_ = com.google.protobuf.ByteString.EMPTY;
+    private BlockMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final BlockMessage defaultInstance;
+    public static BlockMessage getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public BlockMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private BlockMessage(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -3565,15 +5290,25 @@ public final class MessageProto {
               blockBytes_ = input.readBytes();
               break;
             }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              entries_.add(input.readBytes());
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = java.util.Collections.unmodifiableList(entries_);
+        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -3588,6 +5323,21 @@ public final class MessageProto {
       return bitverify.network.proto.MessageProto.internal_static_BlockMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               bitverify.network.proto.MessageProto.BlockMessage.class, bitverify.network.proto.MessageProto.BlockMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<BlockMessage> PARSER =
+        new com.google.protobuf.AbstractParser<BlockMessage>() {
+      public BlockMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new BlockMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<BlockMessage> getParserForType() {
+      return PARSER;
     }
 
     private int bitField0_;
@@ -3606,6 +5356,32 @@ public final class MessageProto {
       return blockBytes_;
     }
 
+    public static final int ENTRIES_FIELD_NUMBER = 2;
+    private java.util.List<com.google.protobuf.ByteString> entries_;
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public java.util.List<com.google.protobuf.ByteString>
+        getEntriesList() {
+      return entries_;
+    }
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public int getEntriesCount() {
+      return entries_.size();
+    }
+    /**
+     * <code>repeated bytes entries = 2;</code>
+     */
+    public com.google.protobuf.ByteString getEntries(int index) {
+      return entries_.get(index);
+    }
+
+    private void initFields() {
+      blockBytes_ = com.google.protobuf.ByteString.EMPTY;
+      entries_ = java.util.Collections.emptyList();
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -3622,14 +5398,19 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, blockBytes_);
       }
-      unknownFields.writeTo(output);
+      for (int i = 0; i < entries_.size(); i++) {
+        output.writeBytes(2, entries_.get(i));
+      }
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -3637,12 +5418,27 @@ public final class MessageProto {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, blockBytes_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < entries_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(entries_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getEntriesList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.BlockMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -3696,17 +5492,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.BlockMessage prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -3747,11 +5538,21 @@ public final class MessageProto {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
         blockBytes_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
+        entries_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -3779,6 +5580,11 @@ public final class MessageProto {
           to_bitField0_ |= 0x00000001;
         }
         result.blockBytes_ = blockBytes_;
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = java.util.Collections.unmodifiableList(entries_);
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.entries_ = entries_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -3798,13 +5604,23 @@ public final class MessageProto {
         if (other.hasBlockBytes()) {
           setBlockBytes(other.getBlockBytes());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        if (!other.entries_.isEmpty()) {
+          if (entries_.isEmpty()) {
+            entries_ = other.entries_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureEntriesIsMutable();
+            entries_.addAll(other.entries_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasBlockBytes()) {
+          
           return false;
         }
         return true;
@@ -3864,51 +5680,495 @@ public final class MessageProto {
         return this;
       }
 
+      private java.util.List<com.google.protobuf.ByteString> entries_ = java.util.Collections.emptyList();
+      private void ensureEntriesIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>(entries_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public java.util.List<com.google.protobuf.ByteString>
+          getEntriesList() {
+        return java.util.Collections.unmodifiableList(entries_);
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public int getEntriesCount() {
+        return entries_.size();
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public com.google.protobuf.ByteString getEntries(int index) {
+        return entries_.get(index);
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder setEntries(
+          int index, com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureEntriesIsMutable();
+        entries_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder addEntries(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureEntriesIsMutable();
+        entries_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder addAllEntries(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureEntriesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, entries_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes entries = 2;</code>
+       */
+      public Builder clearEntries() {
+        entries_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:BlockMessage)
     }
 
-    // @@protoc_insertion_point(class_scope:BlockMessage)
-    private static final bitverify.network.proto.MessageProto.BlockMessage DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.BlockMessage();
+      defaultInstance = new BlockMessage(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.BlockMessage getDefaultInstance() {
-      return DEFAULT_INSTANCE;
+    // @@protoc_insertion_point(class_scope:BlockMessage)
+  }
+
+  public interface BlockNotFoundMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:BlockNotFoundMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    boolean hasBlockID();
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    com.google.protobuf.ByteString getBlockID();
+  }
+  /**
+   * Protobuf type {@code BlockNotFoundMessage}
+   */
+  public static final class BlockNotFoundMessage extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:BlockNotFoundMessage)
+      BlockNotFoundMessageOrBuilder {
+    // Use BlockNotFoundMessage.newBuilder() to construct.
+    private BlockNotFoundMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private BlockNotFoundMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final BlockNotFoundMessage defaultInstance;
+    public static BlockNotFoundMessage getDefaultInstance() {
+      return defaultInstance;
     }
 
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<BlockMessage>
-        PARSER = new com.google.protobuf.AbstractParser<BlockMessage>() {
-      public BlockMessage parsePartialFrom(
+    public BlockNotFoundMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private BlockNotFoundMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              blockID_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return bitverify.network.proto.MessageProto.internal_static_BlockNotFoundMessage_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return bitverify.network.proto.MessageProto.internal_static_BlockNotFoundMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              bitverify.network.proto.MessageProto.BlockNotFoundMessage.class, bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<BlockNotFoundMessage> PARSER =
+        new com.google.protobuf.AbstractParser<BlockNotFoundMessage>() {
+      public BlockNotFoundMessage parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new BlockMessage(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
+        return new BlockNotFoundMessage(input, extensionRegistry);
       }
     };
 
-    public static com.google.protobuf.Parser<BlockMessage> parser() {
+    @java.lang.Override
+    public com.google.protobuf.Parser<BlockNotFoundMessage> getParserForType() {
       return PARSER;
     }
+
+    private int bitField0_;
+    public static final int BLOCKID_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString blockID_;
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    public boolean hasBlockID() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required bytes blockID = 1;</code>
+     */
+    public com.google.protobuf.ByteString getBlockID() {
+      return blockID_;
+    }
+
+    private void initFields() {
+      blockID_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasBlockID()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, blockID_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, blockID_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static bitverify.network.proto.MessageProto.BlockNotFoundMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(bitverify.network.proto.MessageProto.BlockNotFoundMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
-    public com.google.protobuf.Parser<BlockMessage> getParserForType() {
-      return PARSER;
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code BlockNotFoundMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:BlockNotFoundMessage)
+        bitverify.network.proto.MessageProto.BlockNotFoundMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return bitverify.network.proto.MessageProto.internal_static_BlockNotFoundMessage_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return bitverify.network.proto.MessageProto.internal_static_BlockNotFoundMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                bitverify.network.proto.MessageProto.BlockNotFoundMessage.class, bitverify.network.proto.MessageProto.BlockNotFoundMessage.Builder.class);
+      }
+
+      // Construct using bitverify.network.proto.MessageProto.BlockNotFoundMessage.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        blockID_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return bitverify.network.proto.MessageProto.internal_static_BlockNotFoundMessage_descriptor;
+      }
+
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessage getDefaultInstanceForType() {
+        return bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance();
+      }
+
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessage build() {
+        bitverify.network.proto.MessageProto.BlockNotFoundMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public bitverify.network.proto.MessageProto.BlockNotFoundMessage buildPartial() {
+        bitverify.network.proto.MessageProto.BlockNotFoundMessage result = new bitverify.network.proto.MessageProto.BlockNotFoundMessage(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.blockID_ = blockID_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof bitverify.network.proto.MessageProto.BlockNotFoundMessage) {
+          return mergeFrom((bitverify.network.proto.MessageProto.BlockNotFoundMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(bitverify.network.proto.MessageProto.BlockNotFoundMessage other) {
+        if (other == bitverify.network.proto.MessageProto.BlockNotFoundMessage.getDefaultInstance()) return this;
+        if (other.hasBlockID()) {
+          setBlockID(other.getBlockID());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasBlockID()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        bitverify.network.proto.MessageProto.BlockNotFoundMessage parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (bitverify.network.proto.MessageProto.BlockNotFoundMessage) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString blockID_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>required bytes blockID = 1;</code>
+       */
+      public boolean hasBlockID() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required bytes blockID = 1;</code>
+       */
+      public com.google.protobuf.ByteString getBlockID() {
+        return blockID_;
+      }
+      /**
+       * <code>required bytes blockID = 1;</code>
+       */
+      public Builder setBlockID(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        blockID_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required bytes blockID = 1;</code>
+       */
+      public Builder clearBlockID() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        blockID_ = getDefaultInstance().getBlockID();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:BlockNotFoundMessage)
     }
 
-    public bitverify.network.proto.MessageProto.BlockMessage getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
+    static {
+      defaultInstance = new BlockNotFoundMessage(true);
+      defaultInstance.initFields();
     }
 
+    // @@protoc_insertion_point(class_scope:BlockNotFoundMessage)
   }
 
   public interface EntryMessageOrBuilder extends
@@ -3927,27 +6187,37 @@ public final class MessageProto {
   /**
    * Protobuf type {@code EntryMessage}
    */
-  public  static final class EntryMessage extends
+  public static final class EntryMessage extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:EntryMessage)
       EntryMessageOrBuilder {
     // Use EntryMessage.newBuilder() to construct.
     private EntryMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private EntryMessage() {
-      entryBytes_ = com.google.protobuf.ByteString.EMPTY;
+    private EntryMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final EntryMessage defaultInstance;
+    public static EntryMessage getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public EntryMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private EntryMessage(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -3974,11 +6244,10 @@ public final class MessageProto {
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -3994,6 +6263,21 @@ public final class MessageProto {
       return bitverify.network.proto.MessageProto.internal_static_EntryMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               bitverify.network.proto.MessageProto.EntryMessage.class, bitverify.network.proto.MessageProto.EntryMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<EntryMessage> PARSER =
+        new com.google.protobuf.AbstractParser<EntryMessage>() {
+      public EntryMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new EntryMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<EntryMessage> getParserForType() {
+      return PARSER;
     }
 
     private int bitField0_;
@@ -4012,6 +6296,9 @@ public final class MessageProto {
       return entryBytes_;
     }
 
+    private void initFields() {
+      entryBytes_ = com.google.protobuf.ByteString.EMPTY;
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -4028,14 +6315,16 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, entryBytes_);
       }
-      unknownFields.writeTo(output);
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -4043,12 +6332,18 @@ public final class MessageProto {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, entryBytes_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.EntryMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4102,17 +6397,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.EntryMessage prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -4153,11 +6443,19 @@ public final class MessageProto {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
         entryBytes_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -4204,13 +6502,13 @@ public final class MessageProto {
         if (other.hasEntryBytes()) {
           setEntryBytes(other.getEntryBytes());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasEntryBytes()) {
+          
           return false;
         }
         return true;
@@ -4273,48 +6571,12 @@ public final class MessageProto {
       // @@protoc_insertion_point(builder_scope:EntryMessage)
     }
 
-    // @@protoc_insertion_point(class_scope:EntryMessage)
-    private static final bitverify.network.proto.MessageProto.EntryMessage DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.EntryMessage();
+      defaultInstance = new EntryMessage(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.EntryMessage getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<EntryMessage>
-        PARSER = new com.google.protobuf.AbstractParser<EntryMessage>() {
-      public EntryMessage parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new EntryMessage(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<EntryMessage> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<EntryMessage> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.EntryMessage getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:EntryMessage)
   }
 
   public interface PeersOrBuilder extends
@@ -4348,27 +6610,37 @@ public final class MessageProto {
   /**
    * Protobuf type {@code Peers}
    */
-  public  static final class Peers extends
+  public static final class Peers extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:Peers)
       PeersOrBuilder {
     // Use Peers.newBuilder() to construct.
     private Peers(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private Peers() {
-      address_ = java.util.Collections.emptyList();
+    private Peers(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final Peers defaultInstance;
+    public static Peers getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public Peers getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private Peers(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -4392,17 +6664,16 @@ public final class MessageProto {
                 address_ = new java.util.ArrayList<bitverify.network.proto.MessageProto.NetAddress>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              address_.add(input.readMessage(bitverify.network.proto.MessageProto.NetAddress.parser(), extensionRegistry));
+              address_.add(input.readMessage(bitverify.network.proto.MessageProto.NetAddress.PARSER, extensionRegistry));
               break;
             }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           address_ = java.util.Collections.unmodifiableList(address_);
@@ -4421,6 +6692,21 @@ public final class MessageProto {
       return bitverify.network.proto.MessageProto.internal_static_Peers_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               bitverify.network.proto.MessageProto.Peers.class, bitverify.network.proto.MessageProto.Peers.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<Peers> PARSER =
+        new com.google.protobuf.AbstractParser<Peers>() {
+      public Peers parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Peers(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Peers> getParserForType() {
+      return PARSER;
     }
 
     public static final int ADDRESS_FIELD_NUMBER = 1;
@@ -4458,6 +6744,9 @@ public final class MessageProto {
       return address_.get(index);
     }
 
+    private void initFields() {
+      address_ = java.util.Collections.emptyList();
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -4476,14 +6765,16 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       for (int i = 0; i < address_.size(); i++) {
         output.writeMessage(1, address_.get(i));
       }
-      unknownFields.writeTo(output);
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -4491,12 +6782,18 @@ public final class MessageProto {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, address_.get(i));
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.Peers parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4550,17 +6847,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.Peers prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -4602,6 +6894,10 @@ public final class MessageProto {
           getAddressFieldBuilder();
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
         if (addressBuilder_ == null) {
@@ -4611,6 +6907,10 @@ public final class MessageProto {
           addressBuilder_.clear();
         }
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -4683,14 +6983,14 @@ public final class MessageProto {
             }
           }
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         for (int i = 0; i < getAddressCount(); i++) {
           if (!getAddress(i).isInitialized()) {
+            
             return false;
           }
         }
@@ -4959,48 +7259,12 @@ public final class MessageProto {
       // @@protoc_insertion_point(builder_scope:Peers)
     }
 
-    // @@protoc_insertion_point(class_scope:Peers)
-    private static final bitverify.network.proto.MessageProto.Peers DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.Peers();
+      defaultInstance = new Peers(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.Peers getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<Peers>
-        PARSER = new com.google.protobuf.AbstractParser<Peers>() {
-      public Peers parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new Peers(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<Peers> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Peers> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.Peers getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:Peers)
   }
 
   public interface NetAddressOrBuilder extends
@@ -5037,28 +7301,37 @@ public final class MessageProto {
    * encodes serialisation of the addresses.
    * </pre>
    */
-  public  static final class NetAddress extends
+  public static final class NetAddress extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:NetAddress)
       NetAddressOrBuilder {
     // Use NetAddress.newBuilder() to construct.
     private NetAddress(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private NetAddress() {
-      hostName_ = "";
-      port_ = 0;
+    private NetAddress(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final NetAddress defaultInstance;
+    public static NetAddress getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public NetAddress getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private NetAddress(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -5091,11 +7364,10 @@ public final class MessageProto {
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -5113,9 +7385,24 @@ public final class MessageProto {
               bitverify.network.proto.MessageProto.NetAddress.class, bitverify.network.proto.MessageProto.NetAddress.Builder.class);
     }
 
+    public static com.google.protobuf.Parser<NetAddress> PARSER =
+        new com.google.protobuf.AbstractParser<NetAddress>() {
+      public NetAddress parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new NetAddress(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<NetAddress> getParserForType() {
+      return PARSER;
+    }
+
     private int bitField0_;
     public static final int HOSTNAME_FIELD_NUMBER = 1;
-    private volatile java.lang.Object hostName_;
+    private java.lang.Object hostName_;
     /**
      * <code>required string hostName = 1;</code>
      */
@@ -5171,6 +7458,10 @@ public final class MessageProto {
       return port_;
     }
 
+    private void initFields() {
+      hostName_ = "";
+      port_ = 0;
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -5191,33 +7482,42 @@ public final class MessageProto {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        com.google.protobuf.GeneratedMessage.writeString(output, 1, hostName_);
+        output.writeBytes(1, getHostNameBytes());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeInt32(2, port_);
       }
-      unknownFields.writeTo(output);
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.GeneratedMessage.computeStringSize(1, hostName_);
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, getHostNameBytes());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(2, port_);
       }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.NetAddress parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5271,17 +7571,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.NetAddress prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -5326,6 +7621,10 @@ public final class MessageProto {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
         hostName_ = "";
@@ -5333,6 +7632,10 @@ public final class MessageProto {
         port_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -5388,16 +7691,17 @@ public final class MessageProto {
         if (other.hasPort()) {
           setPort(other.getPort());
         }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasHostName()) {
+          
           return false;
         }
         if (!hasPort()) {
+          
           return false;
         }
         return true;
@@ -5533,103 +7837,52 @@ public final class MessageProto {
       // @@protoc_insertion_point(builder_scope:NetAddress)
     }
 
-    // @@protoc_insertion_point(class_scope:NetAddress)
-    private static final bitverify.network.proto.MessageProto.NetAddress DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.NetAddress();
+      defaultInstance = new NetAddress(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.NetAddress getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<NetAddress>
-        PARSER = new com.google.protobuf.AbstractParser<NetAddress>() {
-      public NetAddress parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new NetAddress(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<NetAddress> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<NetAddress> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.NetAddress getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:NetAddress)
   }
 
   public interface GetPeersOrBuilder extends
       // @@protoc_insertion_point(interface_extends:GetPeers)
       com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    boolean hasMyAddress();
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddress getMyAddress();
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder();
   }
   /**
    * Protobuf type {@code GetPeers}
    */
-  public  static final class GetPeers extends
+  public static final class GetPeers extends
       com.google.protobuf.GeneratedMessage implements
       // @@protoc_insertion_point(message_implements:GetPeers)
       GetPeersOrBuilder {
     // Use GetPeers.newBuilder() to construct.
     private GetPeers(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
+      this.unknownFields = builder.getUnknownFields();
     }
-    private GetPeers() {
+    private GetPeers(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final GetPeers defaultInstance;
+    public static GetPeers getDefaultInstance() {
+      return defaultInstance;
     }
 
+    public GetPeers getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
+        getUnknownFields() {
       return this.unknownFields;
     }
     private GetPeers(
         com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry) {
-      this();
-      int mutable_bitField0_ = 0;
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -5647,27 +7900,13 @@ public final class MessageProto {
               }
               break;
             }
-            case 10: {
-              bitverify.network.proto.MessageProto.NetAddress.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = myAddress_.toBuilder();
-              }
-              myAddress_ = input.readMessage(bitverify.network.proto.MessageProto.NetAddress.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(myAddress_);
-                myAddress_ = subBuilder.buildPartial();
-              }
-              bitField0_ |= 0x00000001;
-              break;
-            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw new RuntimeException(e.setUnfinishedMessage(this));
+        throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
-        throw new RuntimeException(
-            new com.google.protobuf.InvalidProtocolBufferException(
-                e.getMessage()).setUnfinishedMessage(this));
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -5685,81 +7924,57 @@ public final class MessageProto {
               bitverify.network.proto.MessageProto.GetPeers.class, bitverify.network.proto.MessageProto.GetPeers.Builder.class);
     }
 
-    private int bitField0_;
-    public static final int MYADDRESS_FIELD_NUMBER = 1;
-    private bitverify.network.proto.MessageProto.NetAddress myAddress_;
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public boolean hasMyAddress() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
-      return myAddress_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : myAddress_;
-    }
-    /**
-     * <code>required .NetAddress myAddress = 1;</code>
-     *
-     * <pre>
-     * include own address
-     * </pre>
-     */
-    public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
-      return myAddress_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : myAddress_;
+    public static com.google.protobuf.Parser<GetPeers> PARSER =
+        new com.google.protobuf.AbstractParser<GetPeers>() {
+      public GetPeers parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GetPeers(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GetPeers> getParserForType() {
+      return PARSER;
     }
 
+    private void initFields() {
+    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasMyAddress()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getMyAddress().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, getMyAddress());
-      }
-      unknownFields.writeTo(output);
+      getSerializedSize();
+      getUnknownFields().writeTo(output);
     }
 
+    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSize;
+      int size = memoizedSerializedSize;
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getMyAddress());
-      }
-      size += unknownFields.getSerializedSize();
-      memoizedSize = size;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
     public static bitverify.network.proto.MessageProto.GetPeers parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -5813,17 +8028,12 @@ public final class MessageProto {
       return PARSER.parseFrom(input, extensionRegistry);
     }
 
+    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
     public static Builder newBuilder(bitverify.network.proto.MessageProto.GetPeers prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      return newBuilder().mergeFrom(prototype);
     }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
+    public Builder toBuilder() { return newBuilder(this); }
 
     @java.lang.Override
     protected Builder newBuilderForType(
@@ -5862,18 +8072,19 @@ public final class MessageProto {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getMyAddressFieldBuilder();
         }
       }
+      private static Builder create() {
+        return new Builder();
+      }
+
       public Builder clear() {
         super.clear();
-        if (myAddressBuilder_ == null) {
-          myAddress_ = null;
-        } else {
-          myAddressBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -5895,17 +8106,6 @@ public final class MessageProto {
 
       public bitverify.network.proto.MessageProto.GetPeers buildPartial() {
         bitverify.network.proto.MessageProto.GetPeers result = new bitverify.network.proto.MessageProto.GetPeers(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (myAddressBuilder_ == null) {
-          result.myAddress_ = myAddress_;
-        } else {
-          result.myAddress_ = myAddressBuilder_.build();
-        }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -5921,21 +8121,11 @@ public final class MessageProto {
 
       public Builder mergeFrom(bitverify.network.proto.MessageProto.GetPeers other) {
         if (other == bitverify.network.proto.MessageProto.GetPeers.getDefaultInstance()) return this;
-        if (other.hasMyAddress()) {
-          mergeMyAddress(other.getMyAddress());
-        }
-        this.mergeUnknownFields(other.unknownFields);
-        onChanged();
+        this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasMyAddress()) {
-          return false;
-        }
-        if (!getMyAddress().isInitialized()) {
-          return false;
-        }
         return true;
       }
 
@@ -5956,250 +8146,79 @@ public final class MessageProto {
         }
         return this;
       }
-      private int bitField0_;
-
-      private bitverify.network.proto.MessageProto.NetAddress myAddress_ = null;
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> myAddressBuilder_;
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public boolean hasMyAddress() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress getMyAddress() {
-        if (myAddressBuilder_ == null) {
-          return myAddress_ == null ? bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : myAddress_;
-        } else {
-          return myAddressBuilder_.getMessage();
-        }
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder setMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (myAddressBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          myAddress_ = value;
-          onChanged();
-        } else {
-          myAddressBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder setMyAddress(
-          bitverify.network.proto.MessageProto.NetAddress.Builder builderForValue) {
-        if (myAddressBuilder_ == null) {
-          myAddress_ = builderForValue.build();
-          onChanged();
-        } else {
-          myAddressBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder mergeMyAddress(bitverify.network.proto.MessageProto.NetAddress value) {
-        if (myAddressBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              myAddress_ != null &&
-              myAddress_ != bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance()) {
-            myAddress_ =
-              bitverify.network.proto.MessageProto.NetAddress.newBuilder(myAddress_).mergeFrom(value).buildPartial();
-          } else {
-            myAddress_ = value;
-          }
-          onChanged();
-        } else {
-          myAddressBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000001;
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public Builder clearMyAddress() {
-        if (myAddressBuilder_ == null) {
-          myAddress_ = null;
-          onChanged();
-        } else {
-          myAddressBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddress.Builder getMyAddressBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getMyAddressFieldBuilder().getBuilder();
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      public bitverify.network.proto.MessageProto.NetAddressOrBuilder getMyAddressOrBuilder() {
-        if (myAddressBuilder_ != null) {
-          return myAddressBuilder_.getMessageOrBuilder();
-        } else {
-          return myAddress_ == null ?
-              bitverify.network.proto.MessageProto.NetAddress.getDefaultInstance() : myAddress_;
-        }
-      }
-      /**
-       * <code>required .NetAddress myAddress = 1;</code>
-       *
-       * <pre>
-       * include own address
-       * </pre>
-       */
-      private com.google.protobuf.SingleFieldBuilder<
-          bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder> 
-          getMyAddressFieldBuilder() {
-        if (myAddressBuilder_ == null) {
-          myAddressBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              bitverify.network.proto.MessageProto.NetAddress, bitverify.network.proto.MessageProto.NetAddress.Builder, bitverify.network.proto.MessageProto.NetAddressOrBuilder>(
-                  getMyAddress(),
-                  getParentForChildren(),
-                  isClean());
-          myAddress_ = null;
-        }
-        return myAddressBuilder_;
-      }
 
       // @@protoc_insertion_point(builder_scope:GetPeers)
     }
 
-    // @@protoc_insertion_point(class_scope:GetPeers)
-    private static final bitverify.network.proto.MessageProto.GetPeers DEFAULT_INSTANCE;
     static {
-      DEFAULT_INSTANCE = new bitverify.network.proto.MessageProto.GetPeers();
+      defaultInstance = new GetPeers(true);
+      defaultInstance.initFields();
     }
 
-    public static bitverify.network.proto.MessageProto.GetPeers getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    @java.lang.Deprecated public static final com.google.protobuf.Parser<GetPeers>
-        PARSER = new com.google.protobuf.AbstractParser<GetPeers>() {
-      public GetPeers parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        try {
-          return new GetPeers(input, extensionRegistry);
-        } catch (RuntimeException e) {
-          if (e.getCause() instanceof
-              com.google.protobuf.InvalidProtocolBufferException) {
-            throw (com.google.protobuf.InvalidProtocolBufferException)
-                e.getCause();
-          }
-          throw e;
-        }
-      }
-    };
-
-    public static com.google.protobuf.Parser<GetPeers> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<GetPeers> getParserForType() {
-      return PARSER;
-    }
-
-    public bitverify.network.proto.MessageProto.GetPeers getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
+    // @@protoc_insertion_point(class_scope:GetPeers)
   }
 
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Message_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Message_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Version_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Version_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Ack_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Ack_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_GetBlock_descriptor;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_VersionAck_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_GetBlock_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+      internal_static_VersionAck_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_GetHeadersMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_GetHeadersMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_HeadersMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_HeadersMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_GetBlockMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_GetBlockMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_BlockMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_BlockMessage_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_BlockNotFoundMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_BlockNotFoundMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_EntryMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_EntryMessage_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_Peers_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_Peers_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_NetAddress_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_NetAddress_fieldAccessorTable;
-  private static com.google.protobuf.Descriptors.Descriptor
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_GetPeers_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -6213,24 +8232,32 @@ public final class MessageProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\rMessage.proto\"\274\002\n\007Message\022\033\n\004type\030\001 \002(" +
-      "\0162\r.Message.Type\022\033\n\010getBlock\030\002 \001(\0132\t.Get" +
-      "Block\022\034\n\005block\030\003 \001(\0132\r.BlockMessage\022\034\n\005e" +
-      "ntry\030\004 \001(\0132\r.EntryMessage\022\025\n\005peers\030\005 \001(\013" +
-      "2\006.Peers\022\033\n\010getPeers\030\006 \001(\0132\t.GetPeers\022\031\n" +
-      "\007version\030\007 \001(\0132\010.Version\022\021\n\003ack\030\010 \001(\0132\004." +
-      "Ack\"Y\n\004Type\022\014\n\010GETBLOCK\020\001\022\t\n\005BLOCK\020\002\022\t\n\005" +
+      "\n\rMessage.proto\"\242\004\n\007Message\022\033\n\004type\030\001 \002(" +
+      "\0162\r.Message.Type\022 \n\007headers\030\002 \001(\0132\017.Head" +
+      "ersMessage\022\034\n\005block\030\003 \001(\0132\r.BlockMessage" +
+      "\022\034\n\005entry\030\004 \001(\0132\r.EntryMessage\022\025\n\005peers\030" +
+      "\005 \001(\0132\006.Peers\022\033\n\010getPeers\030\006 \001(\0132\t.GetPee" +
+      "rs\022\031\n\007version\030\007 \001(\0132\010.Version\022\021\n\003ack\030\010 \001" +
+      "(\0132\004.Ack\022&\n\ngetHeaders\030\t \001(\0132\022.GetHeader" +
+      "sMessage\022\"\n\010getBlock\030\n \001(\0132\020.GetBlockMes" +
+      "sage\022\037\n\nversionAck\030\013 \001(\0132\013.VersionAck\022,\n" +
+      "\rblockNotFound\030\014 \001(\0132\025.BlockNotFoundMess",
+      "age\"\236\001\n\004Type\022\013\n\007HEADERS\020\001\022\t\n\005BLOCK\020\002\022\t\n\005" +
       "ENTRY\020\003\022\t\n\005PEERS\020\004\022\014\n\010GETPEERS\020\005\022\013\n\007VERS" +
-      "ION\020\006\022\007\n\003ACK\020\007\"*\n\007Version\022\037\n\nlistenPort\030" +
-      "\001 \002(\0132\013.NetAddress\" \n\003Ack\022\031\n\004addr\030\001 \001(\0132",
-      "\013.NetAddress\" \n\010GetBlock\022\024\n\014currentBlock" +
-      "\030\001 \002(\014\"\"\n\014BlockMessage\022\022\n\nblockBytes\030\001 \002" +
-      "(\014\"\"\n\014EntryMessage\022\022\n\nentryBytes\030\001 \002(\014\"%" +
-      "\n\005Peers\022\034\n\007address\030\001 \003(\0132\013.NetAddress\",\n" +
-      "\nNetAddress\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 " +
-      "\002(\005\"*\n\010GetPeers\022\036\n\tmyAddress\030\001 \002(\0132\013.Net" +
-      "AddressB\'\n\027bitverify.network.protoB\014Mess" +
-      "ageProto"
+      "ION\020\006\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\022\r\n\tGET_B" +
+      "LOCK\020\t\022\017\n\013VERSION_ACK\020\n\022\023\n\017BLOCK_NOT_FOU" +
+      "ND\020\013\"\035\n\007Version\022\022\n\nlistenPort\030\001 \002(\005\"\005\n\003A" +
+      "ck\" \n\nVersionAck\022\022\n\nlistenPort\030\001 \002(\005\"!\n\021" +
+      "GetHeadersMessage\022\014\n\004from\030\001 \003(\014\"!\n\016Heade" +
+      "rsMessage\022\017\n\007headers\030\001 \003(\014\"\"\n\017GetBlockMe" +
+      "ssage\022\017\n\007blockID\030\001 \002(\014\"3\n\014BlockMessage\022\022" +
+      "\n\nblockBytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\'\n\024B",
+      "lockNotFoundMessage\022\017\n\007blockID\030\001 \002(\014\"\"\n\014" +
+      "EntryMessage\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peer" +
+      "s\022\034\n\007address\030\001 \003(\0132\013.NetAddress\",\n\nNetAd" +
+      "dress\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"\n\n" +
+      "\010GetPeersB\'\n\027bitverify.network.protoB\014Me" +
+      "ssageProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -6249,7 +8276,7 @@ public final class MessageProto {
     internal_static_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Message_descriptor,
-        new java.lang.String[] { "Type", "GetBlock", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", });
+        new java.lang.String[] { "Type", "Headers", "Block", "Entry", "Peers", "GetPeers", "Version", "Ack", "GetHeaders", "GetBlock", "VersionAck", "BlockNotFound", });
     internal_static_Version_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_Version_fieldAccessorTable = new
@@ -6261,43 +8288,67 @@ public final class MessageProto {
     internal_static_Ack_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Ack_descriptor,
-        new java.lang.String[] { "Addr", });
-    internal_static_GetBlock_descriptor =
+        new java.lang.String[] { });
+    internal_static_VersionAck_descriptor =
       getDescriptor().getMessageTypes().get(3);
-    internal_static_GetBlock_fieldAccessorTable = new
+    internal_static_VersionAck_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_GetBlock_descriptor,
-        new java.lang.String[] { "CurrentBlock", });
-    internal_static_BlockMessage_descriptor =
+        internal_static_VersionAck_descriptor,
+        new java.lang.String[] { "ListenPort", });
+    internal_static_GetHeadersMessage_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_GetHeadersMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_GetHeadersMessage_descriptor,
+        new java.lang.String[] { "From", });
+    internal_static_HeadersMessage_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_HeadersMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_HeadersMessage_descriptor,
+        new java.lang.String[] { "Headers", });
+    internal_static_GetBlockMessage_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_GetBlockMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_GetBlockMessage_descriptor,
+        new java.lang.String[] { "BlockID", });
+    internal_static_BlockMessage_descriptor =
+      getDescriptor().getMessageTypes().get(7);
     internal_static_BlockMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_BlockMessage_descriptor,
-        new java.lang.String[] { "BlockBytes", });
+        new java.lang.String[] { "BlockBytes", "Entries", });
+    internal_static_BlockNotFoundMessage_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_BlockNotFoundMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_BlockNotFoundMessage_descriptor,
+        new java.lang.String[] { "BlockID", });
     internal_static_EntryMessage_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_EntryMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_EntryMessage_descriptor,
         new java.lang.String[] { "EntryBytes", });
     internal_static_Peers_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_Peers_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Peers_descriptor,
         new java.lang.String[] { "Address", });
     internal_static_NetAddress_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_NetAddress_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_NetAddress_descriptor,
         new java.lang.String[] { "HostName", "Port", });
     internal_static_GetPeers_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_GetPeers_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetPeers_descriptor,
-        new java.lang.String[] { "MyAddress", });
+        new java.lang.String[] { });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

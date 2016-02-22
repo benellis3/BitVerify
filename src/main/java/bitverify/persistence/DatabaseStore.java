@@ -10,15 +10,15 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.SelectArg;
-import com.j256.ormlite.stmt.Where;
+import com.j256.ormlite.stmt.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.h2.engine.Database;
+
 
 import java.sql.SQLException;
 import java.util.*;
+
 
 public class DatabaseStore implements DataStore {
 
@@ -34,6 +34,8 @@ public class DatabaseStore implements DataStore {
     private PreparedQuery<Entry> entriesForBlockQuery;
 
     private Block latestBlock;
+
+    final int DUPLICATE_ERROR_CODE = 23001;
 
     public DatabaseStore(String databasePath) throws SQLException {
 
@@ -85,7 +87,7 @@ public class DatabaseStore implements DataStore {
         });
     }
 
-    private boolean blockExists(byte[] blockID) throws SQLException {
+    public boolean blockExists(byte[] blockID) throws SQLException {
         return blockDao.queryBuilder()
                 .limit(1L)
                 .where()
@@ -108,6 +110,11 @@ public class DatabaseStore implements DataStore {
         return blockDao.countOf();
     }
 
+    public DatabaseIterator<Block> getAllBlocks() throws SQLException {
+        return new DatabaseIterator<>(blockDao.closeableIterator());
+    }
+
+
     public Block getMostRecentBlock() throws SQLException {
         return latestBlock;
     }
@@ -117,7 +124,7 @@ public class DatabaseStore implements DataStore {
         return entryDao.query(entriesForBlockQuery);
     }
 
-    public List<Block> getNMostRecentBlocks(int n,  Block fromBlock) throws SQLException {
+    public List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException {
         // Sorted with the recent block at (or near) the header of the block
         // n = 2 means return the most recent block and the one before
         CloseableIterator<Block> initialResults = blockDao.queryBuilder()
@@ -151,7 +158,7 @@ public class DatabaseStore implements DataStore {
         return getNMostRecentBlocks(n, latestBlock);
     }
 
-    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {
+    public List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException {
         // try to retrieve the starting block from the database.
         Block startBlock = getBlock(idFrom);
         if (startBlock == null)
@@ -177,25 +184,11 @@ public class DatabaseStore implements DataStore {
 
         byte[] expectedParentID = startBlock.getBlockID();
         try {
-            // separate cases depending on whether we must check the end ID on every iteration.
-            if (idTo == null) {
-                while (results.hasNext() && limit > 0) {
-                    Block b = results.next();
-                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
-                        output.add(b);
-                        expectedParentID = b.getBlockID();
-                    }
-                }
-            } else {
-                while (results.hasNext() && limit > 0) {
-                    Block b = results.next();
-                    // stop before returning the 'to' block
-                    if (Arrays.equals(b.getBlockID(), idTo))
-                        break;
-                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
-                        output.add(b);
-                        expectedParentID = b.getBlockID();
-                    }
+            while (results.hasNext() && limit > 0) {
+                Block b = results.next();
+                if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                    output.add(b);
+                    expectedParentID = b.getBlockID();
                 }
             }
         } finally {
@@ -205,8 +198,8 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
-    public boolean insertBlock(Block b) throws SQLException {
-        // TODO: check if we are unorphaning any blocks
+    public InsertBlockResult insertBlock(Block b) throws SQLException {
+        // TODO: worry about potential exception if this method is re-entered
 
         return t.callInTransaction(() -> {
             boolean blockIsNewLatest = false;
@@ -217,18 +210,14 @@ public class DatabaseStore implements DataStore {
 
                 // extending the active blockchain
                 b.setHeight(latestBlock.getHeight() + 1);
-
                 blockIsNewLatest = true;
-                blocksToActivate.add(b);
 
             } else {
                 // see if this will be the new latest block
-
                 Block parent = getBlock(b.getPrevBlockHash());
                 if (parent == null) {
-                    // orphan block, so it will be inactive.
-                    b.setHeight(-1);
-                    blocksToDeactivate.add(b);
+                    // orphan blocks are not be inserted in the database
+                    return InsertBlockResult.FAIL_ORPHAN;
 
                 } else {
                     long oldHeight = latestBlock.getHeight();
@@ -240,8 +229,6 @@ public class DatabaseStore implements DataStore {
                     if (newHeight > oldHeight || (newHeight == oldHeight && b.getTimeStamp() < oldLatestBlock.getTimeStamp())) {
 
                         blockIsNewLatest = true;
-                        blocksToActivate.add(b);
-
                         // so determine which blocks to activate/deactivate
                         CloseableIterator<Block> blocksFromHighest = blockDao.queryBuilder().orderBy("height", false).iterator();
 
@@ -282,48 +269,80 @@ public class DatabaseStore implements DataStore {
 
 
             try {
+                if (blockIsNewLatest)
+                    b.setActive(true);
+
                 // always add block to database
                 blockDao.create(b);
 
-                if (blockIsNewLatest)
-                    latestBlock = b;
-
                 // deactivate first, in case an entry will get reactivated.
-                for (Block block : blocksToDeactivate)
-                    setBlockEntriesConfirmed(block, false);
+                for (Block block : blocksToDeactivate) {
+                    updateBlockActive(block, false);
+                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
+                    setBlockEntriesConfirmed(block, false, false);
+                }
 
-                for (Block block : blocksToActivate)
-                    setBlockEntriesConfirmed(block, true);
+                for (Block block : blocksToActivate) {
+                    updateBlockActive(block, true);
+                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
+                    setBlockEntriesConfirmed(block, true, false);
+                }
+                // finally activate current block
+                if (blockIsNewLatest) {
+                    setBlockEntriesConfirmed(b, true, true);
+                    latestBlock = b;
+                }
 
                 // now insert block-entry mappings into link table
                 for (Entry e : b.getEntriesList())
                     blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
 
                 // block was successfully inserted
-                return true;
+                return InsertBlockResult.SUCCESS;
 
             } catch (SQLException e) {
                 // catch duplicate block error
-                final int DUPLICATE_ERROR = 23001;
-                if (e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR)
-                    return false;
+                if (isDuplicateError(e))
+                    return InsertBlockResult.FAIL_DUPLICATE;
                 else
                     throw e;
             }
         });
     }
 
+    public boolean isBlockOnActiveChain(byte[] blockID) throws SQLException {
+        Block block = getBlock(blockID);
+        return (block != null && block.isActive());
+    }
+
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
-     * If the entries are not yet in the database, they will be added.
      * Not an atomic operation so should call this from a transaction.
+     * @param block the block whose entries will be affacted
+     * @param confirmed whether the entries are now confirmed or unconfirmed
+     * @param insert whether to inset entries from the block if they're not already present
+     * @throws SQLException
      */
-    private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
+    private void setBlockEntriesConfirmed(Block block, boolean confirmed, boolean insert) throws SQLException {
         // create/update entries
-        for (Entry e : block.getEntriesList()) {
-            e.setConfirmed(confirmed);
-            entryDao.createOrUpdate(e);
+        if (insert) {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.createOrUpdate(e);
+            }
+        } else {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.update(e);
+            }
         }
+    }
+
+    private void updateBlockActive(Block block, boolean active) throws SQLException {
+        UpdateBuilder<Block, Void> ub = blockDao.updateBuilder();
+        ub.updateColumnValue("active", active);
+        ub.where().eq("blockID", block.getBlockID());
+        ub.update();
     }
 
     public Block getBlock(byte[] blockID) throws SQLException {
@@ -342,7 +361,18 @@ public class DatabaseStore implements DataStore {
         return entryDao.queryForEq("confirmed", false);
     }
 
-    public List<Entry> searchEntries(String searchQuery) throws SQLException {
+    public DatabaseIterator<Entry> getConfirmedEntries() throws SQLException {
+        return new DatabaseIterator<>(entryDao.queryBuilder().where().eq("confirmed", true).iterator());
+    }
+
+    public DatabaseIterator<Entry> getAllEntries() throws SQLException {
+        return  new DatabaseIterator<>(entryDao.closeableIterator());
+    }
+
+    public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
+        if (searchQuery.isEmpty())
+            return getAllEntries();
+
         String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         for (String query : queries) {
@@ -351,12 +381,25 @@ public class DatabaseStore implements DataStore {
             w.like("docDescription", likeQuery);
         }
         // OR all of our like clauses together
-        return w.or(queries.length * 2).query();
+        return new DatabaseIterator<>(w.or(queries.length * 2).iterator());
     }
 
-    public void insertEntry(Entry e) throws SQLException {
+    public boolean insertEntry(Entry entry) throws SQLException {
         // by default, entry will be unconfirmed
-        entryDao.create(e);
+        try {
+            entryDao.create(entry);
+            return true;
+        } catch (SQLException e) {
+            // catch duplicate block error
+            if (isDuplicateError(e))
+                return false;
+            else
+                throw e;
+        }
+    }
+
+    private boolean isDuplicateError(SQLException e) {
+        return e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR_CODE;
     }
 
 
@@ -383,5 +426,23 @@ public class DatabaseStore implements DataStore {
         identityDao.create(identity);
     }
 
+    @Override
+    public List<byte[]> getActiveBlocksSample(int maxBlockIDs) throws SQLException {
+        List<byte[]> result = new ArrayList<>(maxBlockIDs);
+        result.add(latestBlock.getBlockID());
+
+        DatabaseIterator<Block> activeBlocks = getActiveBlocks();
+
+
+
+
+        result.add(Block.getGenesisBlock().getBlockID());
+        return result;
+
+    }
+
+    private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
+        return new DatabaseIterator<>(blockDao.queryBuilder().where().eq("active", true).iterator());
+    }
 
 }
