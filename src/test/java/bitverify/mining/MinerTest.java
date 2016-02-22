@@ -191,17 +191,17 @@ public class MinerTest {
 		m.stopMining();	//to prevent warning
 		
 		int input[] = {
-				Miner.calculatePackedTarget(d, b1),
-				Miner.calculatePackedTarget(d, b2),
-				Miner.calculatePackedTarget(d, b3),
-				Miner.calculatePackedTarget(d, b4),
-				Miner.calculatePackedTarget(d, b5),
-				Miner.calculatePackedTarget(d, b6),
-				Miner.calculatePackedTarget(d, b7),
-				Miner.calculatePackedTarget(d, b8),
-				Miner.calculatePackedTarget(d, b9),
-				Miner.calculatePackedTarget(d, b10),
-				Miner.calculatePackedTarget(d, b11),
+				Miner.calculatePackedTarget(d, b1, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b2, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b3, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b4, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b5, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b6, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b7, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b8, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b9, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b10, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b11, new Bus(ThreadEnforcer.ANY)),
 		};
 		
 		int output[] = {
