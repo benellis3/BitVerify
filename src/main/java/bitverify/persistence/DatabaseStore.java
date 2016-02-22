@@ -10,10 +10,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.SelectArg;
-import com.j256.ormlite.stmt.Where;
+import com.j256.ormlite.stmt.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -112,6 +109,10 @@ public class DatabaseStore implements DataStore {
         return blockDao.countOf();
     }
 
+    public DatabaseIterator<Block> getAllBlocks() throws SQLException {
+        return new DatabaseIterator<>(blockDao.closeableIterator());
+    }
+
 
     public Block getMostRecentBlock() throws SQLException {
         return latestBlock;
@@ -156,7 +157,7 @@ public class DatabaseStore implements DataStore {
         return getNMostRecentBlocks(n, latestBlock);
     }
 
-    public List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException {
+    public List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException {
         // try to retrieve the starting block from the database.
         Block startBlock = getBlock(idFrom);
         if (startBlock == null)
@@ -182,25 +183,11 @@ public class DatabaseStore implements DataStore {
 
         byte[] expectedParentID = startBlock.getBlockID();
         try {
-            // separate cases depending on whether we must check the end ID on every iteration.
-            if (idTo == null) {
-                while (results.hasNext() && limit > 0) {
-                    Block b = results.next();
-                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
-                        output.add(b);
-                        expectedParentID = b.getBlockID();
-                    }
-                }
-            } else {
-                while (results.hasNext() && limit > 0) {
-                    Block b = results.next();
-                    // stop before returning the 'to' block
-                    if (Arrays.equals(b.getBlockID(), idTo))
-                        break;
-                    if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
-                        output.add(b);
-                        expectedParentID = b.getBlockID();
-                    }
+            while (results.hasNext() && limit > 0) {
+                Block b = results.next();
+                if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                    output.add(b);
+                    expectedParentID = b.getBlockID();
                 }
             }
         } finally {
@@ -281,16 +268,22 @@ public class DatabaseStore implements DataStore {
 
 
             try {
+                if (blockIsNewLatest)
+                    b.setActive(true);
+
                 // always add block to database
                 blockDao.create(b);
 
                 // deactivate first, in case an entry will get reactivated.
-                for (Block block : blocksToDeactivate)
+                for (Block block : blocksToDeactivate) {
+                    updateBlockActive(block, false);
                     setBlockEntriesConfirmed(block, false, false);
+                }
 
-                for (Block block : blocksToActivate)
+                for (Block block : blocksToActivate) {
+                    updateBlockActive(block, true);
                     setBlockEntriesConfirmed(block, true, false);
-
+                }
                 // finally activate current block
                 if (blockIsNewLatest) {
                     setBlockEntriesConfirmed(b, true, true);
@@ -314,6 +307,11 @@ public class DatabaseStore implements DataStore {
         });
     }
 
+    public boolean isBlockOnActiveChain(byte[] blockID) throws SQLException {
+        Block block = getBlock(blockID);
+        return (block != null && block.isActive());
+    }
+
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
      * Not an atomic operation so should call this from a transaction.
@@ -335,6 +333,13 @@ public class DatabaseStore implements DataStore {
                 entryDao.update(e);
             }
         }
+    }
+
+    private void updateBlockActive(Block block, boolean active) throws SQLException {
+        UpdateBuilder<Block, Void> ub = blockDao.updateBuilder();
+        ub.updateColumnValue("active", active);
+        ub.where().eq("blockID", block.getBlockID());
+        ub.update();
     }
 
     public Block getBlock(byte[] blockID) throws SQLException {
