@@ -179,11 +179,11 @@ public class Node {
 			}
 		}
 		
-		System.out.println("Enter file download:");
-		String fileDownload = mScanner.nextLine();
-		
 		System.out.println("Enter file name:");
 		String fileName = mScanner.nextLine();
+		
+		System.out.println("Enter file download:");
+		String fileDownload = mScanner.nextLine();
 		
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
@@ -196,13 +196,9 @@ public class Node {
 		
 		System.out.println("Enter tags seperated by commas:");
 		String tagString = mScanner.nextLine();
-		String [] tags = tagString.split(",");
-		for (int i = 0; i < tags.length; i++) {
-			tags[i] = tags[i].trim();
-		}
 		
 		try {
-			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tags);
+			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);
 		} catch (KeyDecodingException | IOException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
@@ -211,7 +207,12 @@ public class Node {
 	
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
 			String recieverID, String fileDescription, String fileGeo, 
-			String[] tags) throws KeyDecodingException, IOException {
+			String tagString) throws KeyDecodingException, IOException {
+		
+		String [] tags = tagString.split(",");
+		for (int i = 0; i < tags.length; i++) {
+			tags[i] = tags[i].trim();
+		}
 		
 		// Construct entry object 
 		Entry entry;
@@ -241,15 +242,25 @@ public class Node {
 		if (mDatabase != null) {
 			// We use an iterator to avoid loading entire database in memory
 			try (DatabaseIterator<Entry> di = mDatabase.searchEntries(searchQuery)) {
+				outerLoop:
 				while (true) {
 					for (int i = 0; i < entriesAtOnce; i++) {
 						if (di.moveNext())
 							System.out.println(di.current().toString());
+						else
+							System.out.println("END OF SEARCH");
 					}
-				}
-			    while (di.moveNext()) {
-			        Entry entry = di.current();
-			        
+					while (true) {
+						System.out.println("Type 'n' for next page or 'exit' to exit search");
+						String userDecision = mScanner.nextLine();
+						if (userDecision.equalsIgnoreCase("n")) {
+							break;
+						} else if (userDecision.equalsIgnoreCase("exit")) {
+							break outerLoop;
+						} else {
+							System.out.println(String.format("'%s' is not a valid command", userDecision));
+						}
+					}
 			    }
 			} catch (SQLException ex) {
 				System.out.println("An issue came up with the database. Try to search again.");
@@ -259,9 +270,10 @@ public class Node {
 		}
 	}
 	
-	public DatabaseIterator<Entry> searchEntries(String searchQuery) {
+	public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
 		if (mDatabase != null) 
 			return mDatabase.searchEntries(searchQuery);
+		return null;
 	}
 	
 	private void displayStatistics() {
