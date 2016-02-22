@@ -438,8 +438,8 @@ public class Node {
     public void onBlockFoundEvent(BlockFoundEvent e) {
     	Block block = e.getBlock();
     	System.out.println(block);
-    	//send to database
     	//send to network
+		mConnectionManager.broadcastBlock(e.getBlock());
     }
 
     @Subscribe
