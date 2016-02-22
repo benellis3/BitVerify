@@ -89,6 +89,7 @@ public class ConnectionManager {
                                     ph.shutdown();
                                 } catch (InterruptedException | ExecutionException ie) {
                                     log("An error occurred while establishing connection to peer", Level.INFO);
+                                    log("Cause: " + ie.getCause().getMessage(), Level.INFO);
                                     ph.shutdown();
                                 }
                             });
@@ -154,6 +155,7 @@ public class ConnectionManager {
      * @throws IOException in the case that serialization fails
      */
     public void broadcastBlock(Block block) {
+        log("About to broadcast a block", Level.FINE);
         List<Entry> entryList = block.getEntriesList();
         List<ByteString> byteStringList = new ArrayList<>(entryList.size());
         for (Entry e : entryList) {
