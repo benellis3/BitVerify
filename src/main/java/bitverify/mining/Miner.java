@@ -211,7 +211,7 @@ public class Miner implements Runnable{
 	}
 	
 	/**
-     * Perform mining in a separate thread, we repeatedly incrementing the block's nonce and check it's hash
+     * Perform mining in a separate thread, we repeatedly incrementing the block's nonce and check its hash
      */
 	@Override
 	public void run(){
@@ -259,7 +259,7 @@ public class Miner implements Runnable{
 	
 	/**
      * Create a new mining block with the specified entries.
-     * We calculate it's target by looking at the blockchain and associate it with the block at the end of the chain.
+     * We calculate its target by looking at the blockchain and associate it with the block at the end of the chain.
      * The timestamp is also assigned.
      * 
      * @param entries	list of the entries for the block
