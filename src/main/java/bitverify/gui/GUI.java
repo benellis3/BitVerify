@@ -14,8 +14,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.aquafx_project.AquaFx;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -56,7 +59,10 @@ public class GUI extends Application {
 	Node mNode;
 	private Text setUpText;
 	private Stage primaryStage;
+	private Text numPeersText;
 	private ObservableList<String> minerLog;
+	private ObservableList<String> networkLog;
+	long UPDATE_TIME = 10_000;
 	
 	public static void StartGUI() {
 		launch();
@@ -156,8 +162,7 @@ public class GUI extends Application {
 	        	
 	        	Tab searchTab = getSearchTab();
 	        	
-	        	Tab networkTab = new Tab();
-	        	networkTab.setText("Network");
+	        	Tab networkTab = getNetworkTab();
 	        	
 	        	Tab settingsTab = new Tab();
 	        	settingsTab.setText("Settings");
@@ -169,7 +174,14 @@ public class GUI extends Application {
 	        	
 	        	HBox.setHgrow(tabs, Priority.ALWAYS);
 	        	Scene scene = new Scene(hbox, 800, 600);
-	        	
+	        	Timer timer = new Timer();
+	        	timer.schedule(new TimerTask() {
+
+	                @Override
+	                public void run() {
+	                    updateNumPeers();
+	                }
+	            }, 0, UPDATE_TIME);
 	    		primaryStage.setScene(scene);
 	        }
 	     });
@@ -184,8 +196,15 @@ public class GUI extends Application {
 		btnBox.setSpacing(10);
 		btnBox.setAlignment(Pos.CENTER);
 		
+		HBox lowerBtnBox = new HBox();
+		lowerBtnBox.setPadding(new Insets(15));
+		lowerBtnBox.setSpacing(10);
+		lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+		
+		
 		Button minerBtn = new Button("Start Miner");
 		Button resetBtn = new Button("Reset Miner");
+		Button clearBtn = new Button("Clear Log");        //testing out the log screen 
 		
 		// Start or stop the miner depending on the action
 		minerBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -214,11 +233,19 @@ public class GUI extends Application {
 		    }
 		});
 		
+		clearBtn.setOnAction(new EventHandler<ActionEvent>(){
+		    @Override public void handle(ActionEvent e) {
+		        minerLog.clear();
+		        
+		    }
+		});
+		
 		btnBox.getChildren().addAll(minerBtn, resetBtn);
+		lowerBtnBox.getChildren().add(clearBtn);
 		
 		ListView<String> messageList = new ListView<String>();
 		messageList.setPrefHeight(400);
-		messageList.setMouseTransparent( true );
+		messageList.setMouseTransparent( false );
 		messageList.setFocusTraversable( false );
 		
 		minerLog = FXCollections.observableArrayList(constructLogMessage("Miner ready."));
@@ -228,11 +255,45 @@ public class GUI extends Application {
 		vLay.setPadding(new Insets(15));
 		vLay.setSpacing(25);
 		
-		vLay.getChildren().addAll(btnBox, messageList);
+		vLay.getChildren().addAll(btnBox, messageList,lowerBtnBox);
 		
 		minerTab.setContent(vLay);
 		
 		return minerTab;
+	}
+	
+	private Tab getNetworkTab(){
+	    
+	       Tab networkTab = new Tab();
+	       networkTab.setText("Network");
+	        
+	        HBox networkBox = new HBox();
+	        networkBox.setPadding(new Insets(15));
+	        networkBox.setSpacing(10);
+	        networkBox.setAlignment(Pos.CENTER);
+	        
+	        numPeersText = new Text("Number of Peers: " + mNode.getNumPeers());
+	        
+	        networkBox.getChildren().add(numPeersText);
+	        
+	        ListView<String> networkView = new ListView<String>();
+	        networkView.setPrefHeight(400);
+	        networkView.setMouseTransparent( false );
+	        networkView.setFocusTraversable( false );
+	        
+	        networkLog = FXCollections.observableArrayList(constructLogMessage("Network Running."));
+	        networkView.setItems(networkLog);
+	        
+	        VBox vLay = new VBox();
+	        vLay.setPadding(new Insets(15));
+	        vLay.setSpacing(25);
+	        
+	        vLay.getChildren().addAll(networkBox,networkView);
+	        
+	        networkTab.setContent(vLay);
+	        
+	        return networkTab;
+	    
 	}
 	
 	private Tab getAddEntryTab() {
@@ -417,6 +478,17 @@ public class GUI extends Application {
     	vLay.getChildren().addAll(hLay);
     	searchTab.setContent(vLay);
     	return searchTab;
+	}
+	
+	private void updateNumPeers(){
+	    String strNumPeers = "Number of Peers: " + mNode.getNumPeers();
+	    Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                numPeersText.setText(strNumPeers);
+            }
+         });
+	    
 	}
 
 	public String constructLogMessage(String message) {
