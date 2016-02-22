@@ -11,6 +11,7 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import bitverify.ExceptionLogEvent;
 import bitverify.LogEvent;
 import bitverify.LogEventSource;
 import bitverify.block.Block;
@@ -60,9 +61,12 @@ public class ConnectionManager {
         // create a special executor service that makes daemon threads.
         // this way the application can shut down without having to terminate network threads first.
         ThreadFactory daemonThreadFactory = runnable -> {
-            Thread t = new Thread(runnable);
-            t.setDaemon(true);
-            return t;
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            thread.setUncaughtExceptionHandler((t, e) -> bus.post(
+                    new ExceptionLogEvent("An exception in a network thread was not caught: " + e.getMessage(),
+                            LogEventSource.NETWORK, Level.SEVERE, e)));
+            return thread;
         };
         es = Executors.newCachedThreadPool(daemonThreadFactory);
 
