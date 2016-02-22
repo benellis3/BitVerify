@@ -174,8 +174,15 @@ public class GUI extends Application {
 		btnBox.setSpacing(10);
 		btnBox.setAlignment(Pos.CENTER);
 		
+		HBox lowerBtnBox = new HBox();
+		lowerBtnBox.setPadding(new Insets(15));
+		lowerBtnBox.setSpacing(10);
+		lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+		
+		
 		Button minerBtn = new Button("Start Miner");
 		Button resetBtn = new Button("Reset Miner");
+		Button clearBtn = new Button("Clear Log");        //testing out the log screen 
 		
 		// Start or stop the miner depending on the action
 		minerBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -204,7 +211,15 @@ public class GUI extends Application {
 		    }
 		});
 		
+		clearBtn.setOnAction(new EventHandler<ActionEvent>(){
+		    @Override public void handle(ActionEvent e) {
+		        minerLog.clear();
+		        
+		    }
+		});
+		
 		btnBox.getChildren().addAll(minerBtn, resetBtn);
+		lowerBtnBox.getChildren().add(clearBtn);
 		
 		ListView<String> messageList = new ListView<String>();
 		messageList.setPrefHeight(400);
@@ -218,7 +233,7 @@ public class GUI extends Application {
 		vLay.setPadding(new Insets(15));
 		vLay.setSpacing(25);
 		
-		vLay.getChildren().addAll(btnBox, messageList);
+		vLay.getChildren().addAll(btnBox, messageList,lowerBtnBox);
 		
 		minerTab.setContent(vLay);
 		
