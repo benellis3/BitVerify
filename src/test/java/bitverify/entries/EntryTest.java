@@ -68,12 +68,7 @@ public class EntryTest {
 		}		
 		//serialize
 		byte[] entry1Bytes;
-		try {
-			entry1Bytes = entry1.serialize();
-		} catch (IOException e) {
-			fail();
-			return;
-		}
+		entry1Bytes = entry1.serialize();
 		//deserialize
 		Entry entry1B;
 		try {
@@ -102,12 +97,7 @@ public class EntryTest {
 		}		
 		//serialize
 		byte[] entry2Bytes;
-		try {
-			entry2Bytes = entry2.serialize();
-		} catch (IOException e) {
-			fail();
-			return;
-		}
+		entry2Bytes = entry2.serialize();
 		//deserialize
 		Entry entry2B;
 		try {
@@ -144,13 +134,8 @@ public class EntryTest {
 			fail();
 			return;
 		}
-		try {
-			assertTrue( entry1.testEntryHashSignature() );
-			assertTrue( entry2.testEntryHashSignature() );
-		} catch (IOException e) {
-			fail();
-			return;
-		}
+		assertTrue( entry1.testEntryHashSignature() );
+		assertTrue( entry2.testEntryHashSignature() );
 	}
 	
 	/**
