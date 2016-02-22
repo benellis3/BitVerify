@@ -60,10 +60,10 @@ public class Miner implements Runnable{
 	//The maximum factor that the target may grow or shrink by on each target recalculation
 	private static int growthFactorLimit = 4;
 	//We recalculate the mining difficulty every adjustTargetFrequency blocks
-	private static int adjustTargetFrequency = 2;//1008;
+	private static int adjustTargetFrequency = 1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
 	//(we want 1008 blocks to be mined every week/a block every 10 minutes)
-	private static long idealMiningTime = 8000;//604800000;
+	private static long idealMiningTime = 604800000;
 	
 	//Proof of mining (we multiply the success target by the scale)
 	private static int miningProofDifficultyScale = 0x2;
