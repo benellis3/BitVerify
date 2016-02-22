@@ -63,7 +63,7 @@ public class MinerTest {
 				0x040abcde,
 				0x020000ff,
 				0x030000ff,
-				0x0030000ff, //Test if it ignores initial digits (before 8 digit packed arget)
+				0x0030000ff, //Test if it ignores initial digits (before 8 digit packed target)
 				0x01ffffff,
 				0x02ffffff,
 				0x03ffffff,
