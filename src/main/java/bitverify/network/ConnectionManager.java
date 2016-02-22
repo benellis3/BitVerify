@@ -229,6 +229,7 @@ public class ConnectionManager {
      */
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
+        log("handling a get peers message", Level.FINE);
         // extract the InetSocketAddresses from the Peers.
         es.execute(() -> {
             InetSocketAddress addressFrom = event.getPeer().getPeerAddress();
@@ -248,6 +249,7 @@ public class ConnectionManager {
                     .setPeers(peer)
                     .build();
             event.getPeer().send(msg);
+            log("Sent a peers message with " + peer.getAddressCount() + " peers", Level.FINE);
         });
     }
 
@@ -576,6 +578,7 @@ public class ConnectionManager {
         }
 
         public void send() {
+            log("Sending a get peers message", Level.FINE);
             peers.values().forEach(p -> {
                 MessageProto.GetPeers getPeers = MessageProto.GetPeers.newBuilder().build();
                 MessageProto.Message message = MessageProto.Message.newBuilder()
@@ -583,18 +586,20 @@ public class ConnectionManager {
                         .setGetPeers(getPeers)
                         .build();
                 p.send(message);
+                log("Sent a get peers message", Level.FINE);
                 state = State.WAIT;
                 // register for peers event messages
                 bus.register(this);
-                Timer timer = new Timer();
+                //Timer timer = new Timer();
                 // resend if no response has been received
-                while (state != State.IDLE)
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            p.send(message);
-                        }
-                    }, 3000L);
+//                while (state != State.IDLE)
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            log("Resending a get peers message", Level.FINE);
+//                            p.send(message);
+//                        }
+//                    }, 3000L);
 
             });
 
@@ -602,12 +607,14 @@ public class ConnectionManager {
 
         @Subscribe
         public void onPeersEvent(PeersEvent pe) {
+            log("Handling a peers message", Level.FINE);
             bus.unregister(this);
             es.execute(() -> {
                 state = State.IDLE;
                 Set<InetSocketAddress> newAddresses = pe.getSocketAddresses();
                 for (InetSocketAddress address : newAddresses) {
                     if (!peers.containsKey(address)) {
+                        log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
                         es.execute(() -> connectToPeer(address));
                     }
                 }
