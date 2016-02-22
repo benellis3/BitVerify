@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -338,7 +339,7 @@ public class GUI extends Application {
 					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
 					errorText.setFill(Color.GREEN);
 					errorText.setText("Added file succesfully.");
-				} catch (KeyDecodingException | IOException ex) {
+				} catch (KeyDecodingException | IOException | SQLException ex) {
 					errorText.setFill(Color.RED);
 					errorText.setText("Error constructing entry. Check fields and try again.");
 					ex.printStackTrace();
