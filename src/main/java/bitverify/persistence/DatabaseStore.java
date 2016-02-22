@@ -86,7 +86,7 @@ public class DatabaseStore implements DataStore {
         });
     }
 
-    private boolean blockExists(byte[] blockID) throws SQLException {
+    public boolean blockExists(byte[] blockID) throws SQLException {
         return blockDao.queryBuilder()
                 .limit(1L)
                 .where()
@@ -421,6 +421,11 @@ public class DatabaseStore implements DataStore {
 
     public void insertIdentity(Identity identity) throws SQLException {
         identityDao.create(identity);
+    }
+
+    @Override
+    public List<byte[]> getActiveBlocksSample() {
+        return null;
     }
 
 }

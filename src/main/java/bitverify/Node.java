@@ -63,7 +63,7 @@ public class Node {
 	public enum StartType {CLI, GUI};
 	
 	private GUI mGUI;
-	
+
 	public Node(StartType startType) {
 		handleType(startType);
 	}
@@ -443,8 +443,8 @@ public class Node {
     }
 
     @Subscribe
-    public void onAnyEvent(Object o) {
-        // do stuff
+    public void onLogEvent(LogEvent o) {
+        System.out.println(o.getMessage());
     }
     
     private String getCurrentDatetime() {
@@ -460,5 +460,6 @@ public class Node {
     		mGUI.changeLoadingText(progress);
     	}
     }
+
 
 }

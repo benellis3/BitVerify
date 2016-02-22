@@ -58,6 +58,8 @@ public interface DataStore {
      */
     InsertBlockResult insertBlock(Block b) throws SQLException;
 
+    boolean blockExists(byte[] blockID) throws SQLException;
+
     /**
      * Get a particular block.
      * @param blockID the block id
@@ -136,6 +138,7 @@ public interface DataStore {
      */
     String getProperty(String key) throws SQLException;
 
+
     /**
      * Set a property. Its key and value must be at most 255 characters long.
      * @param key   the property key
@@ -144,10 +147,11 @@ public interface DataStore {
      */
     void setProperty(String key, String value) throws SQLException;
 
-
     List<Identity> getIdentities() throws SQLException;
 
     void updateIdentity(Identity identity) throws SQLException;
 
     void insertIdentity(Identity identity) throws SQLException;
+
+    List<byte[]> getActiveBlocksSample();
 }

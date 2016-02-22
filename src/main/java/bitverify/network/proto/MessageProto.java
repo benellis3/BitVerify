@@ -867,12 +867,6 @@ public final class MessageProto {
           return false;
         }
       }
-      if (hasGetHeaders()) {
-        if (!getGetHeaders().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       if (hasGetBlock()) {
         if (!getGetBlock().isInitialized()) {
           memoizedIsInitialized = 0;
@@ -1388,12 +1382,6 @@ public final class MessageProto {
         }
         if (hasVersion()) {
           if (!getVersion().isInitialized()) {
-            
-            return false;
-          }
-        }
-        if (hasGetHeaders()) {
-          if (!getGetHeaders().isInitialized()) {
             
             return false;
           }
@@ -3888,32 +3876,17 @@ public final class MessageProto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required bytes fromBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>repeated bytes from = 1;</code>
      */
-    boolean hasFromBlock();
+    java.util.List<com.google.protobuf.ByteString> getFromList();
     /**
-     * <code>required bytes fromBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>repeated bytes from = 1;</code>
      */
-    com.google.protobuf.ByteString getFromBlock();
-
+    int getFromCount();
     /**
-     * <code>optional bytes toBlock = 2;</code>
+     * <code>repeated bytes from = 1;</code>
      */
-    boolean hasToBlock();
-    /**
-     * <code>optional bytes toBlock = 2;</code>
-     */
-    com.google.protobuf.ByteString getToBlock();
+    com.google.protobuf.ByteString getFrom(int index);
   }
   /**
    * Protobuf type {@code GetHeadersMessage}
@@ -3968,13 +3941,11 @@ public final class MessageProto {
               break;
             }
             case 10: {
-              bitField0_ |= 0x00000001;
-              fromBlock_ = input.readBytes();
-              break;
-            }
-            case 18: {
-              bitField0_ |= 0x00000002;
-              toBlock_ = input.readBytes();
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                from_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              from_.add(input.readBytes());
               break;
             }
           }
@@ -3985,6 +3956,9 @@ public final class MessageProto {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = java.util.Collections.unmodifiableList(from_);
+        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -4016,50 +3990,30 @@ public final class MessageProto {
       return PARSER;
     }
 
-    private int bitField0_;
-    public static final int FROMBLOCK_FIELD_NUMBER = 1;
-    private com.google.protobuf.ByteString fromBlock_;
+    public static final int FROM_FIELD_NUMBER = 1;
+    private java.util.List<com.google.protobuf.ByteString> from_;
     /**
-     * <code>required bytes fromBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>repeated bytes from = 1;</code>
      */
-    public boolean hasFromBlock() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+    public java.util.List<com.google.protobuf.ByteString>
+        getFromList() {
+      return from_;
     }
     /**
-     * <code>required bytes fromBlock = 1;</code>
-     *
-     * <pre>
-     * encodes current block so that the recipient knows which block to start at.
-     * May be the genesis block.
-     * </pre>
+     * <code>repeated bytes from = 1;</code>
      */
-    public com.google.protobuf.ByteString getFromBlock() {
-      return fromBlock_;
-    }
-
-    public static final int TOBLOCK_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString toBlock_;
-    /**
-     * <code>optional bytes toBlock = 2;</code>
-     */
-    public boolean hasToBlock() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+    public int getFromCount() {
+      return from_.size();
     }
     /**
-     * <code>optional bytes toBlock = 2;</code>
+     * <code>repeated bytes from = 1;</code>
      */
-    public com.google.protobuf.ByteString getToBlock() {
-      return toBlock_;
+    public com.google.protobuf.ByteString getFrom(int index) {
+      return from_.get(index);
     }
 
     private void initFields() {
-      fromBlock_ = com.google.protobuf.ByteString.EMPTY;
-      toBlock_ = com.google.protobuf.ByteString.EMPTY;
+      from_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -4067,10 +4021,6 @@ public final class MessageProto {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasFromBlock()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -4078,11 +4028,8 @@ public final class MessageProto {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, fromBlock_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, toBlock_);
+      for (int i = 0; i < from_.size(); i++) {
+        output.writeBytes(1, from_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -4093,13 +4040,14 @@ public final class MessageProto {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, fromBlock_);
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, toBlock_);
+      {
+        int dataSize = 0;
+        for (int i = 0; i < from_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(from_.get(i));
+        }
+        size += dataSize;
+        size += 1 * getFromList().size();
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4218,10 +4166,8 @@ public final class MessageProto {
 
       public Builder clear() {
         super.clear();
-        fromBlock_ = com.google.protobuf.ByteString.EMPTY;
+        from_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000001);
-        toBlock_ = com.google.protobuf.ByteString.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -4249,16 +4195,11 @@ public final class MessageProto {
       public bitverify.network.proto.MessageProto.GetHeadersMessage buildPartial() {
         bitverify.network.proto.MessageProto.GetHeadersMessage result = new bitverify.network.proto.MessageProto.GetHeadersMessage(this);
         int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = java.util.Collections.unmodifiableList(from_);
+          bitField0_ = (bitField0_ & ~0x00000001);
         }
-        result.fromBlock_ = fromBlock_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.toBlock_ = toBlock_;
-        result.bitField0_ = to_bitField0_;
+        result.from_ = from_;
         onBuilt();
         return result;
       }
@@ -4274,21 +4215,21 @@ public final class MessageProto {
 
       public Builder mergeFrom(bitverify.network.proto.MessageProto.GetHeadersMessage other) {
         if (other == bitverify.network.proto.MessageProto.GetHeadersMessage.getDefaultInstance()) return this;
-        if (other.hasFromBlock()) {
-          setFromBlock(other.getFromBlock());
-        }
-        if (other.hasToBlock()) {
-          setToBlock(other.getToBlock());
+        if (!other.from_.isEmpty()) {
+          if (from_.isEmpty()) {
+            from_ = other.from_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureFromIsMutable();
+            from_.addAll(other.from_);
+          }
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (!hasFromBlock()) {
-          
-          return false;
-        }
         return true;
       }
 
@@ -4311,92 +4252,74 @@ public final class MessageProto {
       }
       private int bitField0_;
 
-      private com.google.protobuf.ByteString fromBlock_ = com.google.protobuf.ByteString.EMPTY;
-      /**
-       * <code>required bytes fromBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
-       */
-      public boolean hasFromBlock() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+      private java.util.List<com.google.protobuf.ByteString> from_ = java.util.Collections.emptyList();
+      private void ensureFromIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          from_ = new java.util.ArrayList<com.google.protobuf.ByteString>(from_);
+          bitField0_ |= 0x00000001;
+         }
       }
       /**
-       * <code>required bytes fromBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>repeated bytes from = 1;</code>
        */
-      public com.google.protobuf.ByteString getFromBlock() {
-        return fromBlock_;
+      public java.util.List<com.google.protobuf.ByteString>
+          getFromList() {
+        return java.util.Collections.unmodifiableList(from_);
       }
       /**
-       * <code>required bytes fromBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>repeated bytes from = 1;</code>
        */
-      public Builder setFromBlock(com.google.protobuf.ByteString value) {
+      public int getFromCount() {
+        return from_.size();
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public com.google.protobuf.ByteString getFrom(int index) {
+        return from_.get(index);
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder setFrom(
+          int index, com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
-        fromBlock_ = value;
+  ensureFromIsMutable();
+        from_.set(index, value);
         onChanged();
         return this;
       }
       /**
-       * <code>required bytes fromBlock = 1;</code>
-       *
-       * <pre>
-       * encodes current block so that the recipient knows which block to start at.
-       * May be the genesis block.
-       * </pre>
+       * <code>repeated bytes from = 1;</code>
        */
-      public Builder clearFromBlock() {
+      public Builder addFrom(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFromIsMutable();
+        from_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder addAllFrom(
+          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
+        ensureFromIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, from_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated bytes from = 1;</code>
+       */
+      public Builder clearFrom() {
+        from_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000001);
-        fromBlock_ = getDefaultInstance().getFromBlock();
-        onChanged();
-        return this;
-      }
-
-      private com.google.protobuf.ByteString toBlock_ = com.google.protobuf.ByteString.EMPTY;
-      /**
-       * <code>optional bytes toBlock = 2;</code>
-       */
-      public boolean hasToBlock() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional bytes toBlock = 2;</code>
-       */
-      public com.google.protobuf.ByteString getToBlock() {
-        return toBlock_;
-      }
-      /**
-       * <code>optional bytes toBlock = 2;</code>
-       */
-      public Builder setToBlock(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        toBlock_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bytes toBlock = 2;</code>
-       */
-      public Builder clearToBlock() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        toBlock_ = getDefaultInstance().getToBlock();
         onChanged();
         return this;
       }
@@ -8324,17 +8247,17 @@ public final class MessageProto {
       "ION\020\006\022\007\n\003ACK\020\007\022\017\n\013GET_HEADERS\020\010\022\r\n\tGET_B" +
       "LOCK\020\t\022\017\n\013VERSION_ACK\020\n\022\023\n\017BLOCK_NOT_FOU" +
       "ND\020\013\"\035\n\007Version\022\022\n\nlistenPort\030\001 \002(\005\"\005\n\003A" +
-      "ck\" \n\nVersionAck\022\022\n\nlistenPort\030\001 \002(\005\"7\n\021" +
-      "GetHeadersMessage\022\021\n\tfromBlock\030\001 \002(\014\022\017\n\007" +
-      "toBlock\030\002 \001(\014\"!\n\016HeadersMessage\022\017\n\007heade" +
-      "rs\030\001 \003(\014\"\"\n\017GetBlockMessage\022\017\n\007blockID\030\001" +
-      " \002(\014\"3\n\014BlockMessage\022\022\n\nblockBytes\030\001 \002(\014",
-      "\022\017\n\007entries\030\002 \003(\014\"\'\n\024BlockNotFoundMessag" +
-      "e\022\017\n\007blockID\030\001 \002(\014\"\"\n\014EntryMessage\022\022\n\nen" +
-      "tryBytes\030\001 \002(\014\"%\n\005Peers\022\034\n\007address\030\001 \003(\013" +
-      "2\013.NetAddress\",\n\nNetAddress\022\020\n\010hostName\030" +
-      "\001 \002(\t\022\014\n\004port\030\002 \002(\005\"\n\n\010GetPeersB\'\n\027bitve" +
-      "rify.network.protoB\014MessageProto"
+      "ck\" \n\nVersionAck\022\022\n\nlistenPort\030\001 \002(\005\"!\n\021" +
+      "GetHeadersMessage\022\014\n\004from\030\001 \003(\014\"!\n\016Heade" +
+      "rsMessage\022\017\n\007headers\030\001 \003(\014\"\"\n\017GetBlockMe" +
+      "ssage\022\017\n\007blockID\030\001 \002(\014\"3\n\014BlockMessage\022\022" +
+      "\n\nblockBytes\030\001 \002(\014\022\017\n\007entries\030\002 \003(\014\"\'\n\024B",
+      "lockNotFoundMessage\022\017\n\007blockID\030\001 \002(\014\"\"\n\014" +
+      "EntryMessage\022\022\n\nentryBytes\030\001 \002(\014\"%\n\005Peer" +
+      "s\022\034\n\007address\030\001 \003(\0132\013.NetAddress\",\n\nNetAd" +
+      "dress\022\020\n\010hostName\030\001 \002(\t\022\014\n\004port\030\002 \002(\005\"\n\n" +
+      "\010GetPeersB\'\n\027bitverify.network.protoB\014Me" +
+      "ssageProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -8377,7 +8300,7 @@ public final class MessageProto {
     internal_static_GetHeadersMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_GetHeadersMessage_descriptor,
-        new java.lang.String[] { "FromBlock", "ToBlock", });
+        new java.lang.String[] { "From", });
     internal_static_HeadersMessage_descriptor =
       getDescriptor().getMessageTypes().get(5);
     internal_static_HeadersMessage_fieldAccessorTable = new
