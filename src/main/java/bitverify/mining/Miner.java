@@ -8,10 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import com.j256.ormlite.logger.LocalLog;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.LogEvent;
 import bitverify.LogEventSource;
@@ -21,7 +19,6 @@ import bitverify.network.NewBlockEvent;
 import bitverify.network.NewEntryEvent;
 import bitverify.network.NewMiningProofEvent;
 import bitverify.persistence.DataStore;
-import bitverify.persistence.DatabaseStore;
 
 import org.bouncycastle.util.encoders.Hex;
 
@@ -83,6 +80,8 @@ public class Miner implements Runnable{
      *
      * @param eventBus		instance of the event bus for sending successful blocks/proof of mining 
      * @param dataStore		instance of the database for the miner
+     * @throws SQLException
+     * @throws IOException
      */
 	public Miner(Bus eventBus, DataStore dataStore) throws SQLException, IOException{
 		this.dataStore = dataStore;
@@ -110,6 +109,8 @@ public class Miner implements Runnable{
      * @param adjustTargetFrequency			how many blocks to wait before recalculating the mining difficulty
      * @param idealMiningTime				the number of milliseconds that 'adjustTargetFrequency' blocks should take to mine
      * @param miningProofDifficultyScale	amount to multiply the target by to get the proof of mining target
+     * @throws SQLException
+     * @throws IOException
      */
 	public Miner(Bus eventBus, DataStore dataStore, int adjustTargetFrequency, int idealMiningTime, int miningProofDifficultyScale) throws SQLException, IOException{
 		this.dataStore = dataStore;
@@ -131,9 +132,10 @@ public class Miner implements Runnable{
 	}
 	
 	/**
-     * Determine whether the block's hash meets it's target difficulty
+     * Determine whether the block's hash meets its target difficulty
      *
      * @param block		the block that we are testing
+     * @return whether the block's hash meets its target
      */
 	public static boolean blockHashMeetDifficulty(Block block){
 		return mineSuccess(Hex.toHexString(block.hashHeader()),block.getTarget());
@@ -146,6 +148,7 @@ public class Miner implements Runnable{
      * We will enforce that you need to prove you are mining in order to send entries to peers.
      * 
      * @param block		the block that we are testing
+     * @return whether the block's hash meets its proof of mining target
      */
 	public static boolean miningProofMeetDifficulty(Block block){
 		return mineSuccess(Hex.toHexString(block.hashHeader()),calculateMiningProofTarget(block.getTarget()));
@@ -159,6 +162,8 @@ public class Miner implements Runnable{
      * @param block			the block who's target we are testing
      * @param parent		the parent of the block that we are testing (used to calculate the required difficulty for block)
      * @param eventBus		instance of the eventbus so the static method can print info to the GUI
+     * @return whether the block's target is the difficulty we require
+     * @throws SQLException
      */
 	public static boolean checkBlockDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
 		int targetShouldBe = calculatePackedTarget(dataStore, parent, eventBus);
@@ -174,6 +179,8 @@ public class Miner implements Runnable{
      * @param block			the block who's target we are testing
      * @param parent		the parent of the block that we are testing (used to calculate the required proof difficulty for block)
      * @param eventBus		instance of the eventbus so the static method can print info to the GUI
+     * @return whether the proof of mining block's target is the difficulty we require
+     * @throws SQLException
      */
 	public static boolean checkMiningProofDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
 		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent, eventBus));
@@ -187,6 +194,7 @@ public class Miner implements Runnable{
      * 
      * @param hash		the 256 bit hash we compare against the target
      * @param packedT	the packed representation of the target
+     * @return the unpacked 256 bit hash is less than the unpacked 256 bit target
      */
 	public static boolean mineSuccess(String hash, int packedT){
 		String target = unpackTarget(packedT);
@@ -255,6 +263,8 @@ public class Miner implements Runnable{
      * The timestamp is also assigned.
      * 
      * @param entries	list of the entries for the block
+     * @throws SQLException
+     * @throws IOException
      */
 	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block
@@ -285,6 +295,8 @@ public class Miner implements Runnable{
      * Subscribe to new entry events on bus. We create a new block to mine with the new entry.
      * 
      *  @param e	the event that is created when a entry has been received
+     *  @throws SQLException
+     * 	@throws IOException
      */
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
@@ -300,6 +312,8 @@ public class Miner implements Runnable{
      * Subscribe to block found events on bus. We restart the Miner when a new block has been found elsewhere.
      * 
      *  @param e	the event that is created when a new block has been found from the network
+     *  @throws SQLException
+     * 	@throws IOException
      */
     @Subscribe
     public void onNewBlockEvent(NewBlockEvent e) throws IOException, SQLException {
@@ -316,6 +330,7 @@ public class Miner implements Runnable{
      * Calculate the packed representation of the target from the string.
      * 
      *  @param s	the target hex string (64 digits or less) to pack for storage
+     *  @return the packed form of the 256 bit target (64 digit hex string)
      */
 	public static int packTarget(String s){
 		//Remove leading zeros
@@ -356,6 +371,7 @@ public class Miner implements Runnable{
      * 0x20ffffff is max representable target
      * 
      *  @param p	the target to unpack into a 64 digit hex string
+     *  @return the unpacked form of the target
      */
 	public static String unpackTarget(int p){
 		//Use maximum representable target if the target is greater than this
@@ -377,6 +393,8 @@ public class Miner implements Runnable{
      *  @param ds		the database containing the blockchain
      *  @param block	parent of the block we are finding the target of
      *  @param eventBus		instance of the eventbus so the static method can print info to the GUI
+     *  @return the target we should assign to the next block
+     *  @throws SQLException
      */
 	public static int calculatePackedTarget(DataStore ds, Block block, Bus eventBus) throws SQLException{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
@@ -428,6 +446,7 @@ public class Miner implements Runnable{
      * We multiply the success target by miningProofDifficultyScale to make it easier to meet this target.
      * 
      *  @param successPackedTarget	the packed target for successfully mining a block
+     *  @return the 256 proof of mining target based on the mining success target
      */
 	public static int calculateMiningProofTarget(int successPackedTarget){
 		BigInteger proofTarget = new BigInteger(unpackTarget(successPackedTarget),16);
@@ -442,6 +461,7 @@ public class Miner implements Runnable{
      * Make the hex string 64 digits long by adding leading zeros
      * 
      *  @param s	the string to format
+     *  @return 64 digit hex string string on valid input
      */
 	public static String stringFormat(String s){
 		while (s.length() < 64){
@@ -450,15 +470,4 @@ public class Miner implements Runnable{
 		return s;
 	}
 	
-	//Temporary method for quick tests
-	public static void main(String[] args) throws SQLException, IOException{
-		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
-		
-		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d);
-		
-		Thread miningThread = new Thread(m);
-		miningThread.start();
-	}
 }
