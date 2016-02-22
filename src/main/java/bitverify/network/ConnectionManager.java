@@ -89,6 +89,7 @@ public class ConnectionManager {
                                     ph.shutdown();
                                 } catch (InterruptedException | ExecutionException ie) {
                                     log("An error occurred while establishing connection to peer", Level.INFO);
+                                    log("Cause: " + ie.getCause().getMessage(), Level.INFO);
                                     ph.shutdown();
                                 }
                             });
@@ -126,7 +127,7 @@ public class ConnectionManager {
     }
 
     private void connectToPeer(InetSocketAddress peerAddress) {
-        Socket socket = null;
+        Socket socket;
         try {
             // may throw IOException
             socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
@@ -146,7 +147,6 @@ public class ConnectionManager {
         } catch (IOException e) {
             log("An error occurred while creating an outgoing socket to a new peer", Level.INFO);
         }
-
     }
 
     /**
@@ -155,6 +155,7 @@ public class ConnectionManager {
      * @throws IOException in the case that serialization fails
      */
     public void broadcastBlock(Block block) {
+        log("About to broadcast a block", Level.FINE);
         List<Entry> entryList = block.getEntriesList();
         List<ByteString> byteStringList = new ArrayList<>(entryList.size());
         for (Entry e : entryList) {
@@ -228,6 +229,7 @@ public class ConnectionManager {
      */
     @Subscribe
     public void onGetPeersEvent(GetPeersEvent event) {
+        log("handling a get peers message", Level.FINE);
         // extract the InetSocketAddresses from the Peers.
         es.execute(() -> {
             InetSocketAddress addressFrom = event.getPeer().getPeerAddress();
@@ -247,6 +249,7 @@ public class ConnectionManager {
                     .setPeers(peer)
                     .build();
             event.getPeer().send(msg);
+            log("Sent a peers message with " + peer.getAddressCount() + " peers", Level.FINE);
         });
     }
 
@@ -323,13 +326,13 @@ public class ConnectionManager {
             // First obtain block headers from some particular peer - send a GetBlockHeaders message
             // then validate this sequence of headers upon receiving a BlockHeaders message
             PeerHandler p = chooseRandomPeer();
-            byte[] fromBlockID = dataStore.getMostRecentBlock().getBlockID();
+            List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample();
 
             // we will break once we've got all the headers, having dispatched download tasks asynchronously.
             // for now, if a peer suddenly gives us some invalid headers, we don't shutdown previous download
             // tasks or discard earlier block headers they gave us.
             while (true) {
-                HeadersFuture h = new HeadersFuture(p, fromBlockID, bus);
+                HeadersFuture h = new HeadersFuture(p, fromBlockIDs, bus);
                 h.run();
                 List<Block> receivedHeaders = null;
                 try {
@@ -346,22 +349,21 @@ public class ConnectionManager {
                     p = chooseRandomPeer();
                 } else {
                     byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
-                    // first header might be either:
-                    // 1. the header following our requested 'from' block ID
-                    // 2. a header following some older block we have - TODO: on our primary chain
-                    if ((Arrays.equals(fromBlockID, firstPredecessorID) || dataStore.getBlock(firstPredecessorID) != null)
-                            && Block.verifyChain(receivedHeaders)) {
-
+                    // first header must follow some older block we have on our primary chain
+                    Block first = dataStore.getBlock(firstPredecessorID);
+                    if (first != null && first.isActive() && Block.verifyChain(receivedHeaders)) {
                         ArrayList<byte[]> blockIDs = new ArrayList<>(receivedHeaders.size());
-                        for (Block b : receivedHeaders)
-                            blockIDs.add(b.getBlockID());
+                        for (Block b : receivedHeaders) {
+                            if (!dataStore.blockExists(b.getBlockID()))
+                                blockIDs.add(b.getBlockID());
+                        }
                         futureBlockIDs.addAll(blockIDs);
                         downloadQueuedBlocks();
 
                         if (receivedHeaders.size() < MAX_HEADERS)
                             break;
                         else
-                            fromBlockID = receivedHeaders.get(receivedHeaders.size() - 1).getBlockID();
+                            fromBlockIDs.add(0, receivedHeaders.get(receivedHeaders.size() - 1).getBlockID());
 
                     } else {
                         // choose a new peer and try again
@@ -420,6 +422,7 @@ public class ConnectionManager {
 
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) {
+            log("Block message received", Level.FINE);
             BlockMessage message = e.getBlockMessage();
             PeerHandler peer = e.getPeer();
 
@@ -450,12 +453,15 @@ public class ConnectionManager {
                 }
 
                 // check we don't already have it in our store
-                if (dataStore.getBlock(block.getBlockID()) != null)
+                if (dataStore.blockExists(block.getBlockID())) {
+                    log("received a block we already have", Level.FINE);
                     return;
-
+                }
                 // verify its hash meets its target
-                if (!Miner.blockHashMeetDifficulty(block))
+                if (!Miner.blockHashMeetDifficulty(block)) {
+                    log("block was rejected because target didn't meet difficulty", Level.FINE);
                     return;
+                }
 
                 List<ByteString> entryBytesList = message.getEntriesList();
                 List<Entry> entryList = new ArrayList<>();
@@ -468,11 +474,13 @@ public class ConnectionManager {
                     InsertBlockResult result = dataStore.insertBlock(block);
                     switch (result) {
                         case SUCCESS:
+                            log("block was successfully added to database", Level.FINE);
                             bus.post(new NewBlockEvent(block));
                             // may now be able to insert orphan blocks
                             insertOrphans(block.getBlockID());
                             break;
                         case FAIL_ORPHAN:
+                            log("block is an orphan and therefore wasn't added to database", Level.FINE);
                             // keep block in memory and try to store it once its parent has been downloaded.
                             orphanBlocks.put(block.getPrevBlockHash(), block);
 
@@ -570,6 +578,7 @@ public class ConnectionManager {
         }
 
         public void send() {
+            log("Sending a get peers message", Level.FINE);
             peers.values().forEach(p -> {
                 MessageProto.GetPeers getPeers = MessageProto.GetPeers.newBuilder().build();
                 MessageProto.Message message = MessageProto.Message.newBuilder()
@@ -577,18 +586,20 @@ public class ConnectionManager {
                         .setGetPeers(getPeers)
                         .build();
                 p.send(message);
+                log("Sent a get peers message", Level.FINE);
                 state = State.WAIT;
                 // register for peers event messages
                 bus.register(this);
-                Timer timer = new Timer();
+                //Timer timer = new Timer();
                 // resend if no response has been received
-                while (state != State.IDLE)
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            p.send(message);
-                        }
-                    }, 3000L);
+//                while (state != State.IDLE)
+//                    timer.schedule(new TimerTask() {
+//                        @Override
+//                        public void run() {
+//                            log("Resending a get peers message", Level.FINE);
+//                            p.send(message);
+//                        }
+//                    }, 3000L);
 
             });
 
@@ -596,12 +607,14 @@ public class ConnectionManager {
 
         @Subscribe
         public void onPeersEvent(PeersEvent pe) {
+            log("Handling a peers message", Level.FINE);
             bus.unregister(this);
             es.execute(() -> {
                 state = State.IDLE;
                 Set<InetSocketAddress> newAddresses = pe.getSocketAddresses();
                 for (InetSocketAddress address : newAddresses) {
                     if (!peers.containsKey(address)) {
+                        log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
                         es.execute(() -> connectToPeer(address));
                     }
                 }

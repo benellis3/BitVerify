@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.proto.MessageProto;
 import bitverify.network.proto.MessageProto.*;
@@ -36,6 +37,7 @@ public class PeerHandler {
     private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
     private static final int BLOCK_TIMEOUT_SECONDS = 5;
     private static final int SETUP_TIMEOUT_SECONDS = 5;
+    private static final int MAX_HEADERS = 1000;
 
     private ArrayBlockingQueue<byte[]> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
     private RestartableTimer blockTimer;
@@ -295,6 +297,39 @@ public class PeerHandler {
                 socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
             }
             bus.post(new PeersEvent(socketAddressList));
+        }
+
+        private void handleGetHeaders(GetHeadersMessage message) throws SQLException {
+            // for each start at ID,
+            for (ByteString bytes : message.getFromList()) {
+                byte[] blockID = bytes.toByteArray();
+
+                // if block is on primary chain
+                if (dataStore.isBlockOnActiveChain(blockID)) {
+
+                    // send that block and as many following it
+                    List<Block> blocks = dataStore.getBlocksAfter(blockID, MAX_HEADERS);
+
+                    HeadersMessage.Builder hb = HeadersMessage.newBuilder();
+                    for (Block block : blocks)
+                        hb.addHeaders(ByteString.copyFrom(block.serializeHeader()));
+                    HeadersMessage h = hb.build();
+
+                    Message m = Message.newBuilder()
+                            .setType(Message.Type.HEADERS)
+                            .setHeaders(h)
+                            .build();
+                    send(m);
+                    return;
+                }
+            }
+            // if we get here, we didn't have any matching blocks so send back an empty headers message
+            HeadersMessage hm = HeadersMessage.newBuilder().build();
+            Message m = Message.newBuilder()
+                    .setType(Message.Type.HEADERS)
+                    .setHeaders(hm)
+                    .build();
+            send(m);
         }
     }
 

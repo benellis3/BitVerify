@@ -42,6 +42,7 @@ public class Node {
 			"List unconfirmed entries",
 			"List connected peers",
 			"List blocks on primary chain",
+			"List all blocks",
 			"Exit",
 			}; // see mapping in handleUserInput
 	private boolean isMining = false;
@@ -62,7 +63,7 @@ public class Node {
 	public enum StartType {CLI, GUI};
 	
 	private GUI mGUI;
-	
+
 	public Node(StartType startType) {
 		handleType(startType);
 	}
@@ -143,9 +144,12 @@ public class Node {
 				listConnectedPeers();
 				break;
 			case 5:
-				listBlocks();
+				listPrimaryBlocks();
 				break;
 			case 6:
+				listAllBlocks();
+				break;
+			case 7:
 				exitProgram();
 				return false;
 		}
@@ -340,7 +344,7 @@ public class Node {
 		System.out.println("######################################");
 	}
 	
-	private void listBlocks() {
+	private void listPrimaryBlocks() {
 		try {
 			List<Block> blocks = mDatabase.getNMostRecentBlocks(2000); //TODO cheating here for now...
 			System.out.println("######################################");
@@ -352,6 +356,26 @@ public class Node {
 			}
 			System.out.println("There are "+blocks.size()+" blocks on the primary chain.");
 			System.out.println("######################################");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return;
+		}
+	}
+	
+	private void listAllBlocks() {
+		try (DatabaseIterator<Block> di = mDatabase.getAllBlocks()) {
+			int blockCount = 0;
+			System.out.println("######################################");
+			System.out.println("All blocks:");
+		    while (di.moveNext()) {
+		    	blockCount++;
+		        Block block = di.current();
+		        System.out.printf("i: %d, height: %d, blockID: %s, entriesHash: %s\n",
+		        		blockCount, block.getHeight(), Base64.encode(block.getBlockID()),
+						Base64.encode(block.getEntriesHash()) );
+		    }
+		    System.out.println("There are "+blockCount+" blocks total.");
+		    System.out.println("######################################");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;
@@ -418,13 +442,13 @@ public class Node {
     public void onBlockFoundEvent(BlockFoundEvent e) {
     	Block block = e.getBlock();
     	System.out.println(block);
-    	//send to database
     	//send to network
+		mConnectionManager.broadcastBlock(e.getBlock());
     }
 
     @Subscribe
-    public void onAnyEvent(Object o) {
-        // do stuff
+    public void onLogEvent(LogEvent o) {
+        System.out.println(o.getMessage());
     }
     
     private String getCurrentDatetime() {
@@ -440,5 +464,6 @@ public class Node {
     		mGUI.changeLoadingText(progress);
     	}
     }
+
 
 }

@@ -47,7 +47,7 @@ public interface DataStore {
      * @param idTo   only get blocks before this block ID. Provide null if there is no limit.
      * @param limit  the maximum number of block IDs to get. Provide -1 if there is no limit.
      */
-    List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
+    List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException;
 
     /**
      * Inserts the given block into the store, unless it is already present or would be an orphan.
@@ -58,12 +58,28 @@ public interface DataStore {
      */
     InsertBlockResult insertBlock(Block b) throws SQLException;
 
+    boolean blockExists(byte[] blockID) throws SQLException;
+
     /**
      * Get a particular block.
      * @param blockID the block id
      * @throws SQLException
      */
     Block getBlock(byte[] blockID) throws SQLException;
+
+    /**
+     * Get all blocks in the datastore.
+     * @throws SQLException
+     */
+    DatabaseIterator<Block> getAllBlocks() throws SQLException;
+
+    /**
+     * Determine if we have this block on our active chain.
+     * @param blockID the block ID
+     * @return true if this block is in the datastore and is on the active chain; otherwise false.
+     * @throws SQLException
+     */
+    boolean isBlockOnActiveChain(byte[] blockID) throws SQLException;
 
     /**
      * Get a particular entry.
@@ -122,6 +138,7 @@ public interface DataStore {
      */
     String getProperty(String key) throws SQLException;
 
+
     /**
      * Set a property. Its key and value must be at most 255 characters long.
      * @param key   the property key
@@ -130,10 +147,11 @@ public interface DataStore {
      */
     void setProperty(String key, String value) throws SQLException;
 
-
     List<Identity> getIdentities() throws SQLException;
 
     void updateIdentity(Identity identity) throws SQLException;
 
     void insertIdentity(Identity identity) throws SQLException;
+
+    List<byte[]> getActiveBlocksSample() throws SQLException;
 }

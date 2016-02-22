@@ -1,7 +1,7 @@
 package bitverify.network;
 
 import bitverify.block.Block;
-import bitverify.network.proto.MessageProto;
+import bitverify.network.proto.MessageProto.*;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
@@ -18,12 +18,12 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
     private List<Block> result;
     private final CountDownLatch resultLatch = new CountDownLatch(1);
     private final PeerHandler peer;
-    private final byte[] fromBlockID;
+    private final List<byte[]> fromBlockIDs;
     private final Bus bus;
 
-    public HeadersFuture(PeerHandler peer, byte[] fromBlockID, Bus bus) {
+    public HeadersFuture(PeerHandler peer, List<byte[]> fromBlockIDs, Bus bus) {
         this.peer = peer;
-        this.fromBlockID = fromBlockID;
+        this.fromBlockIDs = fromBlockIDs;
         this.bus = bus;
     }
 
@@ -31,11 +31,14 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
     public void run() {
         // send a GetBlockHeaders message
         // ask for blocks from our latest known block
-        MessageProto.GetHeadersMessage getHeadersMessage = MessageProto.GetHeadersMessage.newBuilder()
-                .setFromBlock(ByteString.copyFrom(fromBlockID))
-                .build();
-        MessageProto.Message m = MessageProto.Message.newBuilder()
-                .setType(MessageProto.Message.Type.GET_HEADERS)
+        GetHeadersMessage.Builder getHeadersMessageBuilder = GetHeadersMessage.newBuilder();
+        for (byte[] blockID : fromBlockIDs) {
+            getHeadersMessageBuilder.addFrom(ByteString.copyFrom(blockID));
+        }
+        GetHeadersMessage getHeadersMessage = getHeadersMessageBuilder.build();
+
+        Message m = Message.newBuilder()
+                .setType(Message.Type.GET_HEADERS)
                 .setGetHeaders(getHeadersMessage)
                 .build();
 

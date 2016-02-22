@@ -6,12 +6,15 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.j256.ormlite.logger.LocalLog;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.NewEntryEvent;
@@ -56,7 +59,9 @@ public class Miner implements Runnable{
 	//Constant used in unpacking targets (it is subtracted from the exponent)
 	private static final int byteOffset = 3;	
 	
-	//We recalculate the mining difficulty after every adjustTargetFrequency blocks
+	//The maximum factor that the target may grow or shrink by on each target recalculation
+	private static int growthFactorLimit = 4;
+	//We recalculate the mining difficulty every adjustTargetFrequency blocks
 	private static int adjustTargetFrequency = 2;//1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
 	//(we want 1008 blocks to be mined every week/a block every 10 minutes)
@@ -91,6 +96,8 @@ public class Miner implements Runnable{
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
 		blockMining.setEntriesList(pool);
+		
+		eventBus.post(new LogEvent("New Miner Created",LogEventSource.MINING,Level.INFO));
 
 	}
 	
@@ -150,9 +157,10 @@ public class Miner implements Runnable{
      * @param dataStore		instance of the database to use in this static method
      * @param block			the block who's target we are testing
      * @param parent		the parent of the block that we are testing (used to calculate the required difficulty for block)
+     * @param eventBus		instance of the eventbus so the static method can print info to the GUI
      */
-	public static boolean checkBlockDifficulty(DataStore dataStore, Block block, Block parent) throws SQLException{
-		int targetShouldBe = calculatePackedTarget(dataStore, parent);
+	public static boolean checkBlockDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
+		int targetShouldBe = calculatePackedTarget(dataStore, parent, eventBus);
 		
 		return mineSuccess(unpackTarget(targetShouldBe),block.getTarget());
 	}
@@ -164,9 +172,10 @@ public class Miner implements Runnable{
      * @param dataStore		instance of the database to use in this static method
      * @param block			the block who's target we are testing
      * @param parent		the parent of the block that we are testing (used to calculate the required proof difficulty for block)
+     * @param eventBus		instance of the eventbus so the static method can print info to the GUI
      */
-	public static boolean checkMiningProofDifficulty(DataStore dataStore, Block block, Block parent) throws SQLException{
-		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent));
+	public static boolean checkMiningProofDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
+		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent, eventBus));
 		
 		return mineSuccess(unpackTarget(proofTargetShouldBe),block.getTarget());
 	}
@@ -183,8 +192,13 @@ public class Miner implements Runnable{
 		
 		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
-
-		return lessThan;
+		
+		if (lessThan){
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
 	
 	/**
@@ -201,8 +215,8 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
-					//System.out.println("Success");
-					//System.out.println("Block Hash: "+result);
+					eventBus.post(new LogEvent("Successful block mine",LogEventSource.MINING,Level.INFO));
+					eventBus.post(new LogEvent("Block Hash:     "+result,LogEventSource.MINING,Level.INFO));
 					
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
 					dataStore.insertBlock(blockMining);
@@ -214,12 +228,12 @@ public class Miner implements Runnable{
 				}
 				//Proof of mining
 				else if (mineSuccess(result, currentMiningProofTarget)){
-				//	//Application logic must broadcast to peers
-				//	//Must maintain a list of peers in database that have received proof from
-				//	//Reject incoming entries from public IPs not from the list
+				//Application logic must broadcast to peers
+				//Must maintain a list of peers in database that have received proof from
+				//Reject incoming entries from public IPs not from the list
 					eventBus.post(new NewMiningProofEvent(blockMining));
-					//System.out.println("Proof Success");
-					//System.out.println("Block Hash: "+result);
+					eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
+					eventBus.post(new LogEvent("Block Hash:     "+result,LogEventSource.MINING,Level.INFO));
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -243,17 +257,16 @@ public class Miner implements Runnable{
      */
 	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
 		//Create the next block to mine, passing the most recently mined block
-		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock());
+		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock(), eventBus);
 		
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
-		//System.out.println("ProfTarget: "+stringFormat(unpackTarget(currentMiningProofTarget)));
+		eventBus.post(new LogEvent("Success Target: "+stringFormat(unpackTarget(target)),LogEventSource.MINING,Level.INFO));
 		
+		eventBus.post(new LogEvent("Proof Target:   "+stringFormat(unpackTarget(currentMiningProofTarget)),LogEventSource.MINING,Level.INFO));
+
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
-		
-		//System.out.println("Previous block timestamp: "+lastBlockInChain.getTimeStamp());
-		//System.out.println("Current block timestamp: "+System.currentTimeMillis());
 		
 		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, entries);
 	}
@@ -342,14 +355,13 @@ public class Miner implements Runnable{
 	/**
      * Calculate the target for the next block (i.e. the block we are mining, or a block we have received
      * from the network) by looking at the prior blocks. We look at the database and see how long the previous
-     * 'adjustTargetFrequency' blocks took to mine, and adjust our target, after every 'adjustTargetFrequency' blocks.
-     * i.e. if adjustTargetFrequency = 2 then we recalculate the target for block 3 based on the time to mine blocks 1 and 2,
-     * and then we recalculate for block 6 based on the time to mine blocks 4 and 5 (block 5 timestamp - block 3 timestamp) etc.
+     * 'adjustTargetFrequency' blocks took to mine, and adjust our target, every 'adjustTargetFrequency' blocks.
      * 
      *  @param ds		the database containing the blockchain
      *  @param block	parent of the block we are finding the target of
+     *  @param eventBus		instance of the eventbus so the static method can print info to the GUI
      */
-	public static int calculatePackedTarget(DataStore ds, Block block) throws SQLException{
+	public static int calculatePackedTarget(DataStore ds, Block block, Bus eventBus) throws SQLException{
 		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
 		long blocksCount = block.getHeight();
 		
@@ -369,13 +381,13 @@ public class Miner implements Runnable{
 			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
 			long difference = mostRecentTime - nAgoTime;
 			
-			//System.out.println("Most Recent: "+mostRecentTime);
-			//System.out.println("No ago: "+nAgoTime);
-			//System.out.println("Time Difference: "+difference);
+			eventBus.post(new LogEvent("Calculating new target",LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("Previous "+adjustTargetFrequency+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("We want it to take "+idealMiningTime+" milliseconds",LogEventSource.MINING,Level.INFO));
 		
 			//Limit exponential growth
-			if (difference < idealMiningTime/4) difference = idealMiningTime/4;
-			if (difference > idealMiningTime*4) difference = idealMiningTime*4;
+			if (difference < idealMiningTime/growthFactorLimit) difference = idealMiningTime/growthFactorLimit;
+			if (difference > idealMiningTime*growthFactorLimit) difference = idealMiningTime*growthFactorLimit;
 			
 			//Adjust the target by multiplying the previous target by actual time frame/expected time frame
 			BigInteger newTarget = ((BigInteger.valueOf(difference)).multiply(new BigInteger(unpackTarget(block.getTarget()),16))).divide(BigInteger.valueOf(idealMiningTime));
@@ -384,13 +396,11 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			//System.out.println("New Target: "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))));
-		
+			eventBus.post(new LogEvent("New Target:     "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))),LogEventSource.MINING,Level.INFO));
+
 			return packTarget(newTarget.toString(16));
 		}
 		else{
-			//System.out.println("Using targ: "+stringFormat(unpackTarget(block.getTarget())));
-			
 			//Otherwise use the same target as the most recent block
 			return block.getTarget();
 		}

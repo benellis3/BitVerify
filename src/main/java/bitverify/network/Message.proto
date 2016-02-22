@@ -32,10 +32,7 @@ message VersionAck {
 
 
 message GetHeadersMessage {
-    // encodes current block so that the recipient knows which block to start at.
-    // May be the genesis block.
-    required bytes fromBlock = 1;
-    optional bytes toBlock = 2;
+    repeated bytes from = 1;
 }
 
 message HeadersMessage {
