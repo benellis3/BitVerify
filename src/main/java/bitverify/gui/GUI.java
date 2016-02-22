@@ -116,12 +116,12 @@ public class GUI extends Application {
         primaryStage.show();
         
         //set up gui node to run in background
-//        (new Thread() {
-//        	public void run() {
-//        		mNode = new Node(GUI.this);
-//        	}
-//        }).start();
-        onNodeSetupComplete();
+        (new Thread() {
+        	public void run() {
+        		mNode = new Node(GUI.this);
+        	}
+        }).start();
+        //onNodeSetupComplete();
 	}
 	
 	public void changeLoadingText(String newText) {
@@ -321,6 +321,7 @@ public class GUI extends Application {
 					FileInputStream inputStream = new FileInputStream(sourceFile);
 					hash = Hash.hashStream(inputStream);
 				} catch (IOException e1) {
+					errorText.setFill(Color.RED);
 					errorText.setText(String.format("File '%s' does not exist", docText.getText()));
 					return;
 				}
@@ -335,9 +336,11 @@ public class GUI extends Application {
 		    	
 		    	try {
 					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
-					errorText.setText("");
+					errorText.setFill(Color.GREEN);
+					errorText.setText("Added file succesfully.");
 				} catch (KeyDecodingException | IOException ex) {
-					errorText.setText("Error constructing entry. Check fields and try again");
+					errorText.setFill(Color.RED);
+					errorText.setText("Error constructing entry. Check fields and try again.");
 					ex.printStackTrace();
 				}
 		    	

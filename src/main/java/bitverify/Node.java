@@ -209,6 +209,7 @@ public class Node {
 			String recieverID, String fileDescription, String fileGeo, 
 			String tagString) throws KeyDecodingException, IOException {
 		
+		// We need to split the input into an array of tags
 		String [] tags = tagString.split(",");
 		for (int i = 0; i < tags.length; i++) {
 			tags[i] = tags[i].trim();
