@@ -185,23 +185,25 @@ public class MinerTest {
 		d.insertBlock(b9);
 		d.insertBlock(b10);
 		d.insertBlock(b11);
+		
+		Bus eventBus = new Bus(ThreadEnforcer.ANY);
 
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d,2,200,10);
+		Miner m = new Miner(eventBus,d,2,200,10);
 		
 		m.stopMining();	//to prevent warning
 		
 		int input[] = {
-				Miner.calculatePackedTarget(d, b1, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b2, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b3, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b4, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b5, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b6, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b7, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b8, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b9, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b10, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b11, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b1, eventBus),
+				Miner.calculatePackedTarget(d, b2, eventBus),
+				Miner.calculatePackedTarget(d, b3, eventBus),
+				Miner.calculatePackedTarget(d, b4, eventBus),
+				Miner.calculatePackedTarget(d, b5, eventBus),
+				Miner.calculatePackedTarget(d, b6, eventBus),
+				Miner.calculatePackedTarget(d, b7, eventBus),
+				Miner.calculatePackedTarget(d, b8, eventBus),
+				Miner.calculatePackedTarget(d, b9, eventBus),
+				Miner.calculatePackedTarget(d, b10, eventBus),
+				Miner.calculatePackedTarget(d, b11, eventBus),
 		};
 		
 		int output[] = {

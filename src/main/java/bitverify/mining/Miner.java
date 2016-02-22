@@ -17,6 +17,7 @@ import bitverify.LogEvent;
 import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
+import bitverify.network.NewBlockEvent;
 import bitverify.network.NewEntryEvent;
 import bitverify.network.NewMiningProofEvent;
 import bitverify.persistence.DataStore;
@@ -293,6 +294,22 @@ public class Miner implements Runnable{
     	entries.add(e.getNewEntry());
     	
     	newMiningBlock(entries);
+    }
+    
+    /**
+     * Subscribe to block found events on bus. We restart the Miner when a new block has been found elsewhere.
+     * 
+     *  @param e	the event that is created when a new block has been found from the network
+     */
+    @Subscribe
+    public void onNewBlockEvent(NewBlockEvent e) throws IOException, SQLException {
+    	//A new block as been found elsewhere, abort our current block
+    	newMiningBlock(new ArrayList<Entry>());
+		
+		//Get entries that are still unconfirmed from the database
+		List<Entry> pool = dataStore.getUnconfirmedEntries();
+		
+		blockMining.setEntriesList(pool);
     }
 	
     /**
