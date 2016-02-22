@@ -153,5 +153,5 @@ public interface DataStore {
 
     void insertIdentity(Identity identity) throws SQLException;
 
-    List<byte[]> getActiveBlocksSample();
+    List<byte[]> getActiveBlocksSample() throws SQLException;
 }

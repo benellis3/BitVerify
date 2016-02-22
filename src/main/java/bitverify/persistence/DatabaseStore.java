@@ -13,6 +13,7 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import org.h2.engine.Database;
 
 
 import java.sql.SQLException;
@@ -277,11 +278,13 @@ public class DatabaseStore implements DataStore {
                 // deactivate first, in case an entry will get reactivated.
                 for (Block block : blocksToDeactivate) {
                     updateBlockActive(block, false);
+                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
                     setBlockEntriesConfirmed(block, false, false);
                 }
 
                 for (Block block : blocksToActivate) {
                     updateBlockActive(block, true);
+                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
                     setBlockEntriesConfirmed(block, true, false);
                 }
                 // finally activate current block
@@ -424,8 +427,22 @@ public class DatabaseStore implements DataStore {
     }
 
     @Override
-    public List<byte[]> getActiveBlocksSample() {
-        return null;
+    public List<byte[]> getActiveBlocksSample(int maxBlockIDs) throws SQLException {
+        List<byte[]> result = new ArrayList<>(maxBlockIDs);
+        result.add(latestBlock.getBlockID());
+
+        DatabaseIterator<Block> activeBlocks = getActiveBlocks();
+
+
+
+
+        result.add(Block.getGenesisBlock().getBlockID());
+        return result;
+
+    }
+
+    private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
+        return new DatabaseIterator<>(blockDao.queryBuilder().where().eq("active", true).iterator());
     }
 
 }
