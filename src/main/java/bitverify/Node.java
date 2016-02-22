@@ -409,6 +409,10 @@ public class Node {
 		}
 	}
 	
+	public int getNumPeers(){
+	    return mConnectionManager.peers().size();
+	}
+	
    
     @Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {
