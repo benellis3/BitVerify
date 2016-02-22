@@ -218,7 +218,8 @@ public class Node {
 		String tagString = mScanner.nextLine();
 		
 		try {
-			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);		} catch (KeyDecodingException | IOException | SQLException e) {
+			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);
+		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
 		} 
@@ -226,7 +227,7 @@ public class Node {
 	
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
 			String recieverID, String fileDescription, String fileGeo, 
-			String tagString) throws KeyDecodingException, IOException {
+			String tagString) throws KeyDecodingException, IOException, SQLException {
 		
 		// We need to split the input into an array of tags
 		String [] tags = tagString.split(",");
@@ -248,10 +249,13 @@ public class Node {
 		
 		// Notify the relevant authorities of this important incident
 		NewEntryEvent event = new NewEntryEvent(entry);
+		mDatabase.insertEntry(entry);
 		mEventBus.post(event);
 		mConnectionManager.broadcastEntry(entry);
 		
-	}	private void listConfirmedEntries() {
+	}
+	
+	private void listConfirmedEntries() {
 		try (DatabaseIterator<Entry> di = mDatabase.getConfirmedEntries()) {
 			int entryCount = 0;
 			System.out.println("######################################");
@@ -267,7 +271,8 @@ public class Node {
 		} catch (SQLException e) {
 		    e.printStackTrace();
 		}
-	}		
+	}
+	
 	private void searchEntries() {
 		System.out.println("Enter search query");
 		String searchQuery = mScanner.nextLine();
@@ -310,7 +315,9 @@ public class Node {
 		if (mDatabase != null) 
 			return mDatabase.searchEntries(searchQuery);
 		return null;
-	}	private void listUnconfirmedEntries() {
+	}
+	
+	private void listUnconfirmedEntries() {
 		try {
 			List<Entry> entries = mDatabase.getUnconfirmedEntries();
 			System.out.println("######################################");
@@ -324,7 +331,8 @@ public class Node {
 			System.out.println("######################################");
 		} catch (SQLException e) {
 		    e.printStackTrace();
-		}	}
+		}
+	}
 	
 	private void listConnectedPeers() {
 		System.out.println("######################################");
