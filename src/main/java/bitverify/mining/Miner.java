@@ -6,12 +6,15 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.j256.ormlite.logger.LocalLog;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.NewEntryEvent;
@@ -93,6 +96,8 @@ public class Miner implements Runnable{
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
 		blockMining.setEntriesList(pool);
+		
+		eventBus.post(new LogEvent("New Miner Created",LogEventSource.MINING,Level.INFO));
 
 	}
 	
