@@ -44,6 +44,8 @@ public class Block {
     private byte[] blockID;
     @DatabaseField
     private long height;
+    @DatabaseField
+    private boolean active;
 
     private List<Entry> entries;
     private boolean verifiedEntries;
@@ -288,6 +290,10 @@ public class Block {
         this.height = height;
     }
 
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     public void setNonce(int nonce) {
         this.nonce = nonce;
     }
@@ -335,6 +341,10 @@ public class Block {
         return nonce;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     /**
      * Gets a read-only list containing this block's entries.
      * May be null if the entries have not yet been set.
@@ -353,6 +363,5 @@ public class Block {
     public boolean isVerified(){
         return this.verifiedEntries;
     }
-
 
 }
