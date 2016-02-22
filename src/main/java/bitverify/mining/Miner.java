@@ -269,17 +269,15 @@ public class Miner implements Runnable{
 	
 	/**
      * Subscribe to new entry events on bus. We create a new block to mine with the new entry.
-     * 
      *  @param e	the event that is created when a entry has been received
      */
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
     	List<Entry> entries = blockMining.getEntriesList();
-    	
-    	entries.add(e.getNewEntry());
-    	
-    	newMiningBlock(entries);
+    	List<Entry> newEntries = new ArrayList<>(entries);
+		newEntries.add(e.getNewEntry());
+    	newMiningBlock(newEntries);
     }
 	
     /**
