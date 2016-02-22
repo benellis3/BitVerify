@@ -195,6 +195,7 @@ public class ConnectionManager {
             InetSocketAddress address = p.getPeerAddress();
             System.out.println("Connected to: " + address.getHostName() + " " + address.getPort());
         }
+        System.out.println("There are " + peers.values().size() + " connected peers.");
     }
 
     public Collection<PeerHandler> peers() {
