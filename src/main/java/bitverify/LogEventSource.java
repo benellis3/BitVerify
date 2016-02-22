@@ -1,5 +1,5 @@
 package bitverify;
 
 public enum LogEventSource {
-    MINING, NETWORK
+    MINING, NETWORK, PERSISTENCE, CRYPTO
 }

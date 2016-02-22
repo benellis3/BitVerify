@@ -37,6 +37,8 @@ public class DatabaseStore implements DataStore {
 
     private Block latestBlock;
 
+    final int DUPLICATE_ERROR_CODE = 23001;
+
     public DatabaseStore(String databasePath) throws SQLException {
 
         ConnectionSource cs = new JdbcPooledConnectionSource(databasePath);
@@ -110,6 +112,7 @@ public class DatabaseStore implements DataStore {
         return blockDao.countOf();
     }
 
+
     public Block getMostRecentBlock() throws SQLException {
         return latestBlock;
     }
@@ -148,11 +151,6 @@ public class DatabaseStore implements DataStore {
 
         return output;
     }
-
-
-
-    
-
 
     public List<Block> getNMostRecentBlocks(int n) throws SQLException {
         return getNMostRecentBlocks(n, latestBlock);
@@ -212,8 +210,8 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
-    public boolean insertBlock(Block b) throws SQLException {
-        // TODO: check if we are unorphaning any blocks
+    public InsertBlockResult insertBlock(Block b) throws SQLException {
+        // TODO: worry about potential exception if this method is re-entered
 
         return t.callInTransaction(() -> {
             boolean blockIsNewLatest = false;
@@ -224,18 +222,15 @@ public class DatabaseStore implements DataStore {
 
                 // extending the active blockchain
                 b.setHeight(latestBlock.getHeight() + 1);
-
                 blockIsNewLatest = true;
-                blocksToActivate.add(b);
 
             } else {
                 // see if this will be the new latest block
-
                 Block parent = getBlock(b.getPrevBlockHash());
                 if (parent == null) {
-                    // orphan block, so it will be inactive.
-                    b.setHeight(-1);
-                    blocksToDeactivate.add(b);
+                    // orphan blocks are not be inserted in the database
+                    return InsertBlockResult.FAIL_ORPHAN;
+
                 } else {
                     long oldHeight = latestBlock.getHeight();
                     Block oldLatestBlock = latestBlock;
@@ -246,8 +241,6 @@ public class DatabaseStore implements DataStore {
                     if (newHeight > oldHeight || (newHeight == oldHeight && b.getTimeStamp() < oldLatestBlock.getTimeStamp())) {
 
                         blockIsNewLatest = true;
-                        blocksToActivate.add(b);
-
                         // so determine which blocks to activate/deactivate
                         CloseableIterator<Block> blocksFromHighest = blockDao.queryBuilder().orderBy("height", false).iterator();
 
@@ -291,28 +284,30 @@ public class DatabaseStore implements DataStore {
                 // always add block to database
                 blockDao.create(b);
 
-                if (blockIsNewLatest)
-                    latestBlock = b;
-
                 // deactivate first, in case an entry will get reactivated.
                 for (Block block : blocksToDeactivate)
-                    setBlockEntriesConfirmed(block, false);
+                    setBlockEntriesConfirmed(block, false, false);
 
                 for (Block block : blocksToActivate)
-                    setBlockEntriesConfirmed(block, true);
+                    setBlockEntriesConfirmed(block, true, false);
+
+                // finally activate current block
+                if (blockIsNewLatest) {
+                    setBlockEntriesConfirmed(b, true, true);
+                    latestBlock = b;
+                }
 
                 // now insert block-entry mappings into link table
                 for (Entry e : b.getEntriesList())
                     blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
 
                 // block was successfully inserted
-                return true;
+                return InsertBlockResult.SUCCESS;
 
             } catch (SQLException e) {
                 // catch duplicate block error
-                final int DUPLICATE_ERROR = 23001;
-                if (e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR)
-                    return false;
+                if (isDuplicateError(e))
+                    return InsertBlockResult.FAIL_DUPLICATE;
                 else
                     throw e;
             }
@@ -321,14 +316,24 @@ public class DatabaseStore implements DataStore {
 
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
-     * If the entries are not yet in the database, they will be added.
      * Not an atomic operation so should call this from a transaction.
+     * @param block the block whose entries will be affacted
+     * @param confirmed whether the entries are now confirmed or unconfirmed
+     * @param insert whether to inset entries from the block if they're not already present
+     * @throws SQLException
      */
-    private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
+    private void setBlockEntriesConfirmed(Block block, boolean confirmed, boolean insert) throws SQLException {
         // create/update entries
-        for (Entry e : block.getEntriesList()) {
-            e.setConfirmed(confirmed);
-            entryDao.createOrUpdate(e);
+        if (insert) {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.createOrUpdate(e);
+            }
+        } else {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.update(e);
+            }
         }
     }
 
@@ -371,9 +376,22 @@ public class DatabaseStore implements DataStore {
         return new DatabaseIterator<>(w.or(queries.length * 2).iterator());
     }
 
-    public void insertEntry(Entry e) throws SQLException {
+    public boolean insertEntry(Entry entry) throws SQLException {
         // by default, entry will be unconfirmed
-        entryDao.create(e);
+        try {
+            entryDao.create(entry);
+            return true;
+        } catch (SQLException e) {
+            // catch duplicate block error
+            if (isDuplicateError(e))
+                return false;
+            else
+                throw e;
+        }
+    }
+
+    private boolean isDuplicateError(SQLException e) {
+        return e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR_CODE;
     }
 
 
@@ -401,5 +419,3 @@ public class DatabaseStore implements DataStore {
     }
 
 }
-
-

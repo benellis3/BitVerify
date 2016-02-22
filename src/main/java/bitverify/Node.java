@@ -1,17 +1,17 @@
 package bitverify;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.util.encoders.Hex;
 
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.Hash;
@@ -20,6 +20,7 @@ import bitverify.crypto.Identity;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 import bitverify.block.Block;
 import bitverify.crypto.KeyDecodingException;
@@ -30,14 +31,21 @@ import bitverify.mining.Miner.BlockFoundEvent;
 import bitverify.network.ConnectionManager;
 import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseIterator;
 import bitverify.persistence.DatabaseStore;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
-import com.j256.ormlite.support.ConnectionSource;
-
 public class Node {
-	private String[] mOptions = {"Start mining", "Add entry", "Search entries", "See statistics", "Exit"};
-	private int mMiningOptionNum = 0;
+	private String[] mOptions = {
+			"Start mining",
+			"Add entry",
+			"List confirmed entries",
+			"List unconfirmed entries",
+			"List connected peers",
+			"List blocks on primary chain",
+			"Exit",
+			}; // see mapping in handleUserInput
+	private boolean isMining = false;
+	private static final int mMiningOptionNum = 0;
 	
 	private Scanner mScanner;
 	
@@ -89,8 +97,10 @@ public class Node {
 	
 	private void userCLISetup() {
 		// Print out the command options for the user
+		System.out.println("----------");
+		System.out.println("CLI MENU");
 		for (int i = 0; i < mOptions.length; i++) {
-			System.out.printf("(%d)%s\n", i+1, mOptions[i]);
+			System.out.printf("(%d)%s\n", i, mOptions[i]);
 		}
 		
 		// Get the user input and run command if valid
@@ -99,8 +109,7 @@ public class Node {
 		boolean shouldContinue = true;
 		try {
 			int inputNum = Integer.parseInt(uInput);
-			String command = mOptions[inputNum - 1];
-			shouldContinue = handleUserInput(command);
+			shouldContinue = handleUserInput(inputNum);
 		} catch (NumberFormatException e) {
 			System.out.printf("'%s' is not a valid command. Enter a number instead.\n", uInput);
 		} catch (ArrayIndexOutOfBoundsException e2) {
@@ -112,24 +121,35 @@ public class Node {
 			userCLISetup();
 	}
 	
-	private boolean handleUserInput(String command) {
-		command = command.toLowerCase();
-		if (command.equals("start mining"))
-			startMiner();
-		else if (command.equals("stop mining"))
-			stopMiner();
-		else if (command.equals("add entry"))
-			addEntry();
-		else if (command.equals("search entries"))
-			searchEntries();
-		else if (command.equals("see statistics"))
-			displayStatistics();
-		else if (command.equals("exit")){
-			exitProgram();
-			return false;
+	private boolean handleUserInput(int commandNum) {
+		switch (commandNum){
+			case 0:
+				if (isMining){
+					stopMiner();
+				} else {
+					startMiner();
+				}
+				break;
+			case 1:
+				addEntry();
+				break;
+			case 2:
+				listConfirmedEntries();
+				break;
+			case 3:
+				listUnconfirmedEntries();
+				break;
+			case 4:
+				listConnectedPeers();
+				break;
+			case 5:
+				listBlocks();
+				break;
+			case 6:
+				exitProgram();
+				return false;
 		}
 		return true;
-			
 	}
 	
 	public void startMiner() {
@@ -149,6 +169,7 @@ public class Node {
 		Thread miningThread = new Thread(mMiner);
 		miningThread.start();
 		mOptions[mMiningOptionNum] = "Stop mining";
+		isMining = true;
 	}
 	
 	public void stopMiner() {
@@ -157,7 +178,7 @@ public class Node {
 			mMiner = null;
 		}
 		mOptions[mMiningOptionNum] = "Start mining";
-		
+		isMining = false;
 	}
 	
 	private void addEntry() {
@@ -178,11 +199,11 @@ public class Node {
 			}
 		}
 		
-		System.out.println("Enter file download:");
-		String fileDownload = mScanner.nextLine();
-		
 		System.out.println("Enter file name:");
 		String fileName = mScanner.nextLine();
+		
+		System.out.println("Enter file download:");
+		String fileDownload = mScanner.nextLine();
 		
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
@@ -195,37 +216,155 @@ public class Node {
 		
 		System.out.println("Enter tags seperated by commas:");
 		String tagString = mScanner.nextLine();
-		String [] tags = tagString.split(",");
-		for (int i = 0; i < tags.length; i++) {
-			tags[i] = tags[i].trim();
-		}
 		
-		// Construct metadata and entry objects for file
-		Entry entry;
 		try {
-			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
-			// Notify the relevant authorities of this important incident
-			NewEntryEvent event = new NewEntryEvent(entry);
-			mEventBus.post(event);
-			mConnectionManager.broadcastEntry(entry);
-			
-		} catch (KeyDecodingException | IOException e) {
+			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);
+		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
 		} 
 	}
 	
-	private void searchEntries() {
+	public void addEntry(byte [] hash, String fileDownload, String fileName, 
+			String recieverID, String fileDescription, String fileGeo, 
+			String tagString) throws KeyDecodingException, IOException, SQLException {
+		
+		// We need to split the input into an array of tags
+		String [] tags = tagString.split(",");
+		for (int i = 0; i < tags.length; i++) {
+			tags[i] = tags[i].trim();
+		}
+		
+		// Construct entry object 
+		Entry entry;
+		
+		// RecieverID is optional 
+		if (recieverID.length() > 0) {
+			entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		} else {
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		}
+		
+		// Notify the relevant authorities of this important incident
+		NewEntryEvent event = new NewEntryEvent(entry);
+		mDatabase.insertEntry(entry);
+		mEventBus.post(event);
+		mConnectionManager.broadcastEntry(entry);
 		
 	}
 	
-	private void displayStatistics() {
+	private void listConfirmedEntries() {
+		try (DatabaseIterator<Entry> di = mDatabase.getConfirmedEntries()) {
+			int entryCount = 0;
+			System.out.println("######################################");
+			System.out.println("Confirmed entries:");
+		    while (di.moveNext()) {
+		    	entryCount++;
+		        Entry entry = di.current();
+		        System.out.printf("entryID: %s, UploaderID: %s\n",
+						entry.getEntryID().toString(), Base64.encode(entry.getUploaderID()) );
+		    }
+		    System.out.println("There are "+entryCount+" confirmed entries.");
+		    System.out.println("######################################");
+		} catch (SQLException e) {
+		    e.printStackTrace();
+		}
+	}
+	
+	private void searchEntries() {
+		System.out.println("Enter search query");
+		String searchQuery = mScanner.nextLine();
 		
+		// Specify how many entries we want to show to user
+		int entriesAtOnce = 10;
+		if (mDatabase != null) {
+			// We use an iterator to avoid loading entire database in memory
+			try (DatabaseIterator<Entry> di = mDatabase.searchEntries(searchQuery)) {
+				outerLoop:
+				while (true) {
+					for (int i = 0; i < entriesAtOnce; i++) {
+						if (di.moveNext())
+							System.out.println(di.current().toString());
+						else
+							System.out.println("END OF SEARCH");
+					}
+					while (true) {
+						System.out.println("Type 'n' for next page or 'exit' to exit search");
+						String userDecision = mScanner.nextLine();
+						if (userDecision.equalsIgnoreCase("n")) {
+							break;
+						} else if (userDecision.equalsIgnoreCase("exit")) {
+							break outerLoop;
+						} else {
+							System.out.println(String.format("'%s' is not a valid command", userDecision));
+						}
+					}
+			    }
+			} catch (SQLException ex) {
+				System.out.println("An issue came up with the database. Try to search again.");
+			}
+		} else {
+			System.out.println("An issue came up with the database. Try to search again.");
+		}
+	}
+	
+
+	public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
+		if (mDatabase != null) 
+			return mDatabase.searchEntries(searchQuery);
+		return null;
+	}
+	
+	private void listUnconfirmedEntries() {
+		try {
+			List<Entry> entries = mDatabase.getUnconfirmedEntries();
+			System.out.println("######################################");
+			System.out.println("Unconfirmed entries:");
+			for (int i=0; i<entries.size(); i++){
+		        System.out.printf("entryID: %s, UploaderID: %s\n",
+		        		entries.get(i).getEntryID().toString(),
+		        		Base64.encode(entries.get(i).getUploaderID()) );
+		    }
+			System.out.println("There are "+entries.size()+" unconfirmed entries.");
+			System.out.println("######################################");
+		} catch (SQLException e) {
+		    e.printStackTrace();
+		}
+	}
+	
+	private void listConnectedPeers() {
+		System.out.println("######################################");
+		mConnectionManager.printPeers();
+		System.out.println("######################################");
+	}
+	
+	private void listBlocks() {
+		try {
+			List<Block> blocks = mDatabase.getNMostRecentBlocks(2000); //TODO cheating here for now...
+			System.out.println("######################################");
+			System.out.println("Blocks on the primary chain:");
+			for (int i=0; i<blocks.size(); i++){
+				System.out.printf("height: %d, blockID: %s, entriesHash: %s\n",
+						blocks.get(i).getHeight(), Base64.encode(blocks.get(i).getBlockID()),
+						Base64.encode(blocks.get(i).getEntriesHash()) );
+			}
+			System.out.println("There are "+blocks.size()+" blocks on the primary chain.");
+			System.out.println("######################################");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return;
+		}
 	}
 	
 	private void exitProgram() {
+		// Need to stop a few resources before exiting
 		if (mMiner != null)
 			mMiner.stopMining();
+		if (mScanner != null)
+			mScanner.close();
+		
 	}
 	
 	private void setupUser() {

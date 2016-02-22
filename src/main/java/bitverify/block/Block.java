@@ -166,7 +166,7 @@ public class Block {
         int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
-            throw new IllegalStateException();
+            throw new IllegalArgumentException();
         } else if (listLen == 1) {
             Block onlyBlock = blockList.get(FIRST);
             return Miner.blockHashMeetDifficulty(onlyBlock);
@@ -298,6 +298,11 @@ public class Block {
         Block thatBlock = (Block) thatObject;
         return Arrays.equals(this.hashHeader(), thatBlock.hashHeader());
     }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(blockID);
+    }
     
     
 //  GETTER METHODS
@@ -348,4 +353,6 @@ public class Block {
     public boolean isVerified(){
         return this.verifiedEntries;
     }
+
+
 }

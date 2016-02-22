@@ -20,7 +20,7 @@ public interface DataStore {
     long getBlocksCount() throws SQLException;
 
     /**
-     * Gets the most recent block on the active blockchain.
+     * Gets the most recent block on the active blockchain. Never returns null.
      * @throws SQLException
      */
     Block getMostRecentBlock() throws SQLException;
@@ -50,12 +50,13 @@ public interface DataStore {
     List<Block> getBlocksBetween(byte[] idFrom, byte[] idTo, int limit) throws SQLException;
 
     /**
-     * Inserts the given block into the store, unless it is already present.
+     * Inserts the given block into the store, unless it is already present or would be an orphan.
      * @param b the block
-     * @return true if the block was inserted, false if it was already present.
+     * @return An InsertBlockResult object indicating the result of this operation
+     * - success, or failure due to the block being an orphan, or a duplicate.
      * @throws SQLException
      */
-    boolean insertBlock(Block b) throws SQLException;
+    InsertBlockResult insertBlock(Block b) throws SQLException;
 
     /**
      * Get a particular block.
@@ -107,11 +108,12 @@ public interface DataStore {
     DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException;
 
     /**
-     * Insert an entry into the store.
+     * Insert an entry into the store, unless it already exists
      * @param e the entry
+     * @return true if the entry was inserted successfully, false if it is a duplicate.
      * @throws SQLException
      */
-    void insertEntry(Entry e) throws SQLException;
+    boolean insertEntry(Entry e) throws SQLException;
 
     /**
      * Get a property's value. Will return null if the property is not stored.

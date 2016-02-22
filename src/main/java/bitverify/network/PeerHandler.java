@@ -2,16 +2,19 @@ package bitverify.network;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
-import bitverify.network.proto.MessageProto.Version;
-import bitverify.network.proto.MessageProto.Message;
-import bitverify.network.proto.MessageProto.NetAddress;
-import bitverify.network.proto.MessageProto.Ack;
+import bitverify.entries.Entry;
+import bitverify.network.proto.MessageProto;
+import bitverify.network.proto.MessageProto.*;
 import bitverify.persistence.DataStore;
+import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 
 
@@ -19,144 +22,303 @@ import com.squareup.otto.Bus;
  * Created by benellis on 03/02/2016.
  */
 public class PeerHandler {
-    private BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private Socket socket;
-    private InetSocketAddress listenAddress;
-    private Bus bus;
+    private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    private final DataStore dataStore;
+    private final Socket socket;
+    // only post messages, don't register
+    private final Bus bus;
+    private final ExecutorService executorService;
+    private final int ourListenPort;
+    private InetSocketAddress peerAddress;
+
+    private volatile boolean shutdown;
+
+    private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
+    private static final int BLOCK_TIMEOUT_SECONDS = 5;
+    private static final int SETUP_TIMEOUT_SECONDS = 5;
+
+    private ArrayBlockingQueue<byte[]> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
+    private RestartableTimer blockTimer;
+
+
     /**
-     * This constructor should be used when receiving a new connection from the peer.
-     * This will attempt to construct a PeerHandler object from a socket. It
-     * is VERY important to note that this method BLOCKS waiting for a version message
-     * and therefore should be run from within a separate thread.
-     * @param s the socket to connect to
-     * @param es the ExecutorService for the creator
-     * @param ds the Database access class
+     * Use this constructor to create a PeerHandler object from an already connected socket.
+     * You must call establishConnection or acceptConnection before making other communications with the peer.
+     * @param s   the socket to connect to
+     * @param es  the ExecutorService for the creator
+     * @param ds  the Database access class
      * @param bus the application event bus.
+     * @param ourListenPort the port our client is listening on
+     * @param onBlockTimeout the function to call when this peer times out waiting to receive a requested block.
      */
-    public PeerHandler(Socket s, ExecutorService es, DataStore ds, Bus bus) throws
-            TimeoutException, ExecutionException, InterruptedException{
-
+    public PeerHandler(Socket s, ExecutorService es, DataStore ds, Bus bus, int ourListenPort, Consumer<PeerHandler> onBlockTimeout) {
         socket = s;
-        // create new PeerSend Runnable with the right queue
-        // if constructed with a socket need to ensure that the version and ack messages
-        // have been exchanged.
-        Future<InetSocketAddress> addressFuture = es.submit(new VersionReceiveHandler());
+        executorService = es;
+        this.bus = bus;
+        this.dataStore = ds;
+        this.ourListenPort = ourListenPort;
 
-        try {
-            listenAddress = addressFuture.get(3, TimeUnit.SECONDS); // blocks thread
-        }
-        finally {
-            addressFuture.cancel(true);
-        }
-        // create new PeerSend Runnable with the right queue
-        es.execute(new PeerSend(messageQueue, socket));
-        es.execute(new PeerReceive(socket, ds, bus, listenAddress));
-        // send ack message to denote that we have connected
-        Ack ack = Ack.newBuilder().build();
-        Message msg = Message.newBuilder().setType(Message.Type.ACK).setAck(ack).build();
-        send(msg);
+        blockTimer = new RestartableTimer(() -> onBlockTimeout.accept(this), BLOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
-    /**
-     * This constructor should be used when connecting to a peer when starting up.
-     * This constructor blocks waiting for the person we are connecting to to send an ACK message
-     * @param address the InetSocketAddress to connect to
-     * @param listenPort the port that our host is listening on.
-     * @param es the ExecutorService of the connection manager
-     * @param ds the database access class
-     * @param bus the application event bus
-     * @throws IOException in the event socket creation fails.
-     */
-    public PeerHandler(InetSocketAddress address, int listenPort,
-                       ExecutorService es, DataStore ds, Bus bus)
-            throws IOException, TimeoutException, ExecutionException, InterruptedException{
 
-        this.listenAddress = address;
-        socket = new Socket(address.getAddress(), address.getPort());
-        es.execute(new PeerSend(messageQueue, socket));
-        NetAddress netAddress = NetAddress.newBuilder()
-                .setHostName(InetAddress.getLocalHost().getHostName()) //not relevant
-                .setPort(listenPort).build();
-        Version version = Version.newBuilder().setListenPort(netAddress).build();
+    /**
+     * Cancels this peer connection.
+     */
+    public void shutdown() {
+        shutdown = true;
+        try {
+            socket.close();
+        } catch (IOException e) {
+            // nothing we can do here.
+        }
+    }
+
+    /**
+     * Establishes a new outgoing connection with a peer. This method will block until the connection setup has been negotiated.
+     * @param listenAddress the address of the peer
+     * @throws InterruptedException
+     * @throws ExecutionException   a socket IO error occurred
+     * @throws TimeoutException     a timeout occurred while waiting for a connection setup message
+     */
+    public void establishConnection(InetSocketAddress listenAddress)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        this.peerAddress = listenAddress;
+        // 1. send version message
+        executorService.submit(new PeerSend());
+        sendVersionMessage(ourListenPort);
+        // 2. receive version-ack message
+        executorService.submit(() -> receiveMessage(Message.Type.VERSION_ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        // 3. send ack message
+        sendAckMessage();
+        // can now send and receive other messages
+        executorService.submit(new PeerReceive());
+    }
+
+    /**
+     * Accepts a new incoming connection with a peer. This method will block until the connection setup has been negotiated.
+     * @throws ExecutionException   a socket IO error occurred
+     * @throws InterruptedException
+     * @throws TimeoutException     a timeout occurred while waiting for a connection setup message
+     */
+    public InetSocketAddress acceptConnection() throws ExecutionException, InterruptedException, TimeoutException {
+        // 1. receive and check version message
+        Message m = executorService.submit(() -> receiveMessage(Message.Type.VERSION)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        peerAddress = new InetSocketAddress(socket.getInetAddress(), m.getVersion().getListenPort());
+        // 2. send version-ack message
+        executorService.submit(new PeerSend());
+        sendVersionAckMessage();
+        // 3. receive ack message
+        executorService.submit(() -> receiveMessage(Message.Type.ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        // can now send and receive other messages
+        executorService.submit(new PeerReceive());
+        return peerAddress;
+    }
+
+    private Message receiveMessage(Message.Type type) throws IOException {
+        InputStream is = socket.getInputStream();
+        Message msg;
+        do {
+            msg = Message.parseDelimitedFrom(is);
+        } while (msg.getType() != type);
+        return msg;
+    }
+
+    private void sendVersionMessage(int ourListenPort) {
+        Version version = Version.newBuilder()
+                .setListenPort(ourListenPort)
+                .build();
         Message msg = Message.newBuilder()
                 .setType(Message.Type.VERSION)
-                .setVersion(version).build();
+                .setVersion(version)
+                .build();
         send(msg);
-        // await ACK in order to receive messages
-        Future<InetSocketAddress> fut = es.submit(new AckReceiveHandler());
-        try {
-            fut.get(3, TimeUnit.SECONDS);
-        }
-        finally {
-            fut.cancel(true);
-        }
-        // allow connections to be received.
-        es.execute(new PeerReceive(socket, ds, bus, listenAddress));
     }
+
+    private void sendAckMessage() {
+        Ack ack = Ack.newBuilder().build();
+        Message msg = Message.newBuilder()
+                .setType(Message.Type.ACK)
+                .setAck(ack)
+                .build();
+        send(msg);
+    }
+
+    private void sendVersionAckMessage() {
+        VersionAck ack = VersionAck.newBuilder()
+                .setListenPort(ourListenPort)
+                .build();
+        Message msg = Message.newBuilder()
+                .setType(Message.Type.VERSION_ACK)
+                .setVersionAck(ack)
+                .build();
+        send(msg);
+    }
+
+    /**
+     * Gets the address of the peer we are connected to.
+     */
+    public InetSocketAddress getPeerAddress() {
+        return peerAddress;
+    }
+
+    /**
+     * This sends a message and does not block.
+     * Returns true if the message was added to the queue to be sent, or false if this peer is being shut down.
+     * @param msg The message to send
+     */
+    public boolean send(Message msg) {
+        if (shutdown)
+            return false;
+
+        messageQueue.add(msg); // returns immediately.
+        return true;
+    }
+
+    public Queue<byte[]> getBlocksInFlight() {
+        return blocksInFlight;
+    }
+
+    public RestartableTimer getBlockTimer() {
+        return blockTimer;
+    }
+
+    /**
+     * Requests the specified block by sending a getBlock message, provided we aren't already
+     * awaiting the maximum number of blocks we may simultaneously download from a peer.
+     * @param blockID the ID of the block to request
+     * @return true if the request was sent, false if we're already downloading the maximum number of blocks or this peer is being shut down.
+     */
+    public boolean requestBlock(byte[] blockID) {
+        if (!blocksInFlight.offer(blockID))
+            return false;
+
+        MessageProto.GetBlockMessage gbm = MessageProto.GetBlockMessage.newBuilder()
+                .setBlockID(ByteString.copyFrom(blockID))
+                .build();
+
+        MessageProto.Message message = MessageProto.Message.newBuilder()
+                .setType(MessageProto.Message.Type.GET_BLOCK)
+                .setGetBlock(gbm)
+                .build();
+
+
+        // if peer is shutting down so message can't be sent, just return false to indicate failure
+        if (send(message)) {
+            blockTimer.start();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == null) return false;
-        if(obj instanceof PeerHandler) {
+        if (obj == null) return false;
+        if (obj instanceof PeerHandler) {
             PeerHandler p = (PeerHandler) obj;
-            return listenAddress.equals(p.getListenAddress());
+            return peerAddress.equals(p.getPeerAddress());
         }
         return false;
     }
-    public InetSocketAddress getAddress() {return new InetSocketAddress(socket.getInetAddress(),
-                                                socket.getPort());}
-    public InetSocketAddress getLocalAddress() {return new InetSocketAddress(socket.getInetAddress(),
-                                                socket.getLocalPort());}
 
-    public InetSocketAddress getListenAddress() {return listenAddress;}
+
+    class PeerReceive implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                Message message;
+                InputStream is = socket.getInputStream();
+                while (true) {
+                    message = Message.parseDelimitedFrom(is);
+                    switch (message.getType()) {
+                        case GETPEERS:
+                            handleGetPeers(message.getGetPeers());
+                            break;
+                        case ENTRY:
+                            handleEntryMessage(message.getEntry());
+                            break;
+                        case BLOCK:
+                            handleBlockMessage(message.getBlock());
+                            break;
+                        case BLOCK_NOT_FOUND:
+                            handleBlockNotFoundMessage(message.getBlockNotFound());
+                        case PEERS:
+                            handlePeers(message.getPeers());
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+            } catch (IOException | SQLException e) {
+                // Connection manager already knows we are closing if shutdown is true.
+                if (!shutdown)
+                    bus.post(new PeerErrorEvent(PeerHandler.this, e));
+            }
+        }
+
+        private void handleEntryMessage(EntryMessage message) throws SQLException, IOException {
+            byte[] bytes = message.getEntryBytes().toByteArray();
+            Entry entry = Entry.deserialize(bytes);
+
+            // check the validity of the entry
+            if (entry.testEntryHashSignature()) {
+                try {
+                dataStore.insertEntry(entry);
+                } catch (Exception ex) { System.out.println(ex); }
+                // raise a NewEntryEvent on the event bus
+                bus.post(new NewEntryEvent(entry));
+            }
+        }
+
+        private void handleBlockMessage(BlockMessage m) {
+            // create an event which can be handed off to the connection manager.
+            bus.post(new BlockMessageEvent(m, PeerHandler.this));
+        }
+
+        private void handleBlockNotFoundMessage(BlockNotFoundMessage m) {
+            bus.post(new BlockNotFoundMessageEvent(m, PeerHandler.this));
+        }
+
+        private void handleGetPeers(GetPeers message) {
+            // create an event which can be handed off to the connection manager.
+            bus.post(new GetPeersEvent(PeerHandler.this));
+        }
+
+        private void handlePeers(Peers message) {
+            Collection<NetAddress> netAddressList = message.getAddressList();
+            // create a list of InetSocketAddresses from the netAddressList
+            Set<InetSocketAddress> socketAddressList = ConcurrentHashMap.newKeySet();
+            for (NetAddress netAddress : netAddressList) {
+                socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
+            }
+            bus.post(new PeersEvent(socketAddressList));
+        }
+    }
+
+
     /**
-     * This sends a message and does not block.
-     * @param msg The message to send
+     * Sends a messages from a queue over a Socket
      */
-    public void send(Message msg) {
-        messageQueue.add(msg); // returns immediately.
+    class PeerSend implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                OutputStream os = socket.getOutputStream();
+                while (true) {
+                    Message message = messageQueue.take();
+                    message.writeDelimitedTo(os);
+                }
+            } catch (IOException | InterruptedException e) {
+                // Connection manager already knows we are closing if shutdown is true.
+                if (!shutdown)
+                    bus.post(new PeerErrorEvent(PeerHandler.this, e));
+            }
+        }
     }
 
-    public class VersionReceiveHandler implements Callable<InetSocketAddress> {
-        @Override
-        public InetSocketAddress call() throws IOException {
-            Message msg;
-            InputStream is = socket.getInputStream();
-            Version versionMsg;
-            while(true) {
-                msg = Message.parseDelimitedFrom(is);
-                Message.Type type = msg.getType();
-                if (type == Message.Type.VERSION) {
-                    versionMsg = msg.getVersion();
-                    break;
-                }
-            }
-            NetAddress netAddress = versionMsg.getListenPort();
-            // safe cast since one subclasses the other
-            InetSocketAddress socketAddr = (InetSocketAddress) socket.getRemoteSocketAddress();
-            String hostName = socketAddr.getHostName();
-            InetSocketAddress ret = new InetSocketAddress(hostName,netAddress.getPort());
-            return ret;
-        }
-    }
-    // currently this information is not used - Is there anything useful
-    // that we could put in the ACK message?
-    public class AckReceiveHandler implements Callable<InetSocketAddress> {
-        @Override
-        public InetSocketAddress call() throws Exception {
-            Message msg;
-            InputStream is = socket.getInputStream();
-            Ack ack;
-            while(true) {
-                msg = Message.parseDelimitedFrom(is);
-                Message.Type type = msg.getType();
-                if(type == Message.Type.ACK) {
-                    ack = msg.getAck();
-                    break;
-                }
-            }
-            NetAddress netAddress = ack.getAddr();
-            InetSocketAddress addr = new InetSocketAddress(netAddress.getHostName(), netAddress.getPort());
-            return addr;
-        }
-    }
- }
+
+}

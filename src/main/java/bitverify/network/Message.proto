@@ -3,32 +3,56 @@ option java_package = "bitverify.network.proto";
 option java_outer_classname = "MessageProto";
 
 message Message {
-    enum Type {GETBLOCK = 1; BLOCK = 2; ENTRY = 3; PEERS = 4; GETPEERS = 5; VERSION = 6; ACK = 7;}
+    enum Type {HEADERS = 1;BLOCK = 2; ENTRY = 3; PEERS = 4; GETPEERS = 5; VERSION = 6; ACK = 7; GET_HEADERS = 8; GET_BLOCK = 9; VERSION_ACK = 10; BLOCK_NOT_FOUND = 11;}
 
     required Type type = 1;
-
-    optional GetBlock getBlock = 2;
+    optional HeadersMessage headers = 2;
     optional BlockMessage block = 3;
     optional EntryMessage entry = 4;
     optional Peers peers = 5;
     optional GetPeers getPeers = 6;
     optional Version version = 7;
     optional Ack ack = 8;
+    optional GetHeadersMessage getHeaders = 9;
+    optional GetBlockMessage getBlock = 10;
+    optional VersionAck versionAck = 11;
+    optional BlockNotFoundMessage blockNotFound = 12;
 }
+
 message Version {
-    required NetAddress listenPort = 1; // address and port on which the sender is listening
+    required int32 listenPort = 1;
 }
+
 message Ack {
-    optional NetAddress addr = 1;
 }
-message GetBlock {
+
+message VersionAck {
+    required int32 listenPort = 1;
+}
+
+
+message GetHeadersMessage {
     // encodes current block so that the recipient knows which block to start at.
     // May be the genesis block.
-    required bytes currentBlock = 1;
+    required bytes fromBlock = 1;
+    optional bytes toBlock = 2;
+}
+
+message HeadersMessage {
+    repeated bytes headers = 1;
+}
+
+message GetBlockMessage {
+    required bytes blockID = 1;
 }
 
 message BlockMessage {
     required bytes blockBytes = 1;
+    repeated bytes entries = 2;
+}
+
+message BlockNotFoundMessage {
+    required bytes blockID = 1;
 }
 
 message EntryMessage {
@@ -45,5 +69,5 @@ message NetAddress {
 }
 
 message GetPeers {
-    required NetAddress myAddress = 1; // include own address
 }
+

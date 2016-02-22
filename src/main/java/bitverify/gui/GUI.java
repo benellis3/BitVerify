@@ -1,11 +1,19 @@
 package bitverify.gui;
 
 import bitverify.Node;
+import bitverify.crypto.Hash;
+import bitverify.crypto.KeyDecodingException;
 
 import java.awt.GridLayout;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.aquafx_project.AquaFx;
 import javafx.application.Application;
@@ -35,10 +43,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class GUI extends Application {
@@ -105,13 +116,13 @@ public class GUI extends Application {
         
         primaryStage.show();
         
-        // set up gui node to run in background
-//        (new Thread() {
-//        	public void run() {
-//        		mNode = new Node(GUI.this);
-//        	}
-//        }).start();
-        onNodeSetupComplete();
+        //set up gui node to run in background
+        (new Thread() {
+        	public void run() {
+        		mNode = new Node(GUI.this);
+        	}
+        }).start();
+        //onNodeSetupComplete();
 	}
 	
 	public void changeLoadingText(String newText) {
@@ -141,8 +152,7 @@ public class GUI extends Application {
 	        	
 	        	Tab minerTab = getMinerTab();
 	        	
-	        	Tab addEntryTab = new Tab();
-	        	addEntryTab.setText("Add Entry");
+	        	Tab addEntryTab = getAddEntryTab();
 	        	
 	        	Tab searchTab = getSearchTab();
 	        	
@@ -240,7 +250,164 @@ public class GUI extends Application {
 		return minerTab;
 	}
 	
-	public Tab getSearchTab() {
+	private Tab getAddEntryTab() {
+		Tab entryTab = new Tab();
+		entryTab.setText("Add Entry");
+		
+		// Set some constants
+		int TextFieldWidth = 200;
+		int HSpacing = 5;
+		
+		// VLay will hold our form
+		VBox vLay = new VBox();
+    	vLay.setPadding(new Insets(15));
+    	vLay.setSpacing(10);
+		
+    	// Title shown at the top of the form
+		HBox hTitle = new HBox();
+		Text titleText = new Text("Choose fields for document:");
+		hTitle.getChildren().add(titleText);
+		
+		// Get the location of the document
+		HBox docHBox = new HBox();
+		docHBox.setSpacing(HSpacing);
+		docHBox.setAlignment(Pos.TOP_LEFT);
+		
+		Label docLabel = new Label("File Path:");
+		TextField docText = new TextField();
+		docText.setPrefWidth(TextFieldWidth);
+		
+		Button chooseFileBtn = new Button("Choose File");
+		chooseFileBtn.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	FileChooser chooser = new FileChooser();
+				chooser.setTitle("Select File");
+				File selectedFile = chooser.showOpenDialog(primaryStage);
+				// Update the docText field with the desired file
+				docText.setText(selectedFile.getAbsolutePath());
+		    }
+		});
+		
+		docHBox.getChildren().addAll(docLabel, docText, chooseFileBtn);
+		
+		List<HBox> fields = new LinkedList<HBox>();
+		
+		// Get the name of the document
+		HBox nameHBox = getFieldHBox("File Name:", HSpacing, TextFieldWidth);
+		fields.add(nameHBox);
+		
+		// Get the download link of the document
+		HBox downloadHBox = getFieldHBox("Download URL:", HSpacing, TextFieldWidth);
+		fields.add(downloadHBox);
+
+		// Get the description of the document
+		HBox descriptionHBox = getFieldHBox("Description:", HSpacing, TextFieldWidth);
+		fields.add(descriptionHBox);
+		
+		// Get the description of the document
+		HBox recieverHBox = getFieldHBox("Reciever ID:", HSpacing, TextFieldWidth);
+		fields.add(recieverHBox);
+		
+		// Get the description of the document
+		HBox geoHBox = getFieldHBox("Geolocation:", HSpacing, TextFieldWidth);
+		fields.add(geoHBox);
+		
+		// Get the description of the document
+		HBox tagsHBox = getFieldHBox("Tags:", HSpacing, TextFieldWidth);
+		fields.add(tagsHBox);
+		
+		// This will hold any errors in input
+		Text errorText = new Text("");
+		errorText.setFill(Color.RED);
+		
+		// Add buttons to submit the entry and clear the fields
+		HBox submitHBox = new HBox();
+		submitHBox.setSpacing(25);
+		
+		Button submitBtn = new Button("Submit Entry");
+		Button clearBtn = new Button("Clear all fields");
+		
+		submitBtn.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	File sourceFile = new File(docText.getText());
+		    	
+		    	// Try to hash the source file. Display message if failed
+		    	byte [] hash = null;
+				try {
+					FileInputStream inputStream = new FileInputStream(sourceFile);
+					hash = Hash.hashStream(inputStream);
+				} catch (IOException e1) {
+					errorText.setFill(Color.RED);
+					errorText.setText(String.format("File '%s' does not exist", docText.getText()));
+					return;
+				}
+				
+				// Get the form fields
+				String name = extractTextFromHBoxField(nameHBox);
+				String download = extractTextFromHBoxField(downloadHBox);
+				String description = extractTextFromHBoxField(descriptionHBox);
+		    	String recieverID = extractTextFromHBoxField(recieverHBox);
+		    	String geoLoc = extractTextFromHBoxField(geoHBox);
+		    	String tags = extractTextFromHBoxField(tagsHBox);
+		    	
+		    	try {
+					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
+					errorText.setFill(Color.GREEN);
+					errorText.setText("Added file succesfully.");
+				} catch (KeyDecodingException | IOException | SQLException ex) {
+					errorText.setFill(Color.RED);
+					errorText.setText("Error constructing entry. Check fields and try again.");
+					ex.printStackTrace();
+				}
+		    	
+		    }
+		});
+		
+		clearBtn.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	docText.setText("");
+		    	// Just go through the fields and set the text in the box to ""
+		    	for (HBox hbox : fields) {
+		    		TextField field = (TextField) hbox.getChildren().get(1);
+		    		field.setText("");
+		    	}
+		    }
+		});
+		
+		submitHBox.getChildren().addAll(submitBtn, clearBtn);
+		
+				
+		// Add all the fields in the form to the vertical layout
+		vLay.getChildren().addAll(hTitle, docHBox);
+		vLay.getChildren().addAll(fields);
+		vLay.getChildren().addAll(submitHBox, errorText);
+		
+		// Make sure to add the vertical layout to the tab before returning
+		entryTab.setContent(vLay);
+		return entryTab;
+	}
+	
+	private String extractTextFromHBoxField(HBox hbox) {
+		TextField field = (TextField) hbox.getChildren().get(1);
+		return field.getText();
+	}
+	
+	private HBox getFieldHBox(String textLabel, int spacing, int textFieldWidth) {
+		// Get the description of the document
+		HBox hBox = new HBox();
+		hBox.setSpacing(spacing);
+		hBox.setAlignment(Pos.TOP_LEFT);
+		
+		Label label = new Label(textLabel);
+		TextField text = new TextField();
+		text.setPrefWidth(textFieldWidth);
+		
+		hBox.getChildren().addAll(label, text);
+		HBox.setHgrow(hBox, Priority.ALWAYS);
+		return hBox;
+	}
+	
+	private Tab getSearchTab() {
     	Tab searchTab = new Tab();
     	searchTab.setText("Search Entries");
     	
@@ -268,9 +435,9 @@ public class GUI extends Application {
 	}
 
 	public String constructLogMessage(String message) {
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 		Date date = new Date();
-		return String.format("%s - %s", dateFormat.format(date), message);
+		return String.format("[%s] %s", dateFormat.format(date), message);
 	}
 	
 }
