@@ -199,11 +199,11 @@ public class Node {
 			}
 		}
 		
-		System.out.println("Enter file download:");
-		String fileDownload = mScanner.nextLine();
-		
 		System.out.println("Enter file name:");
 		String fileName = mScanner.nextLine();
+		
+		System.out.println("Enter file download:");
+		String fileDownload = mScanner.nextLine();
 		
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
@@ -216,28 +216,42 @@ public class Node {
 		
 		System.out.println("Enter tags seperated by commas:");
 		String tagString = mScanner.nextLine();
-		String [] tags = tagString.split(",");
-		for (int i = 0; i < tags.length; i++) {
-			tags[i] = tags[i].trim();
-		}
 		
-		// Construct metadata and entry objects for file
-		Entry entry;
 		try {
-			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, fileDescription, fileGeo, System.currentTimeMillis(), tags);
-			// Notify the relevant authorities of this important incident
-			NewEntryEvent event = new NewEntryEvent(entry);
-			mEventBus.post(event);
-			mDatabase.insertEntry(entry);
-			mConnectionManager.broadcastEntry(entry);
-			
-		} catch (KeyDecodingException | IOException | SQLException e) {
+			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
 		} 
 	}
 	
-	private void listConfirmedEntries() {
+	public void addEntry(byte [] hash, String fileDownload, String fileName, 
+			String recieverID, String fileDescription, String fileGeo, 
+			String tagString) throws KeyDecodingException, IOException {
+		
+		// We need to split the input into an array of tags
+		String [] tags = tagString.split(",");
+		for (int i = 0; i < tags.length; i++) {
+			tags[i] = tags[i].trim();
+		}
+		
+		// Construct entry object 
+		Entry entry;
+		
+		// RecieverID is optional 
+		if (recieverID.length() > 0) {
+			entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		} else {
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+		}
+		
+		// Notify the relevant authorities of this important incident
+		NewEntryEvent event = new NewEntryEvent(entry);
+		mEventBus.post(event);
+		mConnectionManager.broadcastEntry(entry);
+		
+	}	private void listConfirmedEntries() {
 		try (DatabaseIterator<Entry> di = mDatabase.getConfirmedEntries()) {
 			int entryCount = 0;
 			System.out.println("######################################");
@@ -253,9 +267,50 @@ public class Node {
 		} catch (SQLException e) {
 		    e.printStackTrace();
 		}
+	}		
+	private void searchEntries() {
+		System.out.println("Enter search query");
+		String searchQuery = mScanner.nextLine();
+		
+		// Specify how many entries we want to show to user
+		int entriesAtOnce = 10;
+		if (mDatabase != null) {
+			// We use an iterator to avoid loading entire database in memory
+			try (DatabaseIterator<Entry> di = mDatabase.searchEntries(searchQuery)) {
+				outerLoop:
+				while (true) {
+					for (int i = 0; i < entriesAtOnce; i++) {
+						if (di.moveNext())
+							System.out.println(di.current().toString());
+						else
+							System.out.println("END OF SEARCH");
+					}
+					while (true) {
+						System.out.println("Type 'n' for next page or 'exit' to exit search");
+						String userDecision = mScanner.nextLine();
+						if (userDecision.equalsIgnoreCase("n")) {
+							break;
+						} else if (userDecision.equalsIgnoreCase("exit")) {
+							break outerLoop;
+						} else {
+							System.out.println(String.format("'%s' is not a valid command", userDecision));
+						}
+					}
+			    }
+			} catch (SQLException ex) {
+				System.out.println("An issue came up with the database. Try to search again.");
+			}
+		} else {
+			System.out.println("An issue came up with the database. Try to search again.");
+		}
 	}
 	
-	private void listUnconfirmedEntries() {
+
+	public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
+		if (mDatabase != null) 
+			return mDatabase.searchEntries(searchQuery);
+		return null;
+	}	private void listUnconfirmedEntries() {
 		try {
 			List<Entry> entries = mDatabase.getUnconfirmedEntries();
 			System.out.println("######################################");
@@ -269,8 +324,7 @@ public class Node {
 			System.out.println("######################################");
 		} catch (SQLException e) {
 		    e.printStackTrace();
-		}
-	}
+		}	}
 	
 	private void listConnectedPeers() {
 		System.out.println("######################################");
@@ -297,8 +351,12 @@ public class Node {
 	}
 	
 	private void exitProgram() {
+		// Need to stop a few resources before exiting
 		if (mMiner != null)
 			mMiner.stopMining();
+		if (mScanner != null)
+			mScanner.close();
+		
 	}
 	
 	private void setupUser() {
