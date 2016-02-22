@@ -72,9 +72,9 @@ public class DatabaseStoreTest {
         assertEquals(e.get(1).getEntryID(), e2.getEntryID());
 
         // inserting a duplicate block should fail leaving only 1 block in store
-        boolean inserted = ds.insertBlock(Block.getGenesisBlock());
+        InsertBlockResult inserted = ds.insertBlock(Block.getGenesisBlock());
         assertEquals(1, ds.getBlocksCount());
-        assertEquals(false, inserted);
+        assertEquals(InsertBlockResult.SUCCESS, inserted);
     }
 
     @Test
