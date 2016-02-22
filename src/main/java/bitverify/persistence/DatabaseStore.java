@@ -211,7 +211,7 @@ public class DatabaseStore implements DataStore {
     }
 
     public InsertBlockResult insertBlock(Block b) throws SQLException {
-        // TODO: check if we are unorphaning any blocks
+        // TODO: worry about potential exception if this method is re-entered
 
         return t.callInTransaction(() -> {
             boolean blockIsNewLatest = false;
@@ -222,9 +222,7 @@ public class DatabaseStore implements DataStore {
 
                 // extending the active blockchain
                 b.setHeight(latestBlock.getHeight() + 1);
-
                 blockIsNewLatest = true;
-                blocksToActivate.add(b);
 
             } else {
                 // see if this will be the new latest block
@@ -243,8 +241,6 @@ public class DatabaseStore implements DataStore {
                     if (newHeight > oldHeight || (newHeight == oldHeight && b.getTimeStamp() < oldLatestBlock.getTimeStamp())) {
 
                         blockIsNewLatest = true;
-                        blocksToActivate.add(b);
-
                         // so determine which blocks to activate/deactivate
                         CloseableIterator<Block> blocksFromHighest = blockDao.queryBuilder().orderBy("height", false).iterator();
 
@@ -288,15 +284,18 @@ public class DatabaseStore implements DataStore {
                 // always add block to database
                 blockDao.create(b);
 
-                if (blockIsNewLatest)
-                    latestBlock = b;
-
                 // deactivate first, in case an entry will get reactivated.
                 for (Block block : blocksToDeactivate)
-                    setBlockEntriesConfirmed(block, false);
+                    setBlockEntriesConfirmed(block, false, false);
 
                 for (Block block : blocksToActivate)
-                    setBlockEntriesConfirmed(block, true);
+                    setBlockEntriesConfirmed(block, true, false);
+
+                // finally activate current block
+                if (blockIsNewLatest) {
+                    setBlockEntriesConfirmed(b, true, true);
+                    latestBlock = b;
+                }
 
                 // now insert block-entry mappings into link table
                 for (Entry e : b.getEntriesList())
@@ -317,14 +316,24 @@ public class DatabaseStore implements DataStore {
 
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
-     * If the entries are not yet in the database, they will be added.
      * Not an atomic operation so should call this from a transaction.
+     * @param block the block whose entries will be affacted
+     * @param confirmed whether the entries are now confirmed or unconfirmed
+     * @param insert whether to inset entries from the block if they're not already present
+     * @throws SQLException
      */
-    private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
+    private void setBlockEntriesConfirmed(Block block, boolean confirmed, boolean insert) throws SQLException {
         // create/update entries
-        for (Entry e : block.getEntriesList()) {
-            e.setConfirmed(confirmed);
-            entryDao.createOrUpdate(e);
+        if (insert) {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.createOrUpdate(e);
+            }
+        } else {
+            for (Entry e : block.getEntriesList()) {
+                e.setConfirmed(confirmed);
+                entryDao.update(e);
+            }
         }
     }
 
