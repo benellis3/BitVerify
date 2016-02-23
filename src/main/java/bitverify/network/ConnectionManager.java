@@ -134,6 +134,9 @@ public class ConnectionManager {
             try {
                 List<Future<?>> futures = new ArrayList<>();
                 for (InetSocketAddress peerAddress : initialPeers) {
+                    if (ourListenAddress.equals(peerAddress) || peerAddress.)
+                        continue;
+
                     futures.add(es.submit(() -> {
                         PeerHandler newPeerHandler = connectToPeer(peerAddress);
                         if (newPeerHandler == null)
@@ -158,7 +161,7 @@ public class ConnectionManager {
 
                         if (newPeers != null) {
                             for (InetSocketAddress address : newPeers) {
-                                if (!peers.containsKey(address)) {
+                                if (!peers.containsKey(address) && !ourListenAddress.equals(address)) {
                                     log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
                                     es.execute(() -> connectToPeer(address));
                                 }
