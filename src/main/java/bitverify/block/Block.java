@@ -169,6 +169,7 @@ public class Block {
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
     public static boolean verifyChain(List<Block> blockList, Bus bus){
+        bus.post(new LogEvent("verifying chain of headers", LogEventSource.BLOCK, Level.FINER));
         int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
