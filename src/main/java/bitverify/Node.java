@@ -414,18 +414,12 @@ public class Node {
 	
 	private void setupNetwork() {
 		informUserOfProgress("Setting up network...");
-		try {
-			mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
-		} catch (IOException e) {
-			System.out.println("Error setting up network. Will try again.");
-			setupNetwork();
-		}
+		mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 	}
 	
 	
 	private void setupDatabase() {
 		informUserOfProgress("Setting up database...");
-		// create a connection source to an in-memory database
 		try {
 			mDatabase = new DatabaseStore("jdbc:h2:file:bitverify.db");
 		} catch (SQLException e) {
