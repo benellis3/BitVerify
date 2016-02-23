@@ -8,6 +8,7 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.j256.ormlite.logger.LocalLog;
 import com.j256.ormlite.support.ConnectionSource;
 import static org.junit.Assert.assertEquals;
 
@@ -15,6 +16,7 @@ import com.j256.ormlite.table.TableUtils;
 import org.junit.Test;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -23,7 +25,6 @@ import java.util.Random;
  */
 public class DatabaseStoreTest {
     static class TestObject {
-
         @DatabaseField(dataType = DataType.BYTE_ARRAY, index=true, columnDefinition = "VARBINARY(16)")
         private byte[] ID;
         @DatabaseField
@@ -72,14 +73,13 @@ public class DatabaseStoreTest {
         assertEquals(e.get(1).getEntryID(), e2.getEntryID());
 
         // inserting a duplicate block should fail leaving only 1 block in store
-        boolean inserted = ds.insertBlock(Block.getGenesisBlock());
+        InsertBlockResult inserted = ds.insertBlock(Block.getGenesisBlock());
         assertEquals(1, ds.getBlocksCount());
-        assertEquals(false, inserted);
+        assertEquals(InsertBlockResult.FAIL_ORPHAN, inserted);
     }
 
     @Test
     public void TestUnique() throws SQLException {
-
         // make a database
         ConnectionSource cs = new JdbcConnectionSource("jdbc:h2:mem:account");
         TableUtils.createTableIfNotExists(cs, TestObject2.class);
@@ -105,14 +105,12 @@ public class DatabaseStoreTest {
 
     @Test
     public void TestVarbinary() throws SQLException {
-
         // make a database
         ConnectionSource cs = new JdbcConnectionSource("jdbc:h2:mem:account");
         TableUtils.createTableIfNotExists(cs, TestObject.class);
         Dao<TestObject, byte[]> testDao = DaoManager.createDao(cs, TestObject.class);
 
         Random r = new Random();
-
 
         byte[] special = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 
@@ -133,5 +131,91 @@ public class DatabaseStoreTest {
         assertEquals(testDao.queryForEq("ID", special).get(0).name, "special");
     }
 
+    @Test
+    public void TestInsertBlocks() throws SQLException {
+        DataStore ds = new DatabaseStore("jdbc:h2:mem:bitverifytest");
+
+        ArrayList<Entry> entryList = new ArrayList<Entry>();
+
+        for (int x = 0; x < 100; x++){
+        	entryList.add(EntryTest.generateEntry1());
+        }
+
+        long timeStamp = 100;
+
+        Block initialBlock = Block.getGenesisBlock();
+        Block prevBlock = initialBlock;
+        Block block = initialBlock;
+
+        int numBlocks = 300;
+
+        for (int x = 0; x < numBlocks; x++){
+        	timeStamp += 100;
+        	block = new Block(prevBlock,timeStamp,0x03000004,0,entryList);
+        	ds.insertBlock(block);
+        	prevBlock = block;
+        	//Check the block registers as existing in the database
+        	assertEquals(true,ds.blockExists(block.getBlockID()));
+        }
+
+        //Check the number of blocks in the database (+1 because of the genesis block)
+        assertEquals(numBlocks+1,ds.getBlocksCount());
+        //Check get most recent block actually gets the most recent block
+        assertEquals(block,ds.getMostRecentBlock());
+
+        //Test the block iterator
+        DatabaseIterator<Block> blockIt = ds.getAllBlocks();
+
+        Block curBlock;
+
+        int height = 0;
+
+        while (blockIt.moveNext()){
+        	curBlock = blockIt.current();
+        	assertEquals(height++,curBlock.getHeight());
+        	assertEquals(true,ds.blockExists(curBlock.getBlockID()));
+        }
+
+        //Starting from the end of the blockchain
+        List<Block> nMost = ds.getNMostRecentBlocks(numBlocks+1, block);
+
+        assertEquals(numBlocks+1,nMost.size());
+        assertEquals(initialBlock,nMost.get(numBlocks));
+
+        //Test if blocks not in datatabase
+        Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,entryList);
+        assertEquals(false,ds.blockExists(b1.getBlockID()));
+
+        //Check returns all blocks when we ask for N greater than the length of blockchain
+        int erroneousN = numBlocks+10;
+
+        List<Block> nMostError = ds.getNMostRecentBlocks(erroneousN, block);
+
+        assertEquals(nMostError.size(),numBlocks+1);
+
+
+    }
+
+    @Test
+    public void activeBlockchainSamplingTest() throws SQLException {
+        System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
+
+        int[] numBlocks =  {1, 4, 7, 12, 16, 21, 27, 33, 39};
+        int[] sampleSize = {3, 4, 5, 6,  7,  10, 12, 16, 17};
+        for (int x = 0; x < numBlocks.length; x++) {
+            DataStore ds = new DatabaseStore("jdbc:h2:mem:bitverifytest" + x);
+            Block prev = ds.getMostRecentBlock();
+            for (int i = 0; i < numBlocks[x] - 1; i++) {
+                prev = new Block(prev, 0, 0, new ArrayList<>());
+                ds.insertBlock(prev);
+            }
+            assertEquals(numBlocks[x], ds.getBlocksCount());
+
+            List<byte[]> activeBlocksSample = ds.getActiveBlocksSample(sampleSize[x]);
+            assertEquals(Math.min(sampleSize[x], numBlocks[x]), activeBlocksSample.size());
+            System.out.println("Suceeded for x=" + x);
+        }
+
+    }
 
 }

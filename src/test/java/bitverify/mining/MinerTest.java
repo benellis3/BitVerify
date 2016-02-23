@@ -162,17 +162,19 @@ public class MinerTest {
 		// Target calculated for b11 - the same as b10 	5
 		// Target calculated for b12 - based on b9-b11 	2	(it took 100 milliseconds vs the intended 200, integer part of 5/2 = 2.5)
 		
-		Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,new ArrayList<Entry>());
-		Block b2 = new Block(b1,200,0x03000004,0,new ArrayList<Entry>());
-		Block b3 = new Block(b2,300,0x03000004,0,new ArrayList<Entry>());
-		Block b4 = new Block(b3,400,0x03000004,0,new ArrayList<Entry>());
-		Block b5 = new Block(b4,700,0x03000004,0,new ArrayList<Entry>());
-		Block b6 = new Block(b5,800,0x03000004,0,new ArrayList<Entry>());
-		Block b7 = new Block(b6,900,0x03000004,0,new ArrayList<Entry>());
-		Block b8 = new Block(b7,1400,0x03000004,0,new ArrayList<Entry>());
-		Block b9 = new Block(b8,1500,0x03000005,0,new ArrayList<Entry>());
-		Block b10 = new Block(b9,1550,0x03000005,0,new ArrayList<Entry>());
-		Block b11 = new Block(b10,1600,0x03000005,0,new ArrayList<Entry>());
+		ArrayList<Entry> emtpyEntryList = new ArrayList<Entry>();
+		
+		Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,emtpyEntryList);
+		Block b2 = new Block(b1,200,0x03000004,0,emtpyEntryList);
+		Block b3 = new Block(b2,300,0x03000004,0,emtpyEntryList);
+		Block b4 = new Block(b3,400,0x03000004,0,emtpyEntryList);
+		Block b5 = new Block(b4,700,0x03000004,0,emtpyEntryList);
+		Block b6 = new Block(b5,800,0x03000004,0,emtpyEntryList);
+		Block b7 = new Block(b6,900,0x03000004,0,emtpyEntryList);
+		Block b8 = new Block(b7,1400,0x03000004,0,emtpyEntryList);
+		Block b9 = new Block(b8,1500,0x03000005,0,emtpyEntryList);
+		Block b10 = new Block(b9,1550,0x03000005,0,emtpyEntryList);
+		Block b11 = new Block(b10,1600,0x03000005,0,emtpyEntryList);
 		
 		d.insertBlock(b1);
 		d.insertBlock(b2);
@@ -185,23 +187,25 @@ public class MinerTest {
 		d.insertBlock(b9);
 		d.insertBlock(b10);
 		d.insertBlock(b11);
+		
+		Bus eventBus = new Bus(ThreadEnforcer.ANY);
 
-		Miner m = new Miner(new Bus(ThreadEnforcer.ANY),d,2,200,10);
+		Miner m = new Miner(eventBus,d,2,200,10);
 		
 		m.stopMining();	//to prevent warning
 		
 		int input[] = {
-				Miner.calculatePackedTarget(d, b1, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b2, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b3, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b4, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b5, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b6, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b7, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b8, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b9, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b10, new Bus(ThreadEnforcer.ANY)),
-				Miner.calculatePackedTarget(d, b11, new Bus(ThreadEnforcer.ANY)),
+				Miner.calculatePackedTarget(d, b1, eventBus),
+				Miner.calculatePackedTarget(d, b2, eventBus),
+				Miner.calculatePackedTarget(d, b3, eventBus),
+				Miner.calculatePackedTarget(d, b4, eventBus),
+				Miner.calculatePackedTarget(d, b5, eventBus),
+				Miner.calculatePackedTarget(d, b6, eventBus),
+				Miner.calculatePackedTarget(d, b7, eventBus),
+				Miner.calculatePackedTarget(d, b8, eventBus),
+				Miner.calculatePackedTarget(d, b9, eventBus),
+				Miner.calculatePackedTarget(d, b10, eventBus),
+				Miner.calculatePackedTarget(d, b11, eventBus),
 		};
 		
 		int output[] = {

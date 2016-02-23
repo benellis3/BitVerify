@@ -1,30 +1,34 @@
 package bitverify.network;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.network.proto.MessageProto.*;
 import com.google.protobuf.ByteString;
+import com.j256.ormlite.logger.Log;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+
 
 /**
  * Handles sending a single request for headers to a peer, then awaiting the response.
  */
-public class HeadersFuture implements RunnableFuture<List<Block>> {
-    private List<Block> result;
-    private final CountDownLatch resultLatch = new CountDownLatch(1);
+public class HeadersFuture extends ProtocolFuture<List<Block>> {
     private final PeerHandler peer;
     private final List<byte[]> fromBlockIDs;
-    private final Bus bus;
 
     public HeadersFuture(PeerHandler peer, List<byte[]> fromBlockIDs, Bus bus) {
+        super(bus);
         this.peer = peer;
         this.fromBlockIDs = fromBlockIDs;
-        this.bus = bus;
     }
 
     @Override
@@ -43,11 +47,12 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
                 .build();
 
         // if peer is shut down, return null straight away
-        if (!peer.send(m))
+        if (peer.send(m)) {
+            // register for replies once we've sent the request
+            bus.register(this);
+        } else {
             resultLatch.countDown();
-
-        // register for replies once we've sent the request
-        bus.register(this);
+        }
     }
 
     @Subscribe
@@ -69,35 +74,5 @@ public class HeadersFuture implements RunnableFuture<List<Block>> {
         // notify that we got a response (even if it was rubbish)
         resultLatch.countDown();
     }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return false;
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return false;
-    }
-
-    @Override
-    public boolean isDone() {
-        return resultLatch.getCount() == 0;
-    }
-
-    @Override
-    public List<Block> get() throws InterruptedException {
-        resultLatch.await();
-        return result;
-    }
-
-    @Override
-    public List<Block> get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-        if (resultLatch.await(timeout, unit))
-            return result;
-        else {
-            bus.unregister(this);
-            throw new TimeoutException();
-        }
-    }
 }
+

@@ -9,7 +9,11 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
+import bitverify.ExceptionLogEvent;
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.network.proto.MessageProto;
@@ -39,7 +43,7 @@ public class PeerHandler {
     private static final int SETUP_TIMEOUT_SECONDS = 5;
     private static final int MAX_HEADERS = 1000;
 
-    private ArrayBlockingQueue<byte[]> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
+    private ArrayBlockingQueue<BlockID> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
     private RestartableTimer blockTimer;
 
 
@@ -173,10 +177,11 @@ public class PeerHandler {
             return false;
 
         messageQueue.add(msg); // returns immediately.
+        log("Sending a " + msg.getType() + " message to peer " + getPeerAddress(), Level.FINER);
         return true;
     }
 
-    public Queue<byte[]> getBlocksInFlight() {
+    public Queue<BlockID> getBlocksInFlight() {
         return blocksInFlight;
     }
 
@@ -190,12 +195,12 @@ public class PeerHandler {
      * @param blockID the ID of the block to request
      * @return true if the request was sent, false if we're already downloading the maximum number of blocks or this peer is being shut down.
      */
-    public boolean requestBlock(byte[] blockID) {
+    public boolean requestBlock(BlockID blockID) {
         if (!blocksInFlight.offer(blockID))
             return false;
 
         MessageProto.GetBlockMessage gbm = MessageProto.GetBlockMessage.newBuilder()
-                .setBlockID(ByteString.copyFrom(blockID))
+                .setBlockID(ByteString.copyFrom(blockID.getBlockID()))
                 .build();
 
         MessageProto.Message message = MessageProto.Message.newBuilder()
@@ -206,6 +211,7 @@ public class PeerHandler {
 
         // if peer is shutting down so message can't be sent, just return false to indicate failure
         if (send(message)) {
+            log("sent a get block message for block " + blockID + " from peer " + getPeerAddress(), Level.FINE);
             blockTimer.start();
             return true;
         } else {
@@ -224,6 +230,14 @@ public class PeerHandler {
         return false;
     }
 
+    private void log(String message, Level level) {
+        bus.post(new LogEvent(message, LogEventSource.NETWORK, level));
+    }
+
+    private void log(String message, Level level, Throwable error) {
+        bus.post(new ExceptionLogEvent(message, LogEventSource.NETWORK, level, error));
+    }
+
 
     class PeerReceive implements Runnable {
 
@@ -234,6 +248,7 @@ public class PeerHandler {
                 InputStream is = socket.getInputStream();
                 while (true) {
                     message = Message.parseDelimitedFrom(is);
+                    log("received message of type " + message.getType(), Level.FINER);
                     switch (message.getType()) {
                         case GETPEERS:
                             handleGetPeers(message.getGetPeers());
@@ -246,15 +261,27 @@ public class PeerHandler {
                             break;
                         case BLOCK_NOT_FOUND:
                             handleBlockNotFoundMessage(message.getBlockNotFound());
+                            break;
                         case PEERS:
                             handlePeers(message.getPeers());
                             break;
+                        case GET_HEADERS:
+                            handleGetHeaders(message.getGetHeaders());
+                            break;
+                        case GET_BLOCK:
+                            handleGetBlock(message.getGetBlock());
+                            break;
+                        case HEADERS:
+                            handleHeaders(message.getHeaders());
+                            break;
                         default:
+                            bus.post(new LogEvent("Network message went unhandled, type " + message.getType().toString(), LogEventSource.NETWORK, Level.WARNING));
                             break;
                     }
 
                 }
             } catch (IOException | SQLException e) {
+                log("exception while receiving: " + e.getMessage(), Level.WARNING, e);
                 // Connection manager already knows we are closing if shutdown is true.
                 if (!shutdown)
                     bus.post(new PeerErrorEvent(PeerHandler.this, e));
@@ -275,9 +302,50 @@ public class PeerHandler {
             }
         }
 
+        private void handleGetBlock(GetBlockMessage message) throws SQLException {
+            Block b = dataStore.getBlock(message.getBlockID().toByteArray());
+            if (b == null) {
+                log("Sending block not found message in response to get block for " + Base64.getEncoder().encodeToString(message.getBlockID().toByteArray()), Level.FINE);
+                BlockNotFoundMessage bm = BlockNotFoundMessage.newBuilder()
+                        .setBlockID(message.getBlockID())
+                        .build();
+                Message m = Message.newBuilder()
+                        .setType(Message.Type.BLOCK_NOT_FOUND)
+                        .setBlockNotFound(bm)
+                        .build();
+                send(m);
+            } else {
+                log("Sending block message in response to get block for " + Base64.getEncoder().encodeToString(b.getBlockID()), Level.FINE);
+                try {
+                    BlockMessage.Builder bmb = BlockMessage.newBuilder()
+                            .setBlockBytes(ByteString.copyFrom(b.serializeHeader()));
+                    for (Entry e : b.getEntriesList())
+                        bmb.addEntries(ByteString.copyFrom(e.serialize()));
+
+                    BlockMessage bm = bmb.build();
+
+                    Message m = Message.newBuilder()
+                            .setType(Message.Type.BLOCK)
+                            .setBlock(bm)
+                            .build();
+                    send(m);
+                } catch (Exception e) {
+                    log("Oh dear: " + e.toString(), Level.SEVERE, e);
+                    e.printStackTrace();
+                }
+            }
+        }
+
         private void handleBlockMessage(BlockMessage m) {
             // create an event which can be handed off to the connection manager.
-            bus.post(new BlockMessageEvent(m, PeerHandler.this));
+            log("handing off block message event", Level.FINER);
+            try {
+                bus.post(new BlockMessageEvent(m, PeerHandler.this));
+            }
+            catch (Exception e) {
+                log("Oh dear: " + e.toString(), Level.SEVERE, e);
+                e.printStackTrace();
+            }
         }
 
         private void handleBlockNotFoundMessage(BlockNotFoundMessage m) {
@@ -298,6 +366,11 @@ public class PeerHandler {
             }
             bus.post(new PeersEvent(socketAddressList));
         }
+
+        private void handleHeaders(HeadersMessage message) {
+            bus.post(new HeadersMessageEvent(message));
+        }
+
 
         private void handleGetHeaders(GetHeadersMessage message) throws SQLException {
             // for each start at ID,
