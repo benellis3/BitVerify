@@ -72,8 +72,10 @@ public class Node {
 	}
 	
 	private void handleType(StartType startType) {
-		mEventBus = new Bus(ThreadEnforcer.ANY);
-		mEventBus.register(this);
+		if (mEventBus == null) {
+			mEventBus = new Bus(ThreadEnforcer.ANY);
+			mEventBus.register(this);
+		}
 		
 		switch (startType) {
 			case CLI:
@@ -441,7 +443,8 @@ public class Node {
 
     @Subscribe
     public void onLogEvent(LogEvent o) {
-        System.out.println(o.getMessage());
+        //System.out.println(o.getMessage());
+        mGUI.addLogEvent(o);
     }
     
     private String getCurrentDatetime() {
@@ -457,6 +460,13 @@ public class Node {
     		mGUI.changeLoadingText(progress);
     	}
     }
+    
+    public Bus getEventBus() {
+    	return mEventBus;
+    }
 
+    public Bus getEventBus() {
+    	return mEventBus;
+    }
 
 }
