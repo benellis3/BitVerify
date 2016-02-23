@@ -197,21 +197,23 @@ public class Identity {
 	 * 	decrypt() first.
 	 */
 	public byte[] getPrivateKey(){
+		propagateUnencryptedPrivateKey();
 		return decryptedPrivateKey;
 	}
 	
 	public boolean getNeedsEncryption(){
 		return needsEncryption;
 	}
+
+	private void propagateUnencryptedPrivateKey() {
+		if (decryptedPrivateKey == null && !needsEncryption)
+			decryptedPrivateKey = privateKey;
+	}
 	
 	public AsymmetricCipherKeyPair getKeyPair() throws KeyDecodingException{
-		if (decryptedPrivateKey == null) {
-			if (needsEncryption) {
-				return null;
-			} else {
-				decryptedPrivateKey = privateKey;
-			}
-		}
+		propagateUnencryptedPrivateKey();
+		if (decryptedPrivateKey == null)
+			return null;
 		return Asymmetric.getKeyPairFromByteKeys(publicKey, decryptedPrivateKey);
 	}
 	
