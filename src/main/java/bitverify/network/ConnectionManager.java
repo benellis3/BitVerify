@@ -419,7 +419,7 @@ public class ConnectionManager {
          * @throws SQLException A database error occurred.
          */
         public void initiateBlockDownload() throws SQLException {
-            initiateBlockDownload(chooseRandomPeer());
+            initiateBlockDownload(null);
         }
 
         private void initiateBlockDownload(PeerHandler firstPeer) throws SQLException {
@@ -429,16 +429,19 @@ public class ConnectionManager {
 
                 // First obtain block headers from some particular peer - send a GetBlockHeaders message
                 // then validate this sequence of headers upon receiving a BlockHeaders message
-                PeerHandler p = firstPeer;
                 List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(HEADERS_NUM_BLOCK_IDS);
 
                 // take snapshot of peers
-
+                List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
+                shufflePeers(peersSnapshot);
+                // we might try the first peer twice but that's ok
+                if (firstPeer != null)
+                    peersSnapshot.add(0, firstPeer);
 
                 // we will break once we've got all the headers, having dispatched download tasks asynchronously.
                 // for now, if a peer suddenly gives us some invalid headers, we don't shutdown previous download
                 // tasks or discard earlier block headers they gave us.
-                while (p != null) {
+                for (PeerHandler p : peersSnapshot) {
                     log("sending get headers message", Level.FINE);
                     HeadersFuture h = new HeadersFuture(p, fromBlockIDs, bus);
                     h.run();
@@ -456,25 +459,21 @@ public class ConnectionManager {
 
                     if (receivedHeaders == null) {
                         // choose a new peer and try again
-                        p = chooseRandomPeer();
                     } else {
                         byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
                         // first header must follow some older block we have on our primary chain
                         Block firstPredecessor = dataStore.getBlock(firstPredecessorID);
                         if (firstPredecessor == null) {
                             log("received headers were not accepted because we don't have the previous block. Choosing a new peer.", Level.FINE);
-                            p = chooseRandomPeer();
                             continue;
                         }
                         if (!firstPredecessor.isActive()) {
                             log("received headers were not accepted because the previous block is not active. Choosing a new peer.", Level.FINE);
-                            p = chooseRandomPeer();
                             continue;
                         }
                         if (!Block.verifyChain(receivedHeaders)) {
                             // choose a new peer and try again
                             log("received headers were not accepted because the chain was invalid. Choosing a new peer.", Level.FINE);
-                            p = chooseRandomPeer();
 
                         } else {
                             log("Got " + receivedHeaders.size() + " valid headers", Level.FINE);
@@ -493,7 +492,6 @@ public class ConnectionManager {
                             } else {
                                 fromBlockIDs.add(0, receivedHeaders.get(receivedHeaders.size() - 1).getBlockID());
                             }
-
                         }
                     }
                 }
@@ -501,22 +499,10 @@ public class ConnectionManager {
         }
 
         /**
-         * Makes a copy of the set of peers and chooses one at random. Be aware that this peer could have been shut down while we were choosing it!
+         * Shuffles a copy of the set of peers.
          * @return
          */
-        private PeerHandler chooseRandomPeer() {
-            // make a copy of the peers collection to safely get a random element
-            ArrayList<PeerHandler> p = new ArrayList<>(peers.values());
-            return p.isEmpty() ? null : p.get(ThreadLocalRandom.current().nextInt(p.size()));
-
-        }
-
-        /**
-         * Makes a copy of the set of peers and shuffles it.
-         * @return
-         */
-        private List<PeerHandler> shufflePeers() {
-            ArrayList<PeerHandler> p = new ArrayList<>(peers.values());
+        private List<PeerHandler> shufflePeers(List<PeerHandler> p) {
             Collections.shuffle(p, ThreadLocalRandom.current());
             return p;
         }
@@ -681,7 +667,7 @@ public class ConnectionManager {
 
                 // now ask another peer for this block.
                 // Shuffle in case the first two peers both don't have the block - otherwise we would alternate between them and never obtain it.
-                for (PeerHandler p : shufflePeers()) {
+                for (PeerHandler p : new ArrayList<>(peers.values())) {
                     // provide the future headers queue so the peer can obtain more blocks to download when done
                     if (p != peer && peer.requestBlock(blockID)) {
                         return;
