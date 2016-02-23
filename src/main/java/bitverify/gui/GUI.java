@@ -22,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.aquafx_project.AquaFx;
+import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
 import javafx.application.Application;
@@ -70,7 +71,8 @@ public class GUI extends Application {
 	private Text numPeersText;
 	private ObservableList<String> minerLog;
 	private ObservableList<String> networkLog;
-	DatabaseIterator<Entry> mIterator;
+	private DatabaseIterator<Entry> mIterator;
+	private Bus mEventBus;
 	long UPDATE_TIME = 10_000;
 	int MAX_ENTRIES_AT_ONCE = 100;
 	
@@ -557,17 +559,21 @@ public class GUI extends Application {
 	    
 	}
 	
-	@Subscribe
-	public void onLogEvent(LogEvent event){
-	    LogEventSource source = event.getSource();
-	    switch(source){
-	        case MINING:
-	            minerLog.add(constructLogMessage(event.getMessage()));
-	            break;
-	        case NETWORK:
-	            networkLog.add(constructLogMessage(event.getMessage()));
-	            break;
-	    }
+	public void addLogEvent(LogEvent o) {
+	    Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+        	    LogEventSource source = o.getSource();
+        	    switch(source){
+        	        case MINING:
+        	            minerLog.add(constructLogMessage(o.getMessage()));
+        	            break;
+        	        case NETWORK:
+        	            networkLog.add(constructLogMessage(o.getMessage()));
+        	            break;
+        	    }
+            }
+         });
 	}
 
 	public String constructLogMessage(String message) {
