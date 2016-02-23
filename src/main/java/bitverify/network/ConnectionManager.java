@@ -530,6 +530,10 @@ public class ConnectionManager {
                 allPeersFull = true;
                 for (PeerHandler peer : peers.values()) {
                     // provide the future headers queue so the peer can obtain more blocks to download when done
+                    // break if there are no more blocks to be downloaded
+                    if (b == null) {
+                        break;
+                    }
                     if (peer.requestBlock(b)) {
                         allPeersFull = false;
                         // take the next block
