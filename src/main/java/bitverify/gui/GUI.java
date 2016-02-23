@@ -23,7 +23,6 @@ import java.util.TimerTask;
 
 import com.aquafx_project.AquaFx;
 import com.squareup.otto.Bus;
-import com.squareup.otto.Subscribe;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -485,20 +484,21 @@ public class GUI extends Application {
     	TableView<Entry> tableView = new TableView<Entry>();
     	
     	// Create all our columns
-    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
     	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
-    	//TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
-    	//TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
-    	//TableColumn<Entry, String> recieverColumn = getTableColumn("Receiver", "recieverID");
-    	//TableColumn<Entry, String> uploaderColumn = getTableColumn("Uploader", "uploaderID");
-    	//TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
-    	//TableColumn<Entry, String> hashColumn = getTableColumn("Hash", "docHash");
-    	//TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
+    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
+    	TableColumn<Entry, String> recieverColumn = getTableColumn("Receiver", "recieverID");
+    	TableColumn<Entry, String> uploaderColumn = getTableColumn("Uploader", "uploaderID");
+    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
+    	TableColumn<Entry, String> hashColumn = getTableColumn("Hash", "docHash");
+    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
     	
-//    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-//    			downloadColumn, recieverColumn, uploaderColumn, geoColumn, tagsColumn);
+    	// Order of columns
+    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
+    			downloadColumn, recieverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn);
     	
-    	tableView.getColumns().setAll(nameColumn);
+    	//tableView.getColumns().setAll(nameColumn);
     	
     	tableView.setItems(data);
     	
@@ -512,6 +512,7 @@ public class GUI extends Application {
     	
     	searchButton.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
+		    	data.clear();
 		    	try {
 		    		// If we have a previous iterator, we must close it first
 		    		if (mIterator != null) {
@@ -523,9 +524,10 @@ public class GUI extends Application {
 				
 					for (int i = 0; i < MAX_ENTRIES_AT_ONCE; i++) {
 						if (mIterator.moveNext()) {
-							System.out.println(mIterator.current());
-							//data.add(mIterator.current());
+							Entry entry = mIterator.current();
+							data.add(entry);
 						} else {
+							mIterator.close();
 							break;
 						}
 					}
@@ -535,15 +537,39 @@ public class GUI extends Application {
 				}
 		    }
 		});
+    	searchButton.fire();
     	
     	HBox.setHgrow(hLay, Priority.ALWAYS);
     	hLay.getChildren().addAll(searchField, searchButton);
     	hLay.setAlignment(Pos.TOP_CENTER);
     	
-    	// Perhaps if we want to split this into pages
-    	// Pagination pager = new Pagination();
+    	HBox bottomH = new HBox();
+    	Button loadButton = new Button("Load more entries");
+    	loadButton.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	if (mIterator != null) {
+		    		for (int i = 0; i < MAX_ENTRIES_AT_ONCE; i++) {
+		    			try {
+							if (mIterator.moveNext()) {
+								Entry entry = mIterator.current();
+								data.add(entry);
+							} else {
+								mIterator.close();
+								break;
+							}
+						} catch (SQLException e1) {
+							// Hopefully don't care
+							
+						}
+		    		}
+		    	}
+		    }
+    	});
     	
-    	vLay.getChildren().addAll(hLay, tableView);
+    	bottomH.getChildren().add(loadButton);
+    	bottomH.setAlignment(Pos.CENTER);
+    	
+    	vLay.getChildren().addAll(hLay, tableView, bottomH);
     	searchTab.setContent(vLay);
     	return searchTab;
 	}
@@ -551,7 +577,7 @@ public class GUI extends Application {
 	private TableColumn<Entry, String> getTableColumn(String columnName, String entryName) {
 		// Construct a table column
 		TableColumn<Entry, String> column = new TableColumn<Entry, String>(columnName);
-		column.setCellFactory(new PropertyValueFactory(entryName));
+		column.setCellValueFactory(new PropertyValueFactory<Entry, String>(entryName));
 		return column;
 	}
 	
