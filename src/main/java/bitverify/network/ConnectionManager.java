@@ -1,9 +1,6 @@
 package bitverify.network;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 
 import java.net.*;
 import java.sql.SQLException;
@@ -70,9 +67,13 @@ public class ConnectionManager {
         // create a special executor service that makes daemon threads.
         // this way the application can shut down without having to terminate network threads first.
 
-        Thread.UncaughtExceptionHandler ueh = (t, e) -> bus.post(
-                new ExceptionLogEvent("An exception in a network thread was not caught: " + e.getMessage(),
-                        LogEventSource.NETWORK, Level.SEVERE, e));
+        Thread.UncaughtExceptionHandler ueh = (t, e) -> {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            bus.post(new ExceptionLogEvent("An exception in a network thread was not caught: " + sw.toString(),
+                            LogEventSource.NETWORK, Level.SEVERE, e));
+        };
 
         ThreadFactory daemonThreadFactory = runnable -> {
             Thread thread = new Thread(runnable);
