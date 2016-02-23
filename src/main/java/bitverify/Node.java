@@ -5,13 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Base64;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.util.encoders.Hex;
 
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.Hash;
@@ -20,7 +19,6 @@ import bitverify.crypto.Identity;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 import bitverify.block.Block;
 import bitverify.crypto.KeyDecodingException;
@@ -268,7 +266,7 @@ public class Node {
 		    	entryCount++;
 		        Entry entry = di.current();
 		        System.out.printf("entryID: %s, UploaderID: %s\n",
-						entry.getEntryID().toString(), Base64.encode(entry.getUploaderID()) );
+						entry.getEntryID().toString(), Base64.getEncoder().encodeToString(entry.getUploaderID()) );
 		    }
 		    System.out.println("There are "+entryCount+" confirmed entries.");
 		    System.out.println("######################################");
@@ -330,7 +328,7 @@ public class Node {
 			for (int i=0; i<entries.size(); i++){
 		        System.out.printf("entryID: %s, UploaderID: %s\n",
 		        		entries.get(i).getEntryID().toString(),
-		        		Base64.encode(entries.get(i).getUploaderID()) );
+		        		Base64.getEncoder().encodeToString(entries.get(i).getUploaderID()) );
 		    }
 			System.out.println("There are "+entries.size()+" unconfirmed entries.");
 			System.out.println("######################################");
@@ -352,8 +350,8 @@ public class Node {
 			System.out.println("Blocks on the primary chain:");
 			for (int i=0; i<blocks.size(); i++){
 				System.out.printf("height: %d, blockID: %s, entriesHash: %s\n",
-						blocks.get(i).getHeight(), Base64.encode(blocks.get(i).getBlockID()),
-						Base64.encode(blocks.get(i).getEntriesHash()) );
+						blocks.get(i).getHeight(), Base64.getEncoder().encodeToString(blocks.get(i).getBlockID()),
+						Base64.getEncoder().encodeToString(blocks.get(i).getEntriesHash()) );
 			}
 			System.out.println("There are "+blocks.size()+" blocks on the primary chain.");
 			System.out.println("######################################");
@@ -372,8 +370,8 @@ public class Node {
 		    	blockCount++;
 		        Block block = di.current();
 		        System.out.printf("i: %d, height: %d, blockID: %s, entriesHash: %s\n",
-		        		blockCount, block.getHeight(), Base64.encode(block.getBlockID()),
-						Base64.encode(block.getEntriesHash()) );
+		        		blockCount, block.getHeight(), Base64.getEncoder().encodeToString(block.getBlockID()),
+						Base64.getEncoder().encodeToString(block.getEntriesHash()) );
 		    }
 		    System.out.println("There are "+blockCount+" blocks total.");
 		    System.out.println("######################################");
