@@ -21,11 +21,15 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.bouncycastle.util.encoders.Base64;
+
 import com.aquafx_project.AquaFx;
 import com.squareup.otto.Bus;
 
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -62,6 +66,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class GUI extends Application {
 	Node mNode;
@@ -403,6 +408,12 @@ public class GUI extends Application {
 				} catch (IOException e1) {
 					errorText.setFill(Color.RED);
 					errorText.setText(String.format("File '%s' does not exist", docText.getText()));
+					
+					FadeTransition ft = new FadeTransition(Duration.millis(3000), errorText);
+					ft.setFromValue(1.0);
+				    ft.setToValue(0.0);
+				    ft.play();
+					
 					return;
 				}
 				
@@ -418,9 +429,21 @@ public class GUI extends Application {
 					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
 					errorText.setFill(Color.GREEN);
 					errorText.setText("Added file succesfully.");
+					
+					FadeTransition ft = new FadeTransition(Duration.millis(3000), errorText);
+					ft.setFromValue(1.0);
+				    ft.setToValue(0.0);
+				    ft.play();
+					
 				} catch (KeyDecodingException | IOException | SQLException ex) {
 					errorText.setFill(Color.RED);
 					errorText.setText("Error constructing entry. Check fields and try again.");
+					
+					FadeTransition ft = new FadeTransition(Duration.millis(3000), errorText);
+					ft.setFromValue(1.0);
+				    ft.setToValue(0.0);
+				    ft.play();
+					
 					ex.printStackTrace();
 				}
 		    	
@@ -488,15 +511,28 @@ public class GUI extends Application {
     	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
     	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
     	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
-    	TableColumn<Entry, String> recieverColumn = getTableColumn("Receiver", "recieverID");
-    	TableColumn<Entry, String> uploaderColumn = getTableColumn("Uploader", "uploaderID");
+    	
+    	// These columns are byte arrays, so we have to do them a little differently
+    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
+    	receiverColumn.setText("Receiver");
+    	receiverColumn.setPrefWidth(50);
+    	receiverColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
+    	
+    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
+    	uploaderColumn.setText("Uploader");
+    	uploaderColumn.setPrefWidth(50);
+    	uploaderColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
+   
+    	
     	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
     	TableColumn<Entry, String> hashColumn = getTableColumn("Hash", "docHash");
     	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
     	
     	// Order of columns
     	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-    			downloadColumn, recieverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn);
+    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn);
     	
     	//tableView.getColumns().setAll(nameColumn);
     	
