@@ -648,7 +648,7 @@ public class GUI extends Application {
 				try {
 					FileInputStream inputStream = new FileInputStream(selectedFile);
 					byte [] hash = Hash.hashStream(inputStream);
-					hashText.setText("Hash :" + Base64.toBase64String(hash));
+					hashText.setText("Hash: " + Base64.toBase64String(hash));
 					inputStream.close();
 				} catch (IOException e1) {
 					hashText.setText(String.format("File '%s' does not exist", docText.getText()));
