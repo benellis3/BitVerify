@@ -30,7 +30,6 @@ public class DatabaseStore implements DataStore {
     private Dao<Property, String> propertyDao;
     private Dao<Identity, Integer> identityDao;
 
-    private PreparedQuery<Block> mostRecentBlockQuery;
     private PreparedQuery<Entry> entriesForBlockQuery;
 
     private Block latestBlock;
@@ -49,12 +48,6 @@ public class DatabaseStore implements DataStore {
         identityDao = DaoManager.createDao(cs, Identity.class);
 
         initializeDatabase(cs);
-
-        mostRecentBlockQuery = blockDao.queryBuilder()
-                .orderBy("height", false)
-                .orderBy("timeStamp", true)
-                .limit(1L)
-                .prepare();
 
         prepareEntriesForBlockQuery();
 
@@ -80,20 +73,19 @@ public class DatabaseStore implements DataStore {
 
             // make sure genesis block is present
             Block g = Block.getGenesisBlock();
-            if (!blockExists(g.getBlockID()))
+            if (!blockExists(g.getBlockID())) {
+                g.setActive(true);
                 blockDao.create(g);
-
+            }
             return null;
         });
     }
 
     public boolean blockExists(byte[] blockID) throws SQLException {
         return blockDao.queryBuilder()
-                .limit(1L)
                 .where()
                 .eq("blockID", blockID)
-                .queryForFirst()
-                != null;
+                .countOf() > 0;
     }
 
     private void prepareEntriesForBlockQuery() throws SQLException {
@@ -426,16 +418,36 @@ public class DatabaseStore implements DataStore {
         identityDao.create(identity);
     }
 
-    @Override
     public List<byte[]> getActiveBlocksSample(int maxBlockIDs) throws SQLException {
+
         List<byte[]> result = new ArrayList<>(maxBlockIDs);
-        result.add(latestBlock.getBlockID());
+        long numActiveBlocks = getActiveBlocksCount();
+        // for testing
+        long numBlocks = getBlocksCount();
+        System.out.println(numBlocks);
+        if (maxBlockIDs > 1) {
+            try (DatabaseIterator<Block> activeBlocks = getActiveBlocks()) {
 
-        DatabaseIterator<Block> activeBlocks = getActiveBlocks();
+                // always send the genesis block
+                numActiveBlocks--;
+                maxBlockIDs--;
 
+                double iter = (double) maxBlockIDs / numActiveBlocks;
+                int numAdded = 0;
+                double counter = 0;
 
+                while (numActiveBlocks > 0 && activeBlocks.moveNext()) {
+                    Block b = activeBlocks.current();
 
-
+                    if (counter >= numAdded) {
+                        numAdded++;
+                        result.add(b.getBlockID());
+                    }
+                    counter += iter;
+                    numActiveBlocks--;
+                }
+            }
+        }
         result.add(Block.getGenesisBlock().getBlockID());
         return result;
 
@@ -443,6 +455,10 @@ public class DatabaseStore implements DataStore {
 
     private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
         return new DatabaseIterator<>(blockDao.queryBuilder().where().eq("active", true).iterator());
+    }
+
+    private long getActiveBlocksCount() throws SQLException {
+        return blockDao.queryBuilder().where().eq("active", true).countOf();
     }
 
 }

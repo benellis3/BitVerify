@@ -60,12 +60,15 @@ public class ConnectionManager {
 
         // create a special executor service that makes daemon threads.
         // this way the application can shut down without having to terminate network threads first.
+
+        Thread.UncaughtExceptionHandler ueh = (t, e) -> bus.post(
+                new ExceptionLogEvent("An exception in a network thread was not caught: " + e.getMessage(),
+                        LogEventSource.NETWORK, Level.SEVERE, e));
+
         ThreadFactory daemonThreadFactory = runnable -> {
             Thread thread = new Thread(runnable);
             thread.setDaemon(true);
-            thread.setUncaughtExceptionHandler((t, e) -> bus.post(
-                    new ExceptionLogEvent("An exception in a network thread was not caught: " + e.getMessage(),
-                            LogEventSource.NETWORK, Level.SEVERE, e)));
+            thread.setUncaughtExceptionHandler(ueh);
             return thread;
         };
         es = Executors.newCachedThreadPool(daemonThreadFactory);
@@ -96,7 +99,7 @@ public class ConnectionManager {
                         }
                     } catch (IOException ioe) {
                         // if the server socket dies, we can still carry on but won't be able to accept new connections.
-                        log("Server socket died: can no longer accept new incoming peer connections", Level.WARNING);
+                        log("Server socket died: can no longer accept new incoming peer connections. " + ioe.getMessage(), Level.WARNING);
                     }
                 }
         );
@@ -109,7 +112,7 @@ public class ConnectionManager {
                 es.execute(() -> connectToPeer(peerAddress));
             }
 
-            PeerProtocol peerProtocol = new PeerProtocol(listenPort);
+            PeerProtocol peerProtocol = new PeerProtocol();
             // send some getpeers messages.
             peerProtocol.send();
         });
@@ -142,10 +145,11 @@ public class ConnectionManager {
                 ph.shutdown();
             } catch (InterruptedException | ExecutionException e) {
                 log("An error occurred while establishing connection to peer", Level.INFO);
+                log("Cause: " + ie.getCause().getMessage(), Level.INFO);
                 ph.shutdown();
             }
         } catch (IOException e) {
-            log("An error occurred while creating an outgoing socket to a new peer", Level.INFO);
+            log("An error occurred while creating an outgoing socket to a new peer: " + e.getMessage(), Level.INFO);
         }
     }
 
@@ -567,16 +571,6 @@ public class ConnectionManager {
 
     public class PeerProtocol {
 
-        private State state;
-        private int listenPort;
-
-        public PeerProtocol(int listenPort) {
-            state = State.IDLE;
-            this.listenPort = listenPort;
-
-            bus.register(this);
-        }
-
         public void send() {
             log("Sending a get peers message", Level.FINE);
             peers.values().forEach(p -> {
@@ -587,7 +581,7 @@ public class ConnectionManager {
                         .build();
                 p.send(message);
                 log("Sent a get peers message", Level.FINE);
-                state = State.WAIT;
+                // state = State.WAIT;
                 // register for peers event messages
                 bus.register(this);
                 //Timer timer = new Timer();
@@ -610,7 +604,7 @@ public class ConnectionManager {
             log("Handling a peers message", Level.FINE);
             bus.unregister(this);
             es.execute(() -> {
-                state = State.IDLE;
+                // state = State.IDLE;
                 Set<InetSocketAddress> newAddresses = pe.getSocketAddresses();
                 for (InetSocketAddress address : newAddresses) {
                     if (!peers.containsKey(address)) {
