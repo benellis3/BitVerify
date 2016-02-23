@@ -424,6 +424,7 @@ public class Node {
 			mDatabase = new DatabaseStore("jdbc:h2:file:bitverify.db");
 		} catch (SQLException e) {
 			System.out.println("Error setting up database...");
+			e.printStackTrace();
 			exitProgram();
 		}
 	}
@@ -447,6 +448,11 @@ public class Node {
 		System.out.println(o.getMessage());
         mGUI.addLogEvent(o);
     }
+
+	@Subscribe
+	public void onExceptionLogEvent(ExceptionLogEvent e) {
+		e.getCause().printStackTrace();
+	}
     
     private String getCurrentDatetime() {
     	Calendar cal = Calendar.getInstance();
