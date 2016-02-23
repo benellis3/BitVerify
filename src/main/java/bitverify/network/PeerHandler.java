@@ -295,8 +295,10 @@ public class PeerHandler {
             // check the validity of the entry
             if (entry.testEntryHashSignature()) {
                 try {
-                dataStore.insertEntry(entry);
-                } catch (Exception ex) { System.out.println(ex); }
+                    dataStore.insertEntry(entry);
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                }
                 // raise a NewEntryEvent on the event bus
                 bus.post(new NewEntryEvent(entry));
             }
@@ -341,8 +343,7 @@ public class PeerHandler {
             log("handing off block message event", Level.FINER);
             try {
                 bus.post(new BlockMessageEvent(m, PeerHandler.this));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log("Oh dear: " + e.toString(), Level.SEVERE, e);
                 e.printStackTrace();
             }
@@ -373,36 +374,44 @@ public class PeerHandler {
 
 
         private void handleGetHeaders(GetHeadersMessage message) throws SQLException {
-            // for each start at ID,
-            for (ByteString bytes : message.getFromList()) {
-                byte[] blockID = bytes.toByteArray();
+            try {
 
-                // if block is on primary chain
-                if (dataStore.isBlockOnActiveChain(blockID)) {
 
-                    // send the blocks following it
-                    List<Block> blocks = dataStore.getActiveBlocksAfter(blockID, MAX_HEADERS);
+                // for each start at ID,
+                for (ByteString bytes : message.getFromList()) {
+                    byte[] blockID = bytes.toByteArray();
 
-                    HeadersMessage.Builder hb = HeadersMessage.newBuilder();
-                    for (Block block : blocks)
-                        hb.addHeaders(ByteString.copyFrom(block.serializeHeader()));
-                    HeadersMessage h = hb.build();
+                    // if block is on primary chain
+                    if (dataStore.isBlockOnActiveChain(blockID)) {
 
-                    Message m = Message.newBuilder()
-                            .setType(Message.Type.HEADERS)
-                            .setHeaders(h)
-                            .build();
-                    send(m);
-                    return;
+                        // send the blocks following it
+                        List<Block> blocks = dataStore.getActiveBlocksAfter(blockID, MAX_HEADERS);
+
+                        HeadersMessage.Builder hb = HeadersMessage.newBuilder();
+                        for (Block block : blocks)
+                            hb.addHeaders(ByteString.copyFrom(block.serializeHeader()));
+                        HeadersMessage h = hb.build();
+
+                        Message m = Message.newBuilder()
+                                .setType(Message.Type.HEADERS)
+                                .setHeaders(h)
+                                .build();
+                        send(m);
+                        return;
+                    }
                 }
+                // if we get here, we didn't have any matching blocks so send back an empty headers message
+                HeadersMessage hm = HeadersMessage.newBuilder().build();
+                Message m = Message.newBuilder()
+                        .setType(Message.Type.HEADERS)
+                        .setHeaders(hm)
+                        .build();
+                send(m);
+
+            } catch (Exception ex) {
+                log("Oh dear " + ex.getMessage(), Level.SEVERE, ex);
+                ex.printStackTrace();
             }
-            // if we get here, we didn't have any matching blocks so send back an empty headers message
-            HeadersMessage hm = HeadersMessage.newBuilder().build();
-            Message m = Message.newBuilder()
-                    .setType(Message.Type.HEADERS)
-                    .setHeaders(hm)
-                    .build();
-            send(m);
         }
     }
 
