@@ -62,11 +62,13 @@ public class Miner implements Runnable{
 	//We recalculate the mining difficulty every adjustTargetFrequency blocks
 	private static int adjustTargetFrequency = 1008;
 	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
-	//(we want 1008 blocks to be mined every week/a block every 10 minutes)
 	private static long idealMiningTime = 604800000;
+	//this means
+	//we want 1008 blocks to be mined every week/a block every 10 minutes
+	//this is recalculated every week
 	
 	//Proof of mining (we multiply the success target by the scale)
-	private static int miningProofDifficultyScale = 0x2;
+	private static int miningProofDifficultyScale = 0x800;
 	private int currentMiningProofTarget;
 	
 	//The block we are currently mining
@@ -74,6 +76,9 @@ public class Miner implements Runnable{
 	
 	//Constant making calculations easier to read
 	private static final int bitsInByte = 8;
+	
+	//Flag for printing the target on starting the application
+	private static boolean printTarget = true;
 	
 	/**
      * Constructor for creating a miner, used for creating new blocks
@@ -96,8 +101,6 @@ public class Miner implements Runnable{
 		List<Entry> pool = dataStore.getUnconfirmedEntries();
 		
 		blockMining.setEntriesList(pool);
-		
-		eventBus.post(new LogEvent("New Miner Created",LogEventSource.MINING,Level.INFO));
 
 	}
 	
@@ -248,7 +251,7 @@ public class Miner implements Runnable{
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
 					eventBus.post(new LogEvent("Successful block mine",LogEventSource.MINING,Level.INFO));
-					eventBus.post(new LogEvent("Block Hash:     "+result,LogEventSource.MINING,Level.INFO));
+					eventBus.post(new LogEvent("Block Hash:		"+result,LogEventSource.MINING,Level.INFO));
 					
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
 					dataStore.insertBlock(blockMining);
@@ -264,8 +267,8 @@ public class Miner implements Runnable{
 				//Must maintain a list of peers in database that have received proof from
 				//Reject incoming entries from public IPs not from the list
 					eventBus.post(new NewMiningProofEvent(blockMining));
-					eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
-					eventBus.post(new LogEvent("Block Hash:     "+result,LogEventSource.MINING,Level.INFO));
+					//eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
+					//eventBus.post(new LogEvent("Block Hash:	"+result,LogEventSource.MINING,Level.INFO));
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -296,10 +299,6 @@ public class Miner implements Runnable{
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 		
-		eventBus.post(new LogEvent("Success Target: "+stringFormat(unpackTarget(target)),LogEventSource.MINING,Level.INFO));
-		
-		eventBus.post(new LogEvent("Proof Target:   "+stringFormat(unpackTarget(currentMiningProofTarget)),LogEventSource.MINING,Level.INFO));
-
 		Block lastBlockInChain = dataStore.getMostRecentBlock();
 		
 		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, entries);
@@ -454,13 +453,21 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			eventBus.post(new LogEvent("New Target:     "+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))),LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("New Target:		"+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))),LogEventSource.MINING,Level.INFO));
 
 			return packTarget(newTarget.toString(16));
 		}
 		else{
 			//Otherwise use the same target as the most recent block
-			return block.getTarget();
+			
+			int target = block.getTarget();
+			
+			if (printTarget){
+				eventBus.post(new LogEvent("Success Target:	"+stringFormat(unpackTarget(target)),LogEventSource.MINING,Level.INFO));
+				printTarget = false;
+			}
+			
+			return target;
 		}
 	}
 	
