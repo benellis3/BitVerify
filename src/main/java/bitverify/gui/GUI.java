@@ -80,7 +80,6 @@ public class GUI extends Application {
 	
 	@Override
 	public void start(Stage stage) throws Exception {
-		AquaFx.style();
 		
 		// Set up loading screen
 		primaryStage = stage;
@@ -138,7 +137,7 @@ public class GUI extends Application {
         		mNode = new Node(GUI.this);
         	}
         }).start();
-        //onNodeSetupComplete();
+//        onNodeSetupComplete();
 	}
 	
 	public void changeLoadingText(String newText) {
@@ -167,14 +166,41 @@ public class GUI extends Application {
 	        	tabs.setPadding(new Insets(15));
 	        	
 	        	Tab minerTab = getMinerTab();
+	            Image miningImage = new Image("/mining_icon.png");
+	            ImageView miningImgView = new ImageView(miningImage);
+	            miningImgView.setFitHeight(20);
+	            miningImgView.setFitWidth(20);
+	        	minerTab.setGraphic(miningImgView);
 	        	
 	        	Tab addEntryTab = getAddEntryTab();
+	        	Image entryImage = new Image("/entry_icon.png");
+	        	ImageView entryImgView = new ImageView(entryImage);
+	        	entryImgView.setFitHeight(20);
+	        	entryImgView.setFitWidth(20);
+	        	addEntryTab.setGraphic(entryImgView);
+	        	
 	        	
 	        	Tab searchTab = getSearchTab();
+	        	Image searchImage = new Image("/search_icon.png");
+	        	ImageView searchImgView = new ImageView(searchImage);
+	        	searchImgView.setFitHeight(20);
+	        	searchImgView.setFitWidth(20);
+	        	searchTab.setGraphic(searchImgView);
 	        	
 	        	Tab networkTab = getNetworkTab();
+	        	Image networkImage = new Image("/network_icon.png");
+	        	ImageView networkImgView = new ImageView(networkImage);
+	        	networkImgView.setFitHeight(20);
+	        	networkImgView.setFitWidth(20);
+	        	networkTab.setGraphic(networkImgView);
+	        	
 	        	
 	        	Tab settingsTab = new Tab();
+	        	Image settingsImage = new Image("/settings_icon.png");
+	        	ImageView settingsImgView = new ImageView(settingsImage);
+	        	settingsImgView.setFitHeight(20);
+	        	settingsImgView.setFitWidth(20);
+	        	settingsTab.setGraphic(settingsImgView);
 	        	settingsTab.setText("Settings");
 	        	
 	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, networkTab, settingsTab);
