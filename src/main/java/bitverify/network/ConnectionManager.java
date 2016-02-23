@@ -454,7 +454,7 @@ public class ConnectionManager {
                             log("received headers were not accepted because the previous block is not active. Choosing a new peer.", Level.FINE);
                             return false;
                         }
-                        if (!Block.verifyChain(receivedHeaders)) {
+                        if (!Block.verifyChain(receivedHeaders, bus)) {
                             // choose a new peer and try again
                             log("received headers were not accepted because the chain was invalid. Choosing a new peer.", Level.FINE);
                             return false;

@@ -1,5 +1,7 @@
 package bitverify.block;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.entries.*;
 import bitverify.mining.Miner;
 import bitverify.crypto.Hash;
@@ -14,9 +16,11 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
+import com.squareup.otto.Bus;
 
 
 /**
@@ -164,15 +168,17 @@ public class Block {
      * @return boolean to indicate whether the given subchain is valid or not
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
-    public static boolean verifyChain(List<Block> blockList){
+    public static boolean verifyChain(List<Block> blockList, Bus bus){
         int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
             throw new IllegalArgumentException();
         } else if (listLen == 1) {
+            bus.post(new LogEvent("chain only had one block, verifying hash meets difficulty", LogEventSource.BLOCK, Level.FINER));
             Block onlyBlock = blockList.get(FIRST);
             return Miner.blockHashMeetDifficulty(onlyBlock);
         } else {
+            bus.post(new LogEvent("chain has " + blockList.size() + " blocks", LogEventSource.BLOCK, Level.FINER));
             Block prevBlock = blockList.get(0);
             long prevTime = prevBlock.getTimeStamp();
             Block currentBlock;
@@ -191,6 +197,14 @@ public class Block {
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
                 
                 timeInvar = (prevTime < currentTime);
+
+                if (!matchingHash)
+                    bus.post(new LogEvent("chain validation failed: child-parent hashes didn't match", LogEventSource.BLOCK, Level.FINER));
+                if (!validNonce)
+                    bus.post(new LogEvent("chain validation failed: block hash did not meet its difficulty", LogEventSource.BLOCK, Level.FINER));
+                if (!timeInvar)
+                    bus.post(new LogEvent("chain validation failed: time invariant test failed - a child block was younger than its parent", LogEventSource.BLOCK, Level.FINER));
+
                 if (!matchingHash || !validNonce || !timeInvar) {
                     return false;
                 }
