@@ -165,7 +165,6 @@ public class DatabaseStore implements DataStore {
                 .orderBy("height", true)
                 .orderBy("timeStamp", false)
                 .where();
-        w.eq("active", true);
         if (limit == -1) {
             w.gt("height", startBlock.getHeight());
             limit = Integer.MAX_VALUE;
@@ -173,6 +172,7 @@ public class DatabaseStore implements DataStore {
             long startHeight = startBlock.getHeight() + 1;
             w.between("height", startHeight, startHeight + limit - 1);
         }
+        w.and().eq("active", true);
 
         CloseableIterator<Block> results = w.iterator();
 
