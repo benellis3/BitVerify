@@ -280,5 +280,52 @@ public class MinerTest {
 		//If a block meets success difficulty it will also meet the mining proof difficulty
 		assertEquals(Miner.miningProofMeetDifficulty(Block.getGenesisBlock()),true);
 	}
+	
+	//Test the block target checking
+	@Test
+	public void testBlockTarget() throws IOException, SQLException{
+		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
+		
+		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
+		ArrayList<Entry> emtpyEntryList = new ArrayList<Entry>();
+		
+		Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,emtpyEntryList);
+		Block b2 = new Block(b1,200,0x03000004,0,emtpyEntryList);
+		
+		d.insertBlock(b1);
+		d.insertBlock(b2);
+		
+		
+		
+		Bus eventBus = new Bus(ThreadEnforcer.ANY);
+
+		//Recalculate after every 3 blocks
+		Miner m = new Miner(eventBus,d,3,150,10);
+		
+		m.stopMining();	//to prevent warning
+		
+		Block b3 = new Block(b2,300,0x03000004,0,emtpyEntryList);
+		
+		boolean result = Miner.checkBlockDifficulty(d, b3, b2, eventBus);
+		
+		assertEquals(result, true);
+		
+		Block b4 = new Block(b3,400,0x03000004,0,emtpyEntryList);
+		Block b5 = new Block(b4,500,0x03000004,0,emtpyEntryList);
+		Block b6 = new Block(b5,525,0x03000004,0,emtpyEntryList);
+		Block b7 = new Block(b6,700,0x03000004,0,emtpyEntryList);
+		
+		d.insertBlock(b3);
+		d.insertBlock(b4);
+		d.insertBlock(b5);
+		d.insertBlock(b6);
+		d.insertBlock(b7);
+		
+		Block b8 = new Block(b7,700,0x03000008,0,emtpyEntryList);
+		
+		boolean result2 = Miner.checkBlockDifficulty(d, b8, b7, eventBus);
+		
+		assertEquals(result2, true);
+	}
 
 }
