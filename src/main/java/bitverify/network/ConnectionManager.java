@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import bitverify.ExceptionLogEvent;
 import bitverify.LogEvent;
@@ -18,7 +17,6 @@ import bitverify.LogEventSource;
 import bitverify.block.Block;
 import bitverify.entries.Entry;
 import bitverify.mining.Miner;
-import bitverify.network.proto.MessageProto;
 import bitverify.network.proto.MessageProto.BlockMessage;
 import bitverify.persistence.DataStore;
 import bitverify.network.proto.MessageProto.Peers;
@@ -107,6 +105,8 @@ public class ConnectionManager {
                                     try {
                                         InetSocketAddress address = ph.acceptConnection();
                                         peers.put(address, ph);
+                                        // do block download against this peer
+                                        blockProtocol.blockDownload(ph);
                                     } catch (TimeoutException time) {
                                         // this means the connection could not be established before timeout
                                         log("Did not establish connection to peer within time limit", Level.INFO);
@@ -115,6 +115,8 @@ public class ConnectionManager {
                                         log("An error occurred while establishing connection to peer", Level.INFO);
                                         log("Cause: " + ie.getCause().getMessage(), Level.INFO);
                                         ph.shutdown();
+                                    } catch (SQLException e) {
+                                        log("Database error occurred while doing block download", Level.SEVERE, e);
                                     }
                                 });
                             }
@@ -163,7 +165,7 @@ public class ConnectionManager {
                             for (InetSocketAddress address : newPeers) {
                                 if (!peers.containsKey(address) && !ourListenAddress.equals(address)) {
                                     log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
-                                    es.execute(() -> connectToPeer(address));
+                                    connectToPeer(address);
                                 }
                             }
                         }
@@ -176,7 +178,7 @@ public class ConnectionManager {
                         log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
                     }
                 }
-
+                // once peers are connected, do block download from everyone
                 initiateBlockDownload();
             } catch (SQLException e) {
                 log("Database error while commencing block download", Level.SEVERE, e);
@@ -414,66 +416,48 @@ public class ConnectionManager {
             bus.register(this);
         }
 
-        /**
-         * Performs the initial block download process. Best to call this on a separate thread as it will block.
-         * @throws SQLException A database error occurred.
-         */
-        public void initiateBlockDownload() throws SQLException {
-            initiateBlockDownload(null);
-        }
-
-        private void initiateBlockDownload(PeerHandler firstPeer) throws SQLException {
-            // only do this once at any one time.
+        private boolean blockDownload(PeerHandler peer) throws SQLException {
             synchronized (blockDownloadMonitor) {
-                log("Initiating block download", Level.FINE);
-
-                // First obtain block headers from some particular peer - send a GetBlockHeaders message
-                // then validate this sequence of headers upon receiving a BlockHeaders message
                 List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(HEADERS_NUM_BLOCK_IDS);
 
-                // take snapshot of peers
-                List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
-                shufflePeers(peersSnapshot);
-                // we might try the first peer twice but that's ok
-                if (firstPeer != null)
-                    peersSnapshot.add(0, firstPeer);
-
-                // we will break once we've got all the headers, having dispatched download tasks asynchronously.
-                // for now, if a peer suddenly gives us some invalid headers, we don't shutdown previous download
-                // tasks or discard earlier block headers they gave us.
-                for (PeerHandler p : peersSnapshot) {
+                while(true) {
                     log("sending get headers message", Level.FINE);
-                    HeadersFuture h = new HeadersFuture(p, fromBlockIDs, bus);
+                    HeadersFuture h = new HeadersFuture(peer, fromBlockIDs, bus);
                     h.run();
-                    List<Block> receivedHeaders = null;
+                    List<Block> receivedHeaders;
                     try {
                         receivedHeaders = h.get(HEADERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                         log("received headers reply", Level.FINE);
                     } catch (InterruptedException e) {
-                        // this ought not to happen but we can just try again.
+                        // this ought not to happen
+                        log("unexpected InterruptedException while getting block headers", Level.WARNING, e);
+                        return false;
                     } catch (TimeoutException e) {
                         // in this case shutdown the peer and try another.
-                        log("timed out while waiting for headers reply. Disconnecting peer " + p.getPeerAddress(), Level.FINE);
-                        disconnectPeer(p);
+                        log("timed out while waiting for headers reply. Disconnecting peer " + peer.getPeerAddress(), Level.FINE);
+                        disconnectPeer(peer);
+                        return false;
                     }
 
                     if (receivedHeaders == null) {
                         // choose a new peer and try again
+                        return false;
                     } else {
                         byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
                         // first header must follow some older block we have on our primary chain
                         Block firstPredecessor = dataStore.getBlock(firstPredecessorID);
                         if (firstPredecessor == null) {
                             log("received headers were not accepted because we don't have the previous block. Choosing a new peer.", Level.FINE);
-                            continue;
+                            return false;
                         }
                         if (!firstPredecessor.isActive()) {
                             log("received headers were not accepted because the previous block is not active. Choosing a new peer.", Level.FINE);
-                            continue;
+                            return false;
                         }
                         if (!Block.verifyChain(receivedHeaders)) {
                             // choose a new peer and try again
                             log("received headers were not accepted because the chain was invalid. Choosing a new peer.", Level.FINE);
+                            return false;
 
                         } else {
                             log("Got " + receivedHeaders.size() + " valid headers", Level.FINE);
@@ -488,7 +472,7 @@ public class ConnectionManager {
                             if (receivedHeaders.size() < MAX_HEADERS) {
                                 // TODO: verify against other peers
                                 log("headers download complete", Level.FINE);
-                                break;
+                                return true;
                             } else {
                                 fromBlockIDs.add(0, receivedHeaders.get(receivedHeaders.size() - 1).getBlockID());
                             }
@@ -496,6 +480,30 @@ public class ConnectionManager {
                     }
                 }
             }
+        }
+
+        /**
+         * Performs the initial block download process. Best to call this on a separate thread as it will block.
+         * @throws SQLException A database error occurred.
+         */
+
+        private void initiateBlockDownload() throws SQLException {
+            // only do this once at any one time.
+            log("Initiating block download", Level.FINE);
+
+            // First obtain block headers from some particular peer - send a GetBlockHeaders message
+            // then validate this sequence of headers upon receiving a BlockHeaders message
+
+            // take snapshot of peers
+            List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
+            shufflePeers(peersSnapshot);
+
+            // we will break once we've got all the headers, having dispatched download tasks asynchronously.
+            for (PeerHandler p : peersSnapshot) {
+                if (blockDownload(p))
+                    break;
+            }
+
         }
 
         /**
@@ -592,7 +600,7 @@ public class ConnectionManager {
                     // do some more block downloading
                     es.execute(() -> {
                         try {
-                            initiateBlockDownload(peer);
+                            blockDownload(peer);
                         } catch (SQLException ex) {
                             log("block download failed with a SQLException: " + ex.getMessage(), Level.WARNING, ex);
                         }

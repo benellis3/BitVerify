@@ -380,8 +380,8 @@ public class PeerHandler {
                 // if block is on primary chain
                 if (dataStore.isBlockOnActiveChain(blockID)) {
 
-                    // send that block and as many following it
-                    List<Block> blocks = dataStore.getBlocksAfter(blockID, MAX_HEADERS);
+                    // send the blocks following it
+                    List<Block> blocks = dataStore.getActiveBlocksAfter(blockID, MAX_HEADERS);
 
                     HeadersMessage.Builder hb = HeadersMessage.newBuilder();
                     for (Block block : blocks)

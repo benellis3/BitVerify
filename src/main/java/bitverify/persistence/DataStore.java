@@ -46,7 +46,7 @@ public interface DataStore {
      * @param idFrom get blocks after this block ID
      * @param limit  the maximum number of block IDs to get. Provide -1 if there is no limit.
      */
-    List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException;
+    List<Block> getActiveBlocksAfter(byte[] idFrom, int limit) throws SQLException;
 
     /**
      * Inserts the given block into the store, unless it is already present or would be an orphan.

@@ -155,7 +155,7 @@ public class DatabaseStore implements DataStore {
         return getNMostRecentBlocks(n, latestBlock);
     }
 
-    public List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException {
+    public List<Block> getActiveBlocksAfter(byte[] idFrom, int limit) throws SQLException {
         // try to retrieve the starting block from the database.
         Block startBlock = getBlock(idFrom);
         if (startBlock == null)
@@ -165,7 +165,7 @@ public class DatabaseStore implements DataStore {
                 .orderBy("height", true)
                 .orderBy("timeStamp", false)
                 .where();
-
+        w.eq("active", true);
         if (limit == -1) {
             w.gt("height", startBlock.getHeight());
             limit = Integer.MAX_VALUE;
