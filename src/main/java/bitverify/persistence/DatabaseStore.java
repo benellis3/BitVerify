@@ -340,7 +340,8 @@ public class DatabaseStore implements DataStore {
 
     public Block getBlock(byte[] blockID) throws SQLException {
         Block b = blockDao.queryBuilder().limit(1L).where().eq("blockID", blockID).queryForFirst();
-        b.setEntriesList(getEntriesForBlock(blockID));
+        if (b != null)
+            b.setEntriesList(getEntriesForBlock(blockID));
         return b;
     }
 

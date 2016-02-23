@@ -123,36 +123,45 @@ public class ConnectionManager {
         // connect to each given peer and do get peers. For now, only ask our initial peers for more peers.
         es.submit(() -> {
             try {
+                List<Future<?>> futures = new ArrayList<>();
                 for (InetSocketAddress peerAddress : initialPeers) {
+                    futures.add(es.submit(() -> {
+                        PeerHandler newPeerHandler = connectToPeer(peerAddress);
+                        if (newPeerHandler == null)
+                            return;
 
-                    PeerHandler newPeerHandler = connectToPeer(peerAddress);
-                    if (newPeerHandler == null)
-                        return;
+                        // do getpeers
+                        log("sending get peers message", Level.FINE);
+                        PeersFuture pf = new PeersFuture(newPeerHandler, bus);
+                        pf.run();
+                        Set<InetSocketAddress> newPeers = null;
+                        try {
+                            newPeers = pf.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                            log("received peers reply", Level.FINE);
+                        } catch (InterruptedException e) {
+                            // this ought not to happen
+                            log("while doing get peers, a mysterious InterruptedException occurred", Level.WARNING, e);
+                        } catch (TimeoutException e) {
+                            // in this case shutdown the peer .
+                            log("timed out while waiting for headers reply. Disconnecting peer " + newPeerHandler.getPeerAddress(), Level.FINE);
+                            disconnectPeer(newPeerHandler);
+                        }
 
-                    // do getpeers
-                    log("sending get peers message", Level.FINE);
-                    PeersFuture pf = new PeersFuture(newPeerHandler, bus);
-                    pf.run();
-                    Set<InetSocketAddress> newPeers = null;
-                    try {
-                        newPeers = pf.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                        log("received peers reply", Level.FINE);
-                    } catch (InterruptedException e) {
-                        // this ought not to happen
-                        log("while doing get peers, a mysterious InterruptedException occurred", Level.WARNING, e);
-                    } catch (TimeoutException e) {
-                        // in this case shutdown the peer .
-                        log("timed out while waiting for headers reply. Disconnecting peer " + newPeerHandler.getPeerAddress(), Level.FINE);
-                        disconnectPeer(newPeerHandler);
-                    }
-
-                    if (newPeers != null) {
-                        for (InetSocketAddress address : newPeers) {
-                            if (!peers.containsKey(address)) {
-                                log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
-                                es.execute(() -> connectToPeer(address));
+                        if (newPeers != null) {
+                            for (InetSocketAddress address : newPeers) {
+                                if (!peers.containsKey(address)) {
+                                    log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
+                                    es.execute(() -> connectToPeer(address));
+                                }
                             }
                         }
+                    }));
+                }
+                for (Future<?> f : futures) {
+                    try {
+                        f.get();
+                    } catch (InterruptedException|ExecutionException e) {
+                        log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
                     }
                 }
 
