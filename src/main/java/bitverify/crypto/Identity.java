@@ -161,6 +161,10 @@ public class Identity {
 	}
 	
 	public void decrypt(String masterPassword) throws NotMatchingKeyException{
+		if (!needsEncryption){
+			decryptedPrivateKey = privateKey;
+			return;
+		}
 		try {
 			byte[] symKey = getSymmetricKey(masterPassword);
 			if (symKey.length != Symmetric.KEY_LENGTH_IN_BYTES){
@@ -209,6 +213,17 @@ public class Identity {
 		if (decryptedPrivateKey == null && !needsEncryption)
 			decryptedPrivateKey = privateKey;
 	}
+	
+	/**
+	 * Before using an Identity object for the first time, call this method.
+	 * 
+	 * @return whether you need to call decrypt()
+	 */
+	public boolean needsToBeDecrypted(){
+		propagateUnencryptedPrivateKey();
+		return needsEncryption;
+	}
+
 	
 	/**
 	 * 	@return keypair, OR null if private key is not decrypted. In that case, you need to call
