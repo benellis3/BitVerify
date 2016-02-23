@@ -192,8 +192,88 @@ public class DatabaseStoreTest {
         List<Block> nMostError = ds.getNMostRecentBlocks(erroneousN, block);
 
         assertEquals(nMostError.size(),numBlocks+1);
+        
+        int oldNumBlocks = numBlocks;
+        
+        //Create a new chain
+        initialBlock = Block.getGenesisBlock();
+        prevBlock = initialBlock;
+        block = initialBlock;
 
+        numBlocks = oldNumBlocks-1;
 
+        for (int x = 0; x < numBlocks; x++){
+        	timeStamp += 100;
+        	block = new Block(prevBlock,timeStamp,0x03000004,0,entryList);
+        	ds.insertBlock(block);
+        	prevBlock = block;
+        	//Check the block registers as existing in the database
+        	assertEquals(true,ds.blockExists(block.getBlockID()));
+        }
+        
+        //This new chain is shorter than the old one
+        assertEquals(false,ds.isBlockOnActiveChain(block.getBlockID()));
+        
+        
+        for (int x = 0; x < 2; x++){
+        	timeStamp += 100;
+        	block = new Block(prevBlock,timeStamp,0x03000004,0,entryList);
+        	ds.insertBlock(block);
+        	prevBlock = block;
+        	//Check the block registers as existing in the database
+        	assertEquals(true,ds.blockExists(block.getBlockID()));
+        }
+        
+      //This new chain is now one block longer than the old one, it should be primary chain
+      assertEquals(true,ds.isBlockOnActiveChain(block.getBlockID()));
+      //It has one more block than the previous chain
+      assertEquals(oldNumBlocks+1,block.getHeight());
+    }
+    
+    @Test
+    public void TestInsertEntries() throws SQLException {
+    	DataStore dataStore = new DatabaseStore("jdbc:h2:mem:bitverifytest2");
+    	
+    	//Insert single unconfirmed entry
+    	dataStore.insertEntry(EntryTest.generateEntry1());
+    	
+    	//Check there are the same number of unconfirmed entries as total entries
+    	DatabaseIterator<Entry> entriesIT = dataStore.getAllEntries();
+    	List<Entry> unComfirmedEntriesIT = dataStore.getUnconfirmedEntries();
+    	
+    	int entriesITSize = 0;
+    	
+    	while (entriesIT.moveNext()){
+    		entriesITSize++;
+    	}
+    	
+    	assertEquals(unComfirmedEntriesIT.size(),entriesITSize);
+    	
+    	//Check confirmed entries are correctly added
+    	ArrayList<Entry> entries = new ArrayList<Entry>();
+    	entries.add(EntryTest.generateEntry1());
+    	
+    	ArrayList<Entry> entries2 = new ArrayList<Entry>();
+    	entries2.add(EntryTest.generateEntry2());
+    	
+    	//Add blocks to chain containing the two generated entries
+    	Block block = new Block(Block.getGenesisBlock(),100,0x03000004,0,entries);
+    	Block block2 = new Block(block,100,0x03000004,0,entries2);
+    	
+    	dataStore.insertBlock(block);
+    	dataStore.insertBlock(block2);
+    	
+    	assertEquals(dataStore.getBlocksCount(),3);
+    	
+    	DatabaseIterator<Entry> entryIT = dataStore.getConfirmedEntries();
+
+        ArrayList<Entry> entriesBack = new ArrayList<Entry>();
+
+        while (entryIT.moveNext()){
+        	entriesBack.add(entryIT.current());
+        }
+    	
+        assertEquals(2,entriesBack.size());
     }
 
     @Test
@@ -203,7 +283,7 @@ public class DatabaseStoreTest {
         int[] numBlocks =  {1, 4, 7, 12, 16, 21, 27, 33, 39};
         int[] sampleSize = {3, 4, 5, 6,  7,  10, 12, 16, 17};
         for (int x = 0; x < numBlocks.length; x++) {
-            DataStore ds = new DatabaseStore("jdbc:h2:mem:bitverifytest" + x);
+            DataStore ds = new DatabaseStore("jdbc:h2:mem:bitverifytest3" + x);
             Block prev = ds.getMostRecentBlock();
             for (int i = 0; i < numBlocks[x] - 1; i++) {
                 prev = new Block(prev, 0, 0, new ArrayList<>());

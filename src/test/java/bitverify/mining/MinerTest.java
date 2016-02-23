@@ -295,8 +295,6 @@ public class MinerTest {
 		d.insertBlock(b1);
 		d.insertBlock(b2);
 		
-		
-		
 		Bus eventBus = new Bus(ThreadEnforcer.ANY);
 
 		//Recalculate after every 3 blocks
