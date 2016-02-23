@@ -10,6 +10,7 @@ import java.util.logging.Level;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.LogEvent;
 import bitverify.LogEventSource;
@@ -77,7 +78,7 @@ public class Miner implements Runnable{
 	//Constant making calculations easier to read
 	private static final int bitsInByte = 8;
 	
-	//Flag for printing the target on starting the application
+	//Whether to print the current target (when we first start the miner, except when the target is immediately changed)
 	private static boolean printTarget = true;
 	
 	/**
@@ -169,7 +170,8 @@ public class Miner implements Runnable{
      * @throws SQLException
      */
 	public static boolean checkBlockDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
-		int targetShouldBe = calculatePackedTarget(dataStore, parent, eventBus);
+		//Pass new event bus so output is not displayed in Miner output, since we are verifying not calculating a new target
+		int targetShouldBe = calculatePackedTarget(dataStore, parent, new Bus(ThreadEnforcer.ANY));
 		
 		return targetCorrect(targetShouldBe,block.getTarget());
 	}
@@ -186,7 +188,8 @@ public class Miner implements Runnable{
      * @throws SQLException
      */
 	public static boolean checkMiningProofDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
-		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent, eventBus));
+		//Pass new event bus so output is not displayed in Miner output, since we are verifying not calculating a new target
+		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent, new Bus(ThreadEnforcer.ANY)));
 		
 		return targetCorrect(proofTargetShouldBe,block.getTarget());
 	}
@@ -259,16 +262,15 @@ public class Miner implements Runnable{
 					eventBus.post(new BlockFoundEvent(blockMining));
 	
 					newMiningBlock(new ArrayList<Entry>());
-					
 				}
 				//Proof of mining
 				else if (mineSuccess(result, currentMiningProofTarget)){
-				//Application logic must broadcast to peers
-				//Must maintain a list of peers in database that have received proof from
-				//Reject incoming entries from public IPs not from the list
+					//Application logic must broadcast to peers
+					//Must maintain a list of peers in database that have received proof from
+					//Reject incoming entries from public IPs not from the list
 					eventBus.post(new NewMiningProofEvent(blockMining));
 					//eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
-					//eventBus.post(new LogEvent("Block Hash:	"+result,LogEventSource.MINING,Level.INFO));
+					//eventBus.post(new LogEvent("Proof Block Hash:	"+result,LogEventSource.MINING,Level.INFO));
 				}
 				
 				//Increment the header's nonce to generate a new hash
@@ -309,8 +311,6 @@ public class Miner implements Runnable{
      */
 	public void stopMining(){
 		mining = false;
-		//Application logic should ensure uncomfirmed entries in database that were in the new block are no longer uncomfirmed
-		//When we start mining again, it will get the new unconfirmed entries from the database
 	}
 	
 	/**
@@ -442,6 +442,8 @@ public class Miner implements Runnable{
 			eventBus.post(new LogEvent("Previous "+adjustTargetFrequency+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
 			eventBus.post(new LogEvent("We want it to take "+idealMiningTime+" milliseconds",LogEventSource.MINING,Level.INFO));
 		
+			if (printTarget) printTarget = false;
+			
 			//Limit exponential growth
 			if (difference < idealMiningTime/growthFactorLimit) difference = idealMiningTime/growthFactorLimit;
 			if (difference > idealMiningTime*growthFactorLimit) difference = idealMiningTime*growthFactorLimit;
@@ -453,15 +455,19 @@ public class Miner implements Runnable{
 			if (newTarget.compareTo(minTarget) == -1) newTarget = minTarget;
 			if (newTarget.compareTo(maxTarget) == 1) newTarget = maxTarget;
 			
-			eventBus.post(new LogEvent("New Target:		"+stringFormat(unpackTarget(packTarget(newTarget.toString(16)))),LogEventSource.MINING,Level.INFO));
-
-			return packTarget(newTarget.toString(16));
+			int result = packTarget(newTarget.toString(16));
+			
+			eventBus.post(new LogEvent("New Target:		"+stringFormat(unpackTarget(result)),LogEventSource.MINING,Level.INFO));
+			//eventBus.post(new LogEvent("Proof Target:	"+stringFormat(unpackTarget(Miner.calculateMiningProofTarget(result))),LogEventSource.MINING,Level.INFO));
+			
+			return result;
 		}
 		else{
 			//Otherwise use the same target as the most recent block
 			
 			int target = block.getTarget();
 			
+			//Initially print the target
 			if (printTarget){
 				eventBus.post(new LogEvent("Success Target:	"+stringFormat(unpackTarget(target)),LogEventSource.MINING,Level.INFO));
 				printTarget = false;
