@@ -397,6 +397,9 @@ public class PeerHandler {
                                 .setHeaders(h)
                                 .build();
                         send(m);
+                        log("Sent headers message with " + blocks.size() + " headers", Level.FINE);
+                        for (int i = 0; i < blocks.size(); i++)
+                            log("header " + i + " was " + new BlockID(blocks.get(i).getBlockID()), Level.FINER);
                         return;
                     }
                 }
