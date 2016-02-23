@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -189,27 +190,30 @@ public class Block {
             boolean matchingHash;
             boolean validNonce;
             boolean timeInvar;
-            
+
             for (int i = 1; i < listLen; i++) {
                 currentBlock = blockList.get(i);
                 currentTime = currentBlock.getTimeStamp();
                 currentBlockPrevHash = currentBlock.getPrevBlockHash();
                 matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
-                
+
                 timeInvar = (prevTime < currentTime);
 
                 if (!matchingHash)
                     bus.post(new LogEvent("chain validation failed: child-parent hashes didn't match", LogEventSource.BLOCK, Level.FINER));
                 if (!validNonce)
                     bus.post(new LogEvent("chain validation failed: block hash did not meet its difficulty", LogEventSource.BLOCK, Level.FINER));
-                if (!timeInvar)
-                    bus.post(new LogEvent("chain validation failed: time invariant test failed - a child block was younger than its parent", LogEventSource.BLOCK, Level.FINER));
-
+                if (!timeInvar) {
+                    bus.post(new LogEvent("chain validation failed: time invariant test failed - a child block was older than its parent", LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("parent timestamp was " + new Date(prevTime), LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("child timestamp was " + new Date(currentTime), LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("time invariant was " + timeInvar, LogEventSource.BLOCK, Level.FINER));
+                }
                 if (!matchingHash || !validNonce || !timeInvar) {
                     return false;
                 }
-                
+
                 prevBlock = currentBlock;
                 prevTime = currentBlock.getTimeStamp();
                 prevBlockHash = prevBlock.hashHeader();
