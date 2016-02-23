@@ -168,7 +168,7 @@ public class Miner implements Runnable{
 	public static boolean checkBlockDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
 		int targetShouldBe = calculatePackedTarget(dataStore, parent, eventBus);
 		
-		return mineSuccess(unpackTarget(targetShouldBe),block.getTarget());
+		return targetCorrect(targetShouldBe,block.getTarget());
 	}
 	
 	/**
@@ -185,7 +185,7 @@ public class Miner implements Runnable{
 	public static boolean checkMiningProofDifficulty(DataStore dataStore, Block block, Block parent, Bus eventBus) throws SQLException{
 		int proofTargetShouldBe = calculateMiningProofTarget(calculatePackedTarget(dataStore, parent, eventBus));
 		
-		return mineSuccess(unpackTarget(proofTargetShouldBe),block.getTarget());
+		return targetCorrect(proofTargetShouldBe,block.getTarget());
 	}
 	
 	
@@ -194,7 +194,7 @@ public class Miner implements Runnable{
      * 
      * @param hash		the 256 bit hash we compare against the target
      * @param packedT	the packed representation of the target
-     * @return the unpacked 256 bit hash is less than the unpacked 256 bit target
+     * @return whether the unpacked 256 bit hash is less than the unpacked 256 bit target
      */
 	public static boolean mineSuccess(String hash, int packedT){
 		String target = unpackTarget(packedT);
@@ -203,6 +203,29 @@ public class Miner implements Runnable{
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
 		
 		if (lessThan){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	
+	/**
+     * Determine whether the target of a block is less than or equal to the target it should have
+     * 
+     * @param targetShouldBe	the packed target that it should be
+     * @param targetActual		the packed target that is in the block
+     * @return whether the actual target is less than or equal to what it should be
+     */
+	public static boolean targetCorrect(int targetShouldBe, int targetActual){
+		String target = unpackTarget(targetShouldBe);
+		String actual = unpackTarget(targetActual);
+		
+		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
+		int comparison = (new BigInteger(actual,16)).compareTo(new BigInteger(target,16));
+		
+		//The target must be less than or equal to required target
+		if ((comparison == -1) || (comparison == 0)){
 			return true;
 		}
 		else{
