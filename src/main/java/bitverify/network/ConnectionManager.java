@@ -177,6 +177,7 @@ public class ConnectionManager {
                         f.get();
                     } catch (InterruptedException|ExecutionException e) {
                         log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
+                        e.printStackTrace();
                     }
                 }
                 // once peers are connected, do block download from everyone
