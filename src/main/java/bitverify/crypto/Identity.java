@@ -210,6 +210,10 @@ public class Identity {
 			decryptedPrivateKey = privateKey;
 	}
 	
+	/**
+	 * 	@return keypair, OR null if private key is not decrypted. In that case, you need to call
+	 * 	decrypt() first.
+	 */
 	public AsymmetricCipherKeyPair getKeyPair() throws KeyDecodingException{
 		propagateUnencryptedPrivateKey();
 		if (decryptedPrivateKey == null)
