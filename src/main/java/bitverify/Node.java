@@ -443,7 +443,8 @@ public class Node {
 
     @Subscribe
     public void onLogEvent(LogEvent o) {
-        //System.out.println(o.getMessage());
+        // we need to log to the console for debugging purposes.
+		System.out.println(o.getMessage());
         mGUI.addLogEvent(o);
     }
     
