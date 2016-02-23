@@ -1,5 +1,6 @@
 package bitverify.network;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,14 +40,13 @@ import com.squareup.otto.Subscribe;
  * @author Ben Ellis, Robert Eady
  */
 public class ConnectionManager {
-    private static final Logger LOGGER = Logger.getLogger(ConnectionManager.class.getName());
     private DataStore dataStore;
     private ExecutorService es;
     private Bus bus;
     private Map<InetSocketAddress, PeerHandler> peers;
     private static final String PEER_URL = "http://52.48.86.95:4000/nodes"; // for testing
     private BlockProtocol blockProtocol;
-    private int ourListenPort;
+    private InetSocketAddress ourListenAddress;
 
     private static int GET_PEERS_TIMEOUT_SECONDS = 5;
 
@@ -61,14 +61,13 @@ public class ConnectionManager {
     }
 
     // also used for testing with a pre-defined set of initial peers
-    ConnectionManager(List<InetSocketAddress> initialPeers, int listenPort, DataStore ds, Bus bus) {
+    ConnectionManager(List<InetSocketAddress> initialPeers, int ourListenPort, DataStore ds, Bus bus) {
         peers = new ConcurrentHashMap<>();
         this.bus = bus;
         bus.register(this);
 
         blockProtocol = new BlockProtocol();
         dataStore = ds;
-        ourListenPort = listenPort;
 
         // create a special executor service that makes daemon threads.
         // this way the application can shut down without having to terminate network threads first.
@@ -85,16 +84,26 @@ public class ConnectionManager {
         };
         es = Executors.newCachedThreadPool(daemonThreadFactory);
 
+        es.execute(() -> initialize(ourListenPort, initialPeers));
+    }
+
+    private void initialize(int ourListenPort, List<InetSocketAddress> initialPeers) {
+        // first we obtain our own IP address
+        try {
+            ourListenAddress = new InetSocketAddress(getOurIPAddress(), ourListenPort);
+        } catch (IOException e) {
+            log("An error occurred while obtaining our IP address", Level.SEVERE, e);
+        }
         // Create new runnable to listen for new connections.
         try {
-            ServerSocket serverSocket = new ServerSocket(listenPort);
+            ServerSocket serverSocket = new ServerSocket(ourListenPort);
             es.execute(() -> {
                         try {
                             while (true) {
                                 Socket s = serverSocket.accept();
                                 // separate thread since it blocks waiting for messages.
                                 es.execute(() -> {
-                                    PeerHandler ph = new PeerHandler(s, es, ds, bus, ourListenPort, blockProtocol::onBlockTimeout);
+                                    PeerHandler ph = new PeerHandler(s, es, dataStore, bus, ourListenPort, blockProtocol::onBlockTimeout);
                                     try {
                                         InetSocketAddress address = ph.acceptConnection();
                                         peers.put(address, ph);
@@ -172,6 +181,12 @@ public class ConnectionManager {
         });
     }
 
+    private String getOurIPAddress() throws IOException {
+        URL url1 = new URL("http://checkip.amazonaws.com/");
+        BufferedReader br = new BufferedReader(new InputStreamReader(url1.openStream()));
+        return br.readLine();
+    }
+
 
     private PeerHandler connectToPeer(InetSocketAddress peerAddress) {
         Socket socket;
@@ -179,7 +194,7 @@ public class ConnectionManager {
             // may throw IOException
             socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
             // safe
-            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenPort, blockProtocol::onBlockTimeout);
+            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort(), blockProtocol::onBlockTimeout);
             try {
                 ph.establishConnection(peerAddress);
                 peers.put(peerAddress, ph);

@@ -5,6 +5,7 @@ import bitverify.block.Block;
 
 import bitverify.crypto.Identity;
 import bitverify.entries.Entry;
+import bitverify.network.BlockID;
 import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -53,8 +54,7 @@ public class DatabaseStore implements DataStore {
 
         String latestBlockIDString = getProperty("latestBlockID");
         if (latestBlockIDString == null) {
-            latestBlock = Block.getGenesisBlock();
-            latestBlock.setEntriesList(Collections.emptyList());
+            setLatestBlock(Block.getGenesisBlock());
         } else {
             byte[] id = Base64.getDecoder().decode(latestBlockIDString);
             latestBlock = getBlock(id);
@@ -79,6 +79,11 @@ public class DatabaseStore implements DataStore {
             }
             return null;
         });
+    }
+
+    private void setLatestBlock(Block b) throws SQLException {
+        latestBlock = b;
+        setProperty("latestBlockID",  new BlockID(b.getBlockID()).toString());
     }
 
     public boolean blockExists(byte[] blockID) throws SQLException {
@@ -283,7 +288,7 @@ public class DatabaseStore implements DataStore {
                 // finally activate current block
                 if (blockIsNewLatest) {
                     setBlockEntriesConfirmed(b, true, true);
-                    latestBlock = b;
+                    setLatestBlock(b);
                 }
 
                 // now insert block-entry mappings into link table
