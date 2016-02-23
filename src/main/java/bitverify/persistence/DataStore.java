@@ -44,7 +44,6 @@ public interface DataStore {
     /**
      * Get all of the blocks after a certain block or between two blocks, up to a limited number.
      * @param idFrom get blocks after this block ID
-     * @param idTo   only get blocks before this block ID. Provide null if there is no limit.
      * @param limit  the maximum number of block IDs to get. Provide -1 if there is no limit.
      */
     List<Block> getBlocksAfter(byte[] idFrom, int limit) throws SQLException;

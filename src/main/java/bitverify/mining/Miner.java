@@ -48,7 +48,7 @@ public class Miner implements Runnable{
 	private DataStore dataStore;
 	
 	//Flag to specify whether we are currently mining
-	private boolean mining;
+	private volatile boolean mining;
 	
 	//Limits to the mining target, the unpacked target cannot go outside this range
 	private static final BigInteger minTarget = new BigInteger("1",16);

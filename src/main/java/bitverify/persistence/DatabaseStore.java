@@ -179,6 +179,7 @@ public class DatabaseStore implements DataStore {
             while (results.hasNext() && limit > 0) {
                 Block b = results.next();
                 if (Arrays.equals(b.getPrevBlockHash(), expectedParentID)) {
+                    b.setEntriesList(getEntriesForBlock(b.getBlockID()));
                     output.add(b);
                     expectedParentID = b.getBlockID();
                 }
@@ -338,7 +339,9 @@ public class DatabaseStore implements DataStore {
     }
 
     public Block getBlock(byte[] blockID) throws SQLException {
-        return blockDao.queryBuilder().limit(1L).where().eq("blockID", blockID).queryForFirst();
+        Block b = blockDao.queryBuilder().limit(1L).where().eq("blockID", blockID).queryForFirst();
+        b.setEntriesList(getEntriesForBlock(blockID));
+        return b;
     }
 
     public Entry getEntry(UUID id) throws SQLException {
