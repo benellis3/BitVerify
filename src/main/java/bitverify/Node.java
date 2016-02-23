@@ -300,6 +300,7 @@ public class Node {
 						if (userDecision.equalsIgnoreCase("n")) {
 							break;
 						} else if (userDecision.equalsIgnoreCase("exit")) {
+							di.close();
 							break outerLoop;
 						} else {
 							System.out.println(String.format("'%s' is not a valid command", userDecision));
@@ -426,7 +427,7 @@ public class Node {
 		informUserOfProgress("Setting up database...");
 		// create a connection source to an in-memory database
 		try {
-			mDatabase = new DatabaseStore("jdbc:h2:mem:bitverify");
+			mDatabase = new DatabaseStore("jdbc:h2:file:bitverify.db");
 		} catch (SQLException e) {
 			System.out.println("Error setting up database...");
 			exitProgram();
