@@ -134,7 +134,7 @@ public class ConnectionManager {
             try {
                 List<Future<?>> futures = new ArrayList<>();
                 for (InetSocketAddress peerAddress : initialPeers) {
-                    if (ourListenAddress.equals(peerAddress) || peerAddress.)
+                    if (ourListenAddress.equals(peerAddress))
                         continue;
 
                     futures.add(es.submit(() -> {
@@ -431,6 +431,9 @@ public class ConnectionManager {
                 // then validate this sequence of headers upon receiving a BlockHeaders message
                 PeerHandler p = firstPeer;
                 List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(HEADERS_NUM_BLOCK_IDS);
+
+                // take snapshot of peers
+
 
                 // we will break once we've got all the headers, having dispatched download tasks asynchronously.
                 // for now, if a peer suddenly gives us some invalid headers, we don't shutdown previous download
