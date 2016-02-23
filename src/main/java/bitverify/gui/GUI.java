@@ -1,5 +1,7 @@
 package bitverify.gui;
 
+import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.Node;
 import bitverify.crypto.Hash;
 import bitverify.crypto.KeyDecodingException;
@@ -20,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.aquafx_project.AquaFx;
+import com.squareup.otto.Subscribe;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -552,6 +555,19 @@ public class GUI extends Application {
             }
          });
 	    
+	}
+	
+	@Subscribe
+	public void onLogEvent(LogEvent event){
+	    LogEventSource source = event.getSource();
+	    switch(source){
+	        case MINING:
+	            minerLog.add(constructLogMessage(event.getMessage()));
+	            break;
+	        case NETWORK:
+	            networkLog.add(constructLogMessage(event.getMessage()));
+	            break;
+	    }
 	}
 
 	public String constructLogMessage(String message) {
