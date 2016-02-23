@@ -445,8 +445,12 @@ public class Node {
     @Subscribe
     public void onLogEvent(LogEvent o) {
         // we need to log to the console for debugging purposes.
-		System.out.println(o.getMessage());
-        mGUI.addLogEvent(o);
+		if (mGUI == null) {
+			mGUI.addLogEvent(o);
+		} else {
+			System.out.println(o.getMessage());
+		}
+
     }
 
 	@Subscribe
