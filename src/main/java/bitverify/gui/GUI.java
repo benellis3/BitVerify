@@ -3,6 +3,8 @@ package bitverify.gui;
 import bitverify.Node;
 import bitverify.crypto.Hash;
 import bitverify.crypto.KeyDecodingException;
+import bitverify.entries.Entry;
+import bitverify.persistence.DatabaseIterator;
 
 import java.awt.GridLayout;
 import java.io.File;
@@ -37,7 +39,10 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -62,7 +67,9 @@ public class GUI extends Application {
 	private Text numPeersText;
 	private ObservableList<String> minerLog;
 	private ObservableList<String> networkLog;
+	DatabaseIterator<Entry> mIterator;
 	long UPDATE_TIME = 10_000;
+	int MAX_ENTRIES_AT_ONCE = 100;
 	
 	public static void StartGUI() {
 		launch();
@@ -461,6 +468,28 @@ public class GUI extends Application {
     	vLay.setPadding(new Insets(15));
     	vLay.setSpacing(25);
     	
+    	// Create a table view to display the data
+    	ObservableList<Entry> data = FXCollections.observableArrayList();
+    	TableView<Entry> tableView = new TableView<Entry>();
+    	
+    	// Create all our columns
+    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
+    	//TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
+    	//TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
+    	//TableColumn<Entry, String> recieverColumn = getTableColumn("Receiver", "recieverID");
+    	//TableColumn<Entry, String> uploaderColumn = getTableColumn("Uploader", "uploaderID");
+    	//TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
+    	//TableColumn<Entry, String> hashColumn = getTableColumn("Hash", "docHash");
+    	//TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+    	
+//    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
+//    			downloadColumn, recieverColumn, uploaderColumn, geoColumn, tagsColumn);
+    	
+    	tableView.getColumns().setAll(nameColumn);
+    	
+    	tableView.setItems(data);
+    	
     	HBox hLay = new HBox();
     	TextField searchField = new TextField();
     	searchField.setPrefWidth(600);
@@ -469,15 +498,49 @@ public class GUI extends Application {
     	Button searchButton = new Button("Search");
     	searchButton.setPrefHeight(searchButton.getHeight());
     	
+    	searchButton.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	try {
+		    		// If we have a previous iterator, we must close it first
+		    		if (mIterator != null) {
+		    			mIterator.close();
+		    		}
+		    		
+		    		// Get the iterator for the query
+					mIterator = mNode.searchEntries(searchField.getText());
+				
+					for (int i = 0; i < MAX_ENTRIES_AT_ONCE; i++) {
+						if (mIterator.moveNext()) {
+							System.out.println(mIterator.current());
+							//data.add(mIterator.current());
+						} else {
+							break;
+						}
+					}
+				} catch (SQLException e1) {
+					// TODO handle this by showing error message
+					e1.printStackTrace();
+				}
+		    }
+		});
+    	
     	HBox.setHgrow(hLay, Priority.ALWAYS);
     	hLay.getChildren().addAll(searchField, searchButton);
     	hLay.setAlignment(Pos.TOP_CENTER);
     	
-    	//Pagination pager = new Pagination();
+    	// Perhaps if we want to split this into pages
+    	// Pagination pager = new Pagination();
     	
-    	vLay.getChildren().addAll(hLay);
+    	vLay.getChildren().addAll(hLay, tableView);
     	searchTab.setContent(vLay);
     	return searchTab;
+	}
+	
+	private TableColumn<Entry, String> getTableColumn(String columnName, String entryName) {
+		// Construct a table column
+		TableColumn<Entry, String> column = new TableColumn<Entry, String>(columnName);
+		column.setCellFactory(new PropertyValueFactory(entryName));
+		return column;
 	}
 	
 	private void updateNumPeers(){
