@@ -461,9 +461,6 @@ public class Node {
     	}
     }
     
-    public Bus getEventBus() {
-    	return mEventBus;
-    }
 
     public Bus getEventBus() {
     	return mEventBus;
