@@ -205,7 +205,13 @@ public class Identity {
 	}
 	
 	public AsymmetricCipherKeyPair getKeyPair() throws KeyDecodingException{
-		if (decryptedPrivateKey == null) return null;
+		if (decryptedPrivateKey == null) {
+			if (needsEncryption) {
+				return null;
+			} else {
+				decryptedPrivateKey = privateKey;
+			}
+		}
 		return Asymmetric.getKeyPairFromByteKeys(publicKey, decryptedPrivateKey);
 	}
 	
