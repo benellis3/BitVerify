@@ -73,7 +73,7 @@ public class GUI extends Application {
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
 	private Bus mEventBus;
-	long UPDATE_TIME = 10_000;
+	long UPDATE_TIME = 5_000;
 	int MAX_ENTRIES_AT_ONCE = 100;
 	
 	public static void StartGUI() {
