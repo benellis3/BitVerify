@@ -23,7 +23,10 @@ import java.util.TimerTask;
 
 import com.aquafx_project.AquaFx;
 import com.squareup.otto.Bus;
+<<<<<<< HEAD
 import com.squareup.otto.Subscribe;
+=======
+>>>>>>> 347dea5864c90bf5be1f279dd55d473802bcd7d9
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -73,7 +76,12 @@ public class GUI extends Application {
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
 	private Bus mEventBus;
+<<<<<<< HEAD
 	long UPDATE_TIME = 5_000;
+=======
+	
+	long UPDATE_TIME = 10_000;
+>>>>>>> 347dea5864c90bf5be1f279dd55d473802bcd7d9
 	int MAX_ENTRIES_AT_ONCE = 100;
 	
 	public static void StartGUI() {
@@ -156,9 +164,14 @@ public class GUI extends Application {
 	
 	public void onNodeSetupComplete() {
 		// Can't run UI updates on a different thread
+		
 	    Platform.runLater(new Runnable() {
 	        @Override
 	        public void run() {
+	        	// Let the gui listen to log events on the bus
+	        	mEventBus = mNode.getEventBus();
+	        	mEventBus.register(this);
+	        	
 	        	// Set up main tab;
 	        	HBox hbox = new HBox();
 	        	hbox.setPadding(new Insets(15));

@@ -460,6 +460,10 @@ public class Node {
     		mGUI.changeLoadingText(progress);
     	}
     }
+    
+    public Bus getEventBus() {
+    	return mEventBus;
+    }
 
     public Bus getEventBus() {
     	return mEventBus;

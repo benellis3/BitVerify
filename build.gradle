@@ -21,3 +21,8 @@ dependencies {
 task wrapper(type: Wrapper) {
    gradleVersion = '2.10' //version required
 }
+
+jar {
+    baseName = 'bitverify'
+    version =  '0.1.0'
+}
