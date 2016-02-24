@@ -433,6 +433,20 @@ public class Node {
 	    return mConnectionManager.peers().size();
 	}
 	
+	public int getTotalEntries(){
+//	    int okay = mDatabase.getEntries();
+        return 0;
+	    
+	}
+	
+	public long getTotalBlocks(){
+	    try {
+            return mDatabase.getBlocksCount();
+        } catch (SQLException e) {
+            return -1;
+        }
+	}
+	
    
     @Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {

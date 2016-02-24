@@ -73,6 +73,8 @@ public class GUI extends Application {
 	private Text setUpText;
 	private Stage primaryStage;
 	private Text numPeersText;
+	private Text numBlocksText;
+	private Text numEntriesText;
 	private ObservableList<String> minerLog;
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
@@ -227,7 +229,7 @@ public class GUI extends Application {
 
 	                @Override
 	                public void run() {
-	                    updateNumPeers();
+	                    updateNetworkStats();
 	                }
 	            }, 0, UPDATE_TIME);
 	    		primaryStage.setScene(scene);
@@ -315,14 +317,16 @@ public class GUI extends Application {
 	       Tab networkTab = new Tab();
 	       networkTab.setText("Network");
 	        
-	        HBox networkBox = new HBox();
+	        VBox networkBox = new VBox();
 	        networkBox.setPadding(new Insets(15));
 	        networkBox.setSpacing(10);
 	        networkBox.setAlignment(Pos.CENTER);
 	        
 	        numPeersText = new Text("Number of Peers: " + mNode.getNumPeers());
+	        numBlocksText = new Text("Number of Blocks: " + mNode.getTotalBlocks());
+	        numEntriesText = new Text("Number of Entries: " + mNode.getTotalEntries());
 	        
-	        networkBox.getChildren().add(numPeersText);
+	        networkBox.getChildren().addAll(numPeersText,numBlocksText,numEntriesText);
 	        
 	        ListView<String> networkView = new ListView<String>();
 	        networkView.setPrefHeight(400);
@@ -694,8 +698,11 @@ public class GUI extends Application {
 		return column;
 	}
 	
-	private void updateNumPeers(){
+	private void updateNetworkStats(){
 	    String strNumPeers = "Number of Peers: " + mNode.getNumPeers();
+	    String strNumBlocks = "Number of Blocks: " + mNode.getTotalBlocks();
+	    String strNumEntries = "Number of Entries: " + mNode.getTotalEntries();
+	    
 	    Platform.runLater(new Runnable() {
             @Override
             public void run() {
