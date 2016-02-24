@@ -201,8 +201,6 @@ public class DatabaseStore implements DataStore {
     }
 
     public synchronized InsertBlockResult insertBlock(Block b) throws SQLException {
-        // TODO: worry about potential exception if this method is re-entered
-
         return t.callInTransaction(() -> {
             boolean blockIsNewLatest = false;
             List<Block> blocksToActivate = new ArrayList<>();

@@ -143,7 +143,7 @@ public class Block {
         byte[] newEntriesHash = hashEntries();
         if (Arrays.equals(this.entriesHash, newEntriesHash)) {
             this.verifiedEntries = true;
-            return Miner.blockHashMeetDifficulty(this);
+            return true;
         }
         return false;
     }
