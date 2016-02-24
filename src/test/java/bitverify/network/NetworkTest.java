@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.internal.runners.statements.Fail;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -203,83 +204,71 @@ public class NetworkTest {
         System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
 
         InetSocketAddress addr1 = new InetSocketAddress("localhost", LARGE_INITIAL_PORT);
-        Bus bus1 = new Bus(ThreadEnforcer.ANY);
-        DatabaseStore ds1 = new DatabaseStore("jdbc:h2:mem:networkTest1");
-
-        bus1.register(new Object() {
-            @Subscribe
-            public void onLogEvent(LogEvent l) {
-                if (l.getLevel().intValue() < Level.FINER.intValue()) return;
-                SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
-                System.out.println("NODE 1: " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
-            }
-
-            @Subscribe
-            public void onDeadEvent(DeadEvent e) {
-                SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
-                System.out.println("NODE 1: " + d.format(new Date()) + ": dead event: " + e.event.getClass().toString() + " from: " + e.source);
-            }
-        });
-
-        ConnectionManager man1 = new ConnectionManager(new ArrayList<>(), LARGE_INITIAL_PORT, ds1, bus1);
-
-        bus1.register(new Object() {
-            @Subscribe
-            public void onBlockFoundEvent(Miner.BlockFoundEvent e) throws SQLException {
-                final Block block = e.getBlock();
-                ds1.insertBlock(block);
-                man1.broadcastBlock(block);
-            }
-
-        });
-
-        Miner miner1 = new Miner(bus1, ds1, 2, 1000, 2);
-        Thread t = new Thread(miner1);
-        t.start();
+        MiniNode n1 = new MiniNode("jdbc:h2:mem:networkTest1", "Node1", LARGE_INITIAL_PORT, new ArrayList<>(), 200);
+        n1.startMiner();
         // let it mine for a bit
-        Thread.sleep(2000);
+        Thread.sleep(20000);
         // miner1.stopMining();
         // System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
 
         // now make another peer and see if they synchronise
-        Bus bus2 = new Bus(ThreadEnforcer.ANY);
-        bus2.register(new Object() {
-            @Subscribe
-            public void onLogEvent(LogEvent l) {
-                if (l.getLevel().intValue() < Level.FINER.intValue()) return;
-                SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
-                System.out.println("NODE 2: " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
-            }
-
-            @Subscribe
-            public void onDeadEvent(DeadEvent e) {
-                SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
-                System.out.println("NODE 2: " + d.format(new Date()) + ": dead event: " + e.event.getClass().toString() + " from: " + e.source);
-            }
-        });
-        DatabaseStore ds2 = new DatabaseStore("jdbc:h2:mem:networkTest2");
-        ConnectionManager man2 = new ConnectionManager(new ArrayList<InetSocketAddress>() {{
+        MiniNode n2 = new MiniNode("jdbc:h2:mem:networkTest2", "Node2", LARGE_INITIAL_PORT+1, new ArrayList<InetSocketAddress>() {{
             add(addr1);
-        }}, LARGE_INITIAL_PORT + 1, ds2, bus2);
+        }}, 1000);
+        // n2.startMiner();
+
+        Thread.sleep(10000);
+
+        assertEquals(n1.dataStore.getBlocksCount(), n2.dataStore.getBlocksCount());
+    }
 
 
-        bus2.register(new Object() {
-            @Subscribe
-            public void onBlockFoundEvent(Miner.BlockFoundEvent e) throws SQLException {
-                final Block block = e.getBlock();
-                ds2.insertBlock(block);
-                man2.broadcastBlock(block);
-            }
+    private class MiniNode {
+        Miner miner;
+        DataStore dataStore;
+        Bus bus;
+        ConnectionManager man;
 
-        });
+        private Thread t;
 
-        Miner miner2 = new Miner(bus2, ds2, 2, 2000, 2);
-        Thread t2 = new Thread(miner2);
-        t2.start();
+        public MiniNode(String dsString, String nodeName, int port, List<InetSocketAddress> initialPeers, int minerDifficulty) throws IOException, SQLException {
+            bus = new Bus(ThreadEnforcer.ANY);
+            dataStore = new DatabaseStore(dsString);
 
-        Thread.sleep(30000);
+            bus.register(new Object() {
+                @Subscribe
+                public void onLogEvent(LogEvent l) {
+                    if (l.getLevel().intValue() < Level.FINER.intValue()) return;
+                    SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
+                    System.out.println(nodeName + ": " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
+                }
 
-        assertEquals(ds1.getBlocksCount(), ds2.getBlocksCount());
+                @Subscribe
+                public void onDeadEvent(DeadEvent e) {
+                    SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
+                    System.out.println(nodeName + ": " + d.format(new Date()) + ": dead event: " + e.event.getClass().toString() + " from: " + e.source);
+                }
+            });
+
+            man = new ConnectionManager(initialPeers, port, dataStore, bus);
+
+            bus.register(new Object() {
+                @Subscribe
+                public void onBlockFoundEvent(Miner.BlockFoundEvent e) throws SQLException {
+                    final Block block = e.getBlock();
+                    dataStore.insertBlock(block);
+                    man.broadcastBlock(block);
+                }
+
+            });
+
+            miner = new Miner(bus, dataStore, 2, minerDifficulty, 2);
+            t = new Thread(miner);
+        }
+
+        void startMiner() {
+            t.start();
+        }
     }
 }
 
