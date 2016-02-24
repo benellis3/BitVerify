@@ -69,7 +69,7 @@ public class Miner implements Runnable{
 	//this is recalculated every week
 	
 	//Proof of mining (we multiply the success target by the scale)
-	private static int miningProofDifficultyScale = 0x800;
+	private static int miningProofDifficultyScale = 0x2;//0x800;
 	private int currentMiningProofTarget;
 	
 	//The block we are currently mining
