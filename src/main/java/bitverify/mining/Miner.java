@@ -319,11 +319,9 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
-    	List<Entry> entries = blockMining.getEntriesList();
-    	
-    	entries.add(e.getNewEntry());
-    	
-    	newMiningBlock(entries);
+    	List<Entry> newEntries = new ArrayList<>(blockMining.getEntriesList());
+		newEntries.add(e.getNewEntry());
+    	newMiningBlock(newEntries);
     }
     
     /**
