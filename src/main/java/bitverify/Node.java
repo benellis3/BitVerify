@@ -383,7 +383,7 @@ public class Node {
 		}
 	}
 	
-	private void exitProgram() {
+	public void exitProgram() {
 		// Need to stop a few resources before exiting
 		if (mMiner != null)
 			mMiner.stopMining();

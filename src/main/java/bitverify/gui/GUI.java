@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,6 +54,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -66,6 +70,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
 public class GUI extends Application {
@@ -230,7 +235,19 @@ public class GUI extends Application {
 	                    updateNumPeers();
 	                }
 	            }, 0, UPDATE_TIME);
+	        	
 	    		primaryStage.setScene(scene);
+	    		
+	    		// Close the node when we close the program
+	    		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+	    		    @Override
+	    		    public void handle(WindowEvent event) {
+	    		        if (mNode != null) {
+	    		        	mNode.exitProgram();
+	    		        	Platform.exit();
+	    		        }
+	    		    }
+	    		});
 	        }
 	     });
 	}
@@ -351,6 +368,11 @@ public class GUI extends Application {
 		// Set some constants
 		int TextFieldWidth = 200;
 		int HSpacing = 5;
+		int VSpacing = 10;
+		
+		GridPane grid = new GridPane();
+		grid.setHgap(5);
+		grid.setVgap(VSpacing);
 		
 		// VLay will hold our form
 		VBox vLay = new VBox();
@@ -363,9 +385,9 @@ public class GUI extends Application {
 		hTitle.getChildren().add(titleText);
 		
 		// Get the location of the document
-		HBox docHBox = new HBox();
-		docHBox.setSpacing(HSpacing);
-		docHBox.setAlignment(Pos.TOP_LEFT);
+		//HBox docHBox = new HBox();
+		//docHBox.setSpacing(HSpacing);
+		//docHBox.setAlignment(Pos.TOP_LEFT);
 		
 		Label docLabel = new Label("File Path:");
 		TextField docText = new TextField();
@@ -378,37 +400,39 @@ public class GUI extends Application {
 				chooser.setTitle("Select File");
 				File selectedFile = chooser.showOpenDialog(primaryStage);
 				// Update the docText field with the desired file
-				docText.setText(selectedFile.getAbsolutePath());
+				if (selectedFile != null) {
+					docText.setText(selectedFile.getAbsolutePath());
+				}
 		    }
 		});
 		
-		docHBox.getChildren().addAll(docLabel, docText, chooseFileBtn);
+		grid.add(docLabel, 0, 0);
+		grid.add(docText, 1, 0);
+		grid.add(chooseFileBtn, 2, 0);
 		
-		List<HBox> fields = new LinkedList<HBox>();
+		//docHBox.getChildren().addAll(docLabel, docText, chooseFileBtn);
+		
+		List<TextField> fields = new LinkedList<TextField>();
 		
 		// Get the name of the document
-		HBox nameHBox = getFieldHBox("File Name:", HSpacing, TextFieldWidth);
-		fields.add(nameHBox);
-		
+		TextField nameText = addFieldToGrid(grid, 1, "File Name:", TextFieldWidth);
+	
 		// Get the download link of the document
-		HBox downloadHBox = getFieldHBox("Download URL:", HSpacing, TextFieldWidth);
-		fields.add(downloadHBox);
+		TextField downloadText = addFieldToGrid(grid, 2, "Download URL:", TextFieldWidth);
 
 		// Get the description of the document
-		HBox descriptionHBox = getFieldHBox("Description:", HSpacing, TextFieldWidth);
-		fields.add(descriptionHBox);
+		TextField descriptionText = addFieldToGrid(grid, 3, "Description:", TextFieldWidth);
 		
 		// Get the description of the document
-		HBox recieverHBox = getFieldHBox("Reciever ID:", HSpacing, TextFieldWidth);
-		fields.add(recieverHBox);
+		TextField receiverText = addFieldToGrid(grid, 4, "Receiver ID:", TextFieldWidth);
 		
 		// Get the description of the document
-		HBox geoHBox = getFieldHBox("Geolocation:", HSpacing, TextFieldWidth);
-		fields.add(geoHBox);
+		TextField geoText = addFieldToGrid(grid, 5, "Geolocation:", TextFieldWidth);
 		
 		// Get the description of the document
-		HBox tagsHBox = getFieldHBox("Tags:", HSpacing, TextFieldWidth);
-		fields.add(tagsHBox);
+		TextField tagsText = addFieldToGrid(grid, 6, "Tags:", TextFieldWidth);
+		
+		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText, tagsText);
 		
 		// This will hold any errors in input
 		Text errorText = new Text("");
@@ -443,12 +467,12 @@ public class GUI extends Application {
 				}
 				
 				// Get the form fields
-				String name = extractTextFromHBoxField(nameHBox);
-				String download = extractTextFromHBoxField(downloadHBox);
-				String description = extractTextFromHBoxField(descriptionHBox);
-		    	String recieverID = extractTextFromHBoxField(recieverHBox);
-		    	String geoLoc = extractTextFromHBoxField(geoHBox);
-		    	String tags = extractTextFromHBoxField(tagsHBox);
+				String name = nameText.getText();
+				String download = downloadText.getText();
+				String description = descriptionText.getText();
+		    	String recieverID = receiverText.getText();
+		    	String geoLoc = geoText.getText();
+		    	String tags = tagsText.getText();
 		    	
 		    	try {
 					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
@@ -477,10 +501,8 @@ public class GUI extends Application {
 		
 		clearBtn.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
-		    	docText.setText("");
 		    	// Just go through the fields and set the text in the box to ""
-		    	for (HBox hbox : fields) {
-		    		TextField field = (TextField) hbox.getChildren().get(1);
+		    	for (TextField field : fields) {
 		    		field.setText("");
 		    	}
 		    }
@@ -489,8 +511,7 @@ public class GUI extends Application {
 		submitHBox.getChildren().addAll(submitBtn, clearBtn);
 		
 		// Add all the fields in the form to the vertical layout
-		vLay.getChildren().addAll(hTitle, docHBox);
-		vLay.getChildren().addAll(fields);
+		vLay.getChildren().addAll(hTitle, grid);
 		vLay.getChildren().addAll(submitHBox, errorText);
 		
 		// Make sure to add the vertical layout to the tab before returning
@@ -498,24 +519,13 @@ public class GUI extends Application {
 		return entryTab;
 	}
 	
-	private String extractTextFromHBoxField(HBox hbox) {
-		TextField field = (TextField) hbox.getChildren().get(1);
-		return field.getText();
-	}
-	
-	private HBox getFieldHBox(String textLabel, int spacing, int textFieldWidth) {
-		// Get the description of the document
-		HBox hBox = new HBox();
-		hBox.setSpacing(spacing);
-		hBox.setAlignment(Pos.TOP_LEFT);
-		
+	private TextField addFieldToGrid(GridPane grid, int row, String textLabel, int textFieldWidth) {
 		Label label = new Label(textLabel);
 		TextField text = new TextField();
 		text.setPrefWidth(textFieldWidth);
-		
-		hBox.getChildren().addAll(label, text);
-		HBox.setHgrow(hBox, Priority.ALWAYS);
-		return hBox;
+		grid.add(label, 0, row);
+		grid.add(text, 1, row);
+		return text;
 	}
 	
 	private Tab getSearchTab() {
@@ -602,7 +612,20 @@ public class GUI extends Application {
 				}
 		    }
 		});
+    	
     	searchButton.fire();
+    	
+    	searchField.setOnKeyPressed(new EventHandler<KeyEvent>()
+        {
+            @Override
+            public void handle(KeyEvent ke)
+            {
+                if (ke.getCode().equals(KeyCode.ENTER))
+                {
+                    searchButton.fire();
+                }
+            }
+        });
     	
     	HBox.setHgrow(hLay, Priority.ALWAYS);
     	hLay.getChildren().addAll(searchField, searchButton);
@@ -668,23 +691,42 @@ public class GUI extends Application {
 				chooser.setTitle("Select File");
 				File selectedFile = chooser.showOpenDialog(primaryStage);
 				// Update the docText field with the desired file
-				docText.setText(selectedFile.getAbsolutePath());
-				
-				try {
-					FileInputStream inputStream = new FileInputStream(selectedFile);
-					byte [] hash = Hash.hashStream(inputStream);
-					hashText.setText("Hash: " + Base64.toBase64String(hash));
-					inputStream.close();
-				} catch (IOException e1) {
-					hashText.setText(String.format("File '%s' does not exist", docText.getText()));
+				if (selectedFile != null) {
+					docText.setText(selectedFile.getAbsolutePath());
+					updateHashText(selectedFile, hashText);
 				}
+				
 		    }
 		});
+		
+    	docText.setOnKeyPressed(new EventHandler<KeyEvent>()
+        {
+            @Override
+            public void handle(KeyEvent ke)
+            {
+                if (ke.getCode().equals(KeyCode.ENTER))
+                {
+                    File file = new File(docText.getText());
+                    updateHashText(file, hashText);
+                }
+            }
+        });
 		
 		docHBox.getChildren().addAll(docLabel, docText, chooseFileBtn);
 		vLay.getChildren().addAll(docHBox, hashHBox);
 		documentTab.setContent(vLay);
 		return documentTab;
+	}
+	
+	private void updateHashText(File selectedFile, Text hashText) {
+		try {
+			FileInputStream inputStream = new FileInputStream(selectedFile);
+			byte [] hash = Hash.hashStream(inputStream);
+			hashText.setText("Hash: " + Base64.toBase64String(hash));
+			inputStream.close();
+		} catch (IOException e1) {
+			hashText.setText(String.format("File '%s' does not exist", selectedFile.getAbsolutePath()));
+		}
 	}
 	
 	private TableColumn<Entry, String> getTableColumn(String columnName, String entryName) {
