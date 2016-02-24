@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 import static org.junit.Assert.*;
 
@@ -208,6 +209,7 @@ public class NetworkTest {
         bus1.register(new Object() {
             @Subscribe
             public void onLogEvent(LogEvent l) {
+                if (l.getLevel().intValue() < Level.FINER.intValue()) return;
                 SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
                 System.out.println("NODE 1: " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
             }
@@ -235,15 +237,16 @@ public class NetworkTest {
         Thread t = new Thread(miner1);
         t.start();
         // let it mine for a bit
-        Thread.sleep(20000);
-        miner1.stopMining();
-        System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
+        Thread.sleep(2000);
+        // miner1.stopMining();
+        // System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
 
         // now make another peer and see if they synchronise
         Bus bus2 = new Bus(ThreadEnforcer.ANY);
         bus2.register(new Object() {
             @Subscribe
             public void onLogEvent(LogEvent l) {
+                if (l.getLevel().intValue() < Level.FINER.intValue()) return;
                 SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
                 System.out.println("NODE 2: " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
             }
@@ -259,7 +262,22 @@ public class NetworkTest {
             add(addr1);
         }}, LARGE_INITIAL_PORT + 1, ds2, bus2);
 
-        Thread.sleep(10000);
+
+        bus2.register(new Object() {
+            @Subscribe
+            public void onBlockFoundEvent(Miner.BlockFoundEvent e) throws SQLException {
+                final Block block = e.getBlock();
+                ds2.insertBlock(block);
+                man2.broadcastBlock(block);
+            }
+
+        });
+
+        Miner miner2 = new Miner(bus2, ds2, 2, 2000, 2);
+        Thread t2 = new Thread(miner2);
+        t2.start();
+
+        Thread.sleep(30000);
 
         assertEquals(ds1.getBlocksCount(), ds2.getBlocksCount());
     }

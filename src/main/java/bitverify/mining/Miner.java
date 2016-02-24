@@ -5,6 +5,7 @@ import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -33,7 +34,7 @@ public class Miner implements Runnable{
 	private Bus eventBus;
     
 	//Create an event when a block is successfully mined
-	public class BlockFoundEvent {
+	public static class BlockFoundEvent {
         private Block successBlock;
 
         public BlockFoundEvent(Block b) {
@@ -208,12 +209,7 @@ public class Miner implements Runnable{
 		//BigInteger.compareTo returns -1 if this BigInteger is less than the argument BigInteger
 		boolean lessThan = ((new BigInteger(hash,16)).compareTo(new BigInteger(target,16)) == -1);
 		
-		if (lessThan){
-			return true;
-		}
-		else{
-			return false;
-		}
+		return lessThan;
 	}
 	
 	/**
@@ -253,25 +249,26 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
+					Block successfulBlock = blockMining;
 					eventBus.post(new LogEvent("Successful block mine",LogEventSource.MINING,Level.INFO));
 					eventBus.post(new LogEvent("Block Hash:		"+result,LogEventSource.MINING,Level.INFO));
-					
+					eventBus.post(new LogEvent("Block id:	  	"+ Base64.getEncoder().encodeToString(successfulBlock.getBlockID()),LogEventSource.MINING,Level.INFO));
 					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
-					dataStore.insertBlock(blockMining);
+					dataStore.insertBlock(successfulBlock);
 					//Pass successful block to application logic for broadcasting to the network
-					eventBus.post(new BlockFoundEvent(blockMining));
+					eventBus.post(new BlockFoundEvent(successfulBlock));
 	
 					newMiningBlock(new ArrayList<Entry>());
 				}
 				//Proof of mining
-				else if (mineSuccess(result, currentMiningProofTarget)){
+				// else if (mineSuccess(result, currentMiningProofTarget)){
 					//Application logic must broadcast to peers
 					//Must maintain a list of peers in database that have received proof from
 					//Reject incoming entries from public IPs not from the list
-					eventBus.post(new NewMiningProofEvent(blockMining));
+					// eventBus.post(new NewMiningProofEvent(blockMining));
 					//eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
 					//eventBus.post(new LogEvent("Proof Block Hash:	"+result,LogEventSource.MINING,Level.INFO));
-				}
+				// }
 				
 				//Increment the header's nonce to generate a new hash
 				blockMining.incrementNonce();
@@ -295,15 +292,14 @@ public class Miner implements Runnable{
      * @throws IOException
      */
 	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
+		Block mostRecentBlock = dataStore.getMostRecentBlock();
 		//Create the next block to mine, passing the most recently mined block
-		int target = calculatePackedTarget(dataStore, dataStore.getMostRecentBlock(), eventBus);
+		int target = calculatePackedTarget(dataStore, mostRecentBlock, eventBus);
 		
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
-		
-		Block lastBlockInChain = dataStore.getMostRecentBlock();
-		
-		blockMining = new Block(lastBlockInChain, System.currentTimeMillis(),target, 0, entries);
+
+		blockMining = new Block(mostRecentBlock, System.currentTimeMillis(),target, 0, entries);
 	}
 	
 	/**

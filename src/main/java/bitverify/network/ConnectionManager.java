@@ -215,8 +215,7 @@ public class ConnectionManager {
                 log("Did not establish connection to peer within time limit", Level.INFO);
                 ph.shutdown();
             } catch (InterruptedException | ExecutionException e) {
-                log("An error occurred while establishing connection to peer", Level.INFO, e);
-                log("Cause: " + e.getCause().getMessage(), Level.INFO, e.getCause());
+                log("An error occurred while establishing connection to peer", Level.WARNING, e);
                 ph.shutdown();
             }
             return ph;
@@ -232,7 +231,7 @@ public class ConnectionManager {
      * @throws IOException in the case that serialization fails
      */
     public void broadcastBlock(Block block) {
-        log("About to broadcast a block", Level.FINE);
+        log("About to broadcast a block with ID " + new BlockID(block.getBlockID()), Level.FINE);
         List<Entry> entryList = block.getEntriesList();
         List<ByteString> byteStringList = new ArrayList<>(entryList.size());
         for (Entry e : entryList) {
@@ -282,20 +281,6 @@ public class ConnectionManager {
 
     public Collection<PeerHandler> peers() {
         return Collections.unmodifiableCollection(peers.values());
-    }
-
-    /**
-     * For testing only - not relevant to actual version
-     */
-    @Subscribe
-    public void onNewEntryEvent(NewEntryEvent nee) {
-        // prints the document description
-        System.out.println(nee.getNewEntry().getDocDescription());
-    }
-
-    @Subscribe
-    public void onNewBlockEvent(NewBlockEvent nbe) {
-        System.out.println(nbe.getNewBlock().getNonce());
     }
 
     /**
@@ -405,9 +390,9 @@ public class ConnectionManager {
 
     public class BlockProtocol {
 
-        private static final int MAX_HEADERS = 10000;
+        private static final int MAX_HEADERS = 10000000;
         // at most how many block IDs from our active chain to provide in a GetHeaders message
-        private static final int HEADERS_NUM_BLOCK_IDS = 10;
+        private static final int HEADERS_NUM_BLOCK_IDS = 20;
         private static final int HEADERS_TIMEOUT_SECONDS = 10;
 
         // blocks we will download in the future
@@ -449,7 +434,11 @@ public class ConnectionManager {
                     if (receivedHeaders == null) {
                         // choose a new peer and try again
                         return false;
+                    } else if (receivedHeaders.isEmpty()) {
+                        // we're done
+                        return true;
                     } else {
+
                         byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
                         // first header must follow some older block we have on our primary chain
                         Block firstPredecessor = dataStore.getBlock(firstPredecessorID);
@@ -473,6 +462,7 @@ public class ConnectionManager {
                                 if (!dataStore.blockExists(b.getBlockID()))
                                     blockIDs.add(new BlockID(b.getBlockID()));
                             }
+                            log("About to download " + blockIDs.size() + " blocks", Level.FINE);
                             futureBlockIDs.addAll(blockIDs);
                             es.execute(this::downloadQueuedBlocks);
 
@@ -481,6 +471,7 @@ public class ConnectionManager {
                                 log("headers download complete", Level.FINE);
                                 return true;
                             } else {
+                                // TODO: make sure this works
                                 fromBlockIDs.add(0, receivedHeaders.get(receivedHeaders.size() - 1).getBlockID());
                             }
                         }
@@ -508,7 +499,7 @@ public class ConnectionManager {
             // we will break once we've got all the headers, having dispatched download tasks asynchronously.
             for (PeerHandler p : peersSnapshot) {
                 if (blockDownload(p))
-                    break;
+                    return;
             }
 
         }
@@ -597,7 +588,7 @@ public class ConnectionManager {
                 }
                 // verify its hash meets its target
                 if (!Miner.blockHashMeetDifficulty(block)) {
-                    log("block was rejected because target didn't meet difficulty", Level.FINE);
+                    log("block was rejected because its hash didn't meet target difficulty", Level.FINE);
                     return;
                 }
 
@@ -608,6 +599,7 @@ public class ConnectionManager {
                     log("block is an orphan and therefore wasn't added to database", Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
                     orphanBlocks.put(block.getPrevBlockHash(), block);
+                    log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
                     // do some more block downloading
                     es.execute(() -> {
                         try {

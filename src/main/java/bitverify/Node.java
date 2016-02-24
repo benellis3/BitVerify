@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Base64;
+import java.util.logging.Level;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 
@@ -455,7 +456,8 @@ public class Node {
 
 	@Subscribe
 	public void onExceptionLogEvent(ExceptionLogEvent e) {
-		e.getCause().printStackTrace();
+		if (e.getLevel().intValue() >= Level.WARNING.intValue())
+			e.getCause().printStackTrace();
 	}
     
     private String getCurrentDatetime() {
