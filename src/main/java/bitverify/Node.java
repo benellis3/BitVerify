@@ -278,6 +278,18 @@ public class Node {
 		}
 	}
 	
+	public long getBlockCount() {
+		if (mDatabase != null) {
+			try {
+				return mDatabase.getBlocksCount();
+			} catch (SQLException e) {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+	
 	private void searchEntries() {
 		System.out.println("Enter search query");
 		String searchQuery = mScanner.nextLine();
