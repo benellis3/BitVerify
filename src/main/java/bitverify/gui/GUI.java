@@ -259,12 +259,12 @@ public class GUI extends Application {
 		minerTab.setText("Miner");
 		
 		HBox btnBox = new HBox();
-		btnBox.setPadding(new Insets(15));
-		btnBox.setSpacing(10);
+		btnBox.setPadding(new Insets(5));
+		btnBox.setSpacing(20);
 		btnBox.setAlignment(Pos.CENTER);
 		
 		HBox lowerBtnBox = new HBox();
-		lowerBtnBox.setPadding(new Insets(15));
+		lowerBtnBox.setPadding(new Insets(5));
 		lowerBtnBox.setSpacing(10);
 		lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
 		
@@ -334,10 +334,11 @@ public class GUI extends Application {
 	       Tab networkTab = new Tab();
 	       networkTab.setText("Network");
 	        
-	        VBox networkBox = new VBox();
-	        networkBox.setPadding(new Insets(15));
-	        networkBox.setSpacing(10);
+	        HBox networkBox = new HBox();
+	        networkBox.setPadding(new Insets(5));
+	        networkBox.setSpacing(30);
 	        networkBox.setAlignment(Pos.CENTER);
+	        
 	        
 	        numPeersText = new Text("Number of Peers: " + mNode.getNumPeers());
 	        numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
@@ -349,6 +350,7 @@ public class GUI extends Application {
 	        networkView.setPrefHeight(400);
 	        networkView.setMouseTransparent( false );
 	        networkView.setFocusTraversable( false );
+	        
 	        
 	        networkLog = FXCollections.observableArrayList(constructLogMessage("Network Running."));
 	        networkView.setItems(networkLog);
