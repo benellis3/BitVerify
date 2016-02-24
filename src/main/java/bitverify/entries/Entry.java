@@ -1,6 +1,7 @@
 package bitverify.entries;
 
 import java.io.*;
+import java.util.Date;
 import java.util.UUID;
 
 import com.j256.ormlite.field.DataType;
@@ -309,6 +310,10 @@ public class Entry {
 	
 	public long getEntryTimeStamp(){
 		return entryTimeStamp;
+	}
+	
+	public String getEntryTimeStampString() {
+		return new Date(getEntryTimeStamp()).toString();
 	}
 	
 	public byte[] getUploaderID(){

@@ -561,7 +561,13 @@ public class GUI extends Application {
     	TableView<Entry> tableView = new TableView<Entry>();
     	
     	// Create all our columns
-    	TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
+    	timeStampColumn.setText("TimeStamp");
+    	timeStampColumn.setPrefWidth(175);
+    	timeStampColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
+    	
     	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
     	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
     	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
