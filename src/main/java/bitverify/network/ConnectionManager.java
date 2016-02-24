@@ -600,14 +600,14 @@ public class ConnectionManager {
                     // keep block in memory and try to store it once its parent has been downloaded.
                     orphanBlocks.put(block.getPrevBlockHash(), block);
                     log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
-                    // do some more block downloading
-                    es.execute(() -> {
-                        try {
-                            blockDownload(peer);
-                        } catch (SQLException ex) {
-                            log("block download failed with a SQLException: " + ex.getMessage(), Level.WARNING, ex);
-                        }
-                    });
+                    // TODO: do some more block downloading
+//                    es.execute(() -> {
+//                        try {
+//                            blockDownload(peer);
+//                        } catch (SQLException ex) {
+//                            log("block download failed with a SQLException: " + ex.getMessage(), Level.WARNING, ex);
+//                        }
+//                    });
 
                 } else {
                     // verify it was mined with the right difficulty
