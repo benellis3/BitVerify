@@ -78,6 +78,8 @@ public class GUI extends Application {
 	private Text setUpText;
 	private Stage primaryStage;
 	private Text numPeersText;
+	private Text numEntryText;
+	private Text numBlocksText;
 	private ObservableList<String> minerLog;
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
@@ -232,7 +234,7 @@ public class GUI extends Application {
 
 	                @Override
 	                public void run() {
-	                    updateNumPeers();
+	                    updateNetworkStats();
 	                }
 	            }, 0, UPDATE_TIME);
 	        	
@@ -332,14 +334,16 @@ public class GUI extends Application {
 	       Tab networkTab = new Tab();
 	       networkTab.setText("Network");
 	        
-	        HBox networkBox = new HBox();
+	        VBox networkBox = new VBox();
 	        networkBox.setPadding(new Insets(15));
 	        networkBox.setSpacing(10);
 	        networkBox.setAlignment(Pos.CENTER);
 	        
 	        numPeersText = new Text("Number of Peers: " + mNode.getNumPeers());
+	        numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
+	        numBlocksText = new Text("Number of Blocks: " + mNode.getBlockCount());
 	        
-	        networkBox.getChildren().add(numPeersText);
+	        networkBox.getChildren().addAll(numBlocksText,numPeersText,numEntryText);
 	        
 	        ListView<String> networkView = new ListView<String>();
 	        networkView.setPrefHeight(400);
@@ -736,12 +740,16 @@ public class GUI extends Application {
 		return column;
 	}
 	
-	private void updateNumPeers(){
+	private void updateNetworkStats(){
 	    String strNumPeers = "Number of Peers: " + mNode.getNumPeers();
+        String strNumEntry = "Number of Entries: " + mNode.getEntryCount();
+        String strNumBlock = "Number of Blocks: " + mNode.getBlockCount();
 	    Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 numPeersText.setText(strNumPeers);
+                numEntryText.setText(strNumEntry);
+                numBlocksText.setText(strNumBlock);
             }
          });
 	    
