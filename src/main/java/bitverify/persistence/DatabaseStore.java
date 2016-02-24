@@ -200,7 +200,7 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
-    public InsertBlockResult insertBlock(Block b) throws SQLException {
+    public synchronized InsertBlockResult insertBlock(Block b) throws SQLException {
         // TODO: worry about potential exception if this method is re-entered
 
         return t.callInTransaction(() -> {
