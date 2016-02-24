@@ -1,6 +1,9 @@
 version '1.0'
 
 apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'bitverify.Main'
 
 repositories {
     mavenCentral()
@@ -19,10 +22,19 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-   gradleVersion = '2.10' //version required
+	gradleVersion = '2.10' //version required
 }
 
 jar {
     baseName = 'bitverify'
     version =  '0.1.0'
+	
+	manifest { 
+		attributes "Main-Class": "$mainClassName"
+	}  
+	
+    doFirst {
+        from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } 
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA' 
 }
