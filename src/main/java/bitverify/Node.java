@@ -278,6 +278,42 @@ public class Node {
 		}
 	}
 	
+	public long getBlockCount() {
+		if (mDatabase != null) {
+			try {
+				return mDatabase.getBlocksCount();
+			} catch (SQLException e) {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+	
+	public long getActiveBlockCount() {
+		if (mDatabase != null) {
+			try {
+				return mDatabase.getActiveBlocksCount();
+			} catch (SQLException e) {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+	
+	public long getEntryCount() {
+		if (mDatabase != null) {
+			try {
+				return mDatabase.getEntriesCount();
+			} catch (SQLException e) {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+	}
+	
 	private void searchEntries() {
 		System.out.println("Enter search query");
 		String searchQuery = mScanner.nextLine();
