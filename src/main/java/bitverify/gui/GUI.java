@@ -271,7 +271,7 @@ public class GUI extends Application {
 		
 		Button minerBtn = new Button("Start Miner");
 		Button resetBtn = new Button("Reset Miner");
-		Button clearBtn = new Button("Clear Log");        //testing out the log screen 
+		Button clearBtn = new Button("Clear Log");
 		
 		// Start or stop the miner depending on the action
 		minerBtn.setOnAction(new EventHandler<ActionEvent>() {
@@ -339,6 +339,12 @@ public class GUI extends Application {
 	        networkBox.setSpacing(30);
 	        networkBox.setAlignment(Pos.CENTER);
 	        
+	        HBox lowerBtnBox = new HBox();
+	        lowerBtnBox.setPadding(new Insets(5));
+	        lowerBtnBox.setSpacing(10);
+	        lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+	        
+	        Button clearBtn = new Button("Clear Log");
 	        
 	        numPeersText = new Text("Number of Peers: " + mNode.getNumPeers());
 	        numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
@@ -351,15 +357,23 @@ public class GUI extends Application {
 	        networkView.setMouseTransparent( false );
 	        networkView.setFocusTraversable( false );
 	        
+	        clearBtn.setOnAction(new EventHandler<ActionEvent>(){
+	            @Override public void handle(ActionEvent e) {
+	                networkLog.clear();
+	                
+	            }
+	        });
 	        
 	        networkLog = FXCollections.observableArrayList(constructLogMessage("Network Running."));
 	        networkView.setItems(networkLog);
+	        
+	        lowerBtnBox.getChildren().add(clearBtn);
 	        
 	        VBox vLay = new VBox();
 	        vLay.setPadding(new Insets(15));
 	        vLay.setSpacing(25);
 	        
-	        vLay.getChildren().addAll(networkBox,networkView);
+	        vLay.getChildren().addAll(networkBox,networkView,lowerBtnBox);
 	        
 	        networkTab.setContent(vLay);
 	        
