@@ -20,6 +20,12 @@ public interface DataStore {
     long getBlocksCount() throws SQLException;
 
     /**
+     * Gets the number of blocks in the active blockchain.
+     * @throws SQLException
+     */
+    long getActiveBlocksCount() throws SQLException;
+
+    /**
      * Gets the most recent block on the active blockchain. Never returns null.
      * @throws SQLException
      */
@@ -79,6 +85,12 @@ public interface DataStore {
      * @throws SQLException
      */
     boolean isBlockOnActiveChain(byte[] blockID) throws SQLException;
+
+    /**
+     * Gets the number of entries in the store.
+     * @throws SQLException
+     */
+    long getEntriesCount() throws SQLException;
 
     /**
      * Get a particular entry.

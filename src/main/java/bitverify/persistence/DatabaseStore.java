@@ -107,6 +107,10 @@ public class DatabaseStore implements DataStore {
         return blockDao.countOf();
     }
 
+    public long getActiveBlocksCount() throws SQLException {
+        return blockDao.queryBuilder().where().eq("active", true).countOf();
+    }
+
     public DatabaseIterator<Block> getAllBlocks() throws SQLException {
         return new DatabaseIterator<>(blockDao.closeableIterator());
     }
@@ -350,6 +354,10 @@ public class DatabaseStore implements DataStore {
         return b;
     }
 
+    public long getEntriesCount() throws SQLException {
+        return entryDao.countOf();
+    }
+
     public Entry getEntry(UUID id) throws SQLException {
         return entryDao.queryForId(id);
     }
@@ -464,10 +472,6 @@ public class DatabaseStore implements DataStore {
 
     private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
         return new DatabaseIterator<>(blockDao.queryBuilder().where().eq("active", true).iterator());
-    }
-
-    private long getActiveBlocksCount() throws SQLException {
-        return blockDao.queryBuilder().where().eq("active", true).countOf();
     }
 
 }
