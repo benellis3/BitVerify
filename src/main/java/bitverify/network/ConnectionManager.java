@@ -390,7 +390,7 @@ public class ConnectionManager {
 
     public class BlockProtocol {
 
-        private static final int MAX_HEADERS = 10000000;
+        static final int MAX_HEADERS = 10000000;
         // at most how many block IDs from our active chain to provide in a GetHeaders message
         private static final int HEADERS_NUM_BLOCK_IDS = 20;
         private static final int HEADERS_TIMEOUT_SECONDS = 10;

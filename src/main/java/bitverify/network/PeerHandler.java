@@ -41,7 +41,6 @@ public class PeerHandler {
     private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
     private static final int BLOCK_TIMEOUT_SECONDS = 5;
     private static final int SETUP_TIMEOUT_SECONDS = 5;
-    private static final int MAX_HEADERS = 1000;
 
     private ArrayBlockingQueue<BlockID> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
     private RestartableTimer blockTimer;
@@ -385,7 +384,7 @@ public class PeerHandler {
                     if (dataStore.isBlockOnActiveChain(blockID)) {
 
                         // send the blocks following it
-                        List<Block> blocks = dataStore.getActiveBlocksAfter(blockID, MAX_HEADERS);
+                        List<Block> blocks = dataStore.getActiveBlocksAfter(blockID, ConnectionManager.BlockProtocol.MAX_HEADERS);
 
                         HeadersMessage.Builder hb = HeadersMessage.newBuilder();
                         for (Block block : blocks)
