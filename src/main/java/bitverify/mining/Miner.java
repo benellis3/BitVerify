@@ -96,13 +96,8 @@ public class Miner implements Runnable{
 		this.eventBus = eventBus;
 		eventBus.register(this);
 		
-		newMiningBlock(new ArrayList<Entry>());
-		
 		//Add unconfirmed entries from the database to the block for mining
-		List<Entry> pool = dataStore.getUnconfirmedEntries();
-		
-		blockMining.setEntriesList(pool);
-
+		newMiningBlock();
 	}
 	
 	/**
@@ -122,13 +117,9 @@ public class Miner implements Runnable{
 		//Set up the event bus
 		this.eventBus = eventBus;
 		eventBus.register(this);
-		
-		newMiningBlock(new ArrayList<Entry>());
-		
+
 		//Add unconfirmed entries from the database to the block for mining
-		List<Entry> pool = dataStore.getUnconfirmedEntries();
-		
-		blockMining.setEntriesList(pool);
+		newMiningBlock();
 
 		Miner.adjustTargetFrequency = adjustTargetFrequency;
 		Miner.idealMiningTime = idealMiningTime;
@@ -257,7 +248,7 @@ public class Miner implements Runnable{
 					//Pass successful block to application logic for broadcasting to the network
 					eventBus.post(new BlockFoundEvent(successfulBlock));
 	
-					newMiningBlock(new ArrayList<Entry>());
+					newMiningBlock();
 				}
 				//Proof of mining
 				else if (mineSuccess(result, currentMiningProofTarget)){
@@ -286,11 +277,10 @@ public class Miner implements Runnable{
      * We calculate its target by looking at the blockchain and associate it with the block at the end of the chain.
      * The timestamp is also assigned.
      * 
-     * @param entries	list of the entries for the block
      * @throws SQLException
      * @throws IOException
      */
-	public void newMiningBlock(List<Entry> entries) throws SQLException, IOException{
+	public void newMiningBlock() throws SQLException, IOException{
 		Block mostRecentBlock = dataStore.getMostRecentBlock();
 		//Create the next block to mine, passing the most recently mined block
 		int target = calculatePackedTarget(dataStore, mostRecentBlock, eventBus);
@@ -298,7 +288,7 @@ public class Miner implements Runnable{
 		//Keep track of the current proof of mining target (instead of storing it in the block)
 		this.currentMiningProofTarget = Miner.calculateMiningProofTarget(target);
 
-		blockMining = new Block(mostRecentBlock, System.currentTimeMillis(),target, 0, entries);
+		blockMining = new Block(mostRecentBlock, System.currentTimeMillis(),target, 0, dataStore.getUnconfirmedEntries());
 	}
 	
 	/**
@@ -318,10 +308,8 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
-    	eventBus.post(new LogEvent("Received new entry",LogEventSource.MINING,Level.INFO));
-    	List<Entry> newEntries = new ArrayList<>(blockMining.getEntriesList());
-		newEntries.add(e.getNewEntry());
-    	newMiningBlock(newEntries);
+    	eventBus.post(new LogEvent("About to mine on new entry",LogEventSource.MINING,Level.INFO));
+    	newMiningBlock();
     }
     
     /**
@@ -336,9 +324,7 @@ public class Miner implements Runnable{
     	//A new block as been found elsewhere, abort our current block
     	
     	//Get entries that are still unconfirmed from the database
-    	List<Entry> pool = dataStore.getUnconfirmedEntries();
-    	
-    	newMiningBlock(pool);
+    	newMiningBlock();
     }
 	
     /**

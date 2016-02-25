@@ -80,6 +80,7 @@ public class Block {
         this.timeStamp = timestamp;
         this.nonce = nonce;
 
+        Collections.sort(entriesList);
         this.entries = entriesList;
         this.entriesHash = hashEntries();
         this.verifiedEntries = true;
@@ -137,6 +138,7 @@ public class Block {
      * @return a boolean to indicate if the entered entries are the same as the ones indicated in the hash of the deserialized block.
      */
     public boolean setEntriesList(List<Entry> entryList) {
+        Collections.sort(entryList);
         entries = entryList;
         byte[] newEntriesHash = hashEntries();
         if (Arrays.equals(this.entriesHash, newEntriesHash)) {

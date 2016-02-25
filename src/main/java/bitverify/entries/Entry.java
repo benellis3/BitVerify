@@ -22,7 +22,7 @@ import bitverify.crypto.NotMatchingKeyException;
 import bitverify.crypto.Symmetric;
 
 @DatabaseTable
-public class Entry {
+public class Entry implements Comparable<Entry> {
 
 	@DatabaseField(id = true)
 	private UUID entryID = UUID.randomUUID();
@@ -449,6 +449,13 @@ public class Entry {
 	public String[] getDocTags(){
 		return docTags;
 	}
-	
-	// <------------------------------------ metadata methods
+
+	@Override
+	public int compareTo(Entry o) {
+		if (o == null)
+			return 1;
+		return this.entryID.compareTo(o.entryID);
+	}
+
+// <------------------------------------ metadata methods
 }
