@@ -410,7 +410,7 @@ public class ConnectionManager {
         // blocks we've received but don't yet have the parent of
         // a map from parentID => Block
         // TODO: limit the size of this collection (like a sliding download window)
-        private Map<byte[], Block> orphanBlocks = new ConcurrentHashMap<>();
+        private Map<BlockID, Block> orphanBlocks = new ConcurrentHashMap<>();
         private Object blockDownloadMonitor = new Object();
 
         public BlockProtocol() {
@@ -607,7 +607,7 @@ public class ConnectionManager {
                 if (parent == null) {
                     log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
-                    orphanBlocks.put(block.getPrevBlockHash(), block);
+                    orphanBlocks.put(new BlockID(block.getPrevBlockHash()), block);
                     log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
                     // TODO: do some more block downloading
 //                    es.execute(() -> {
@@ -649,7 +649,7 @@ public class ConnectionManager {
                             log("block was successfully added to database", Level.FINE);
                             bus.post(new NewBlockEvent(block));
                             // may now be able to insert orphan blocks
-                            insertOrphans(block.getBlockID());
+                            insertOrphans(new BlockID(block.getBlockID()));
                             break;
                         case FAIL_ORPHAN:
                             assert false;
@@ -704,7 +704,7 @@ public class ConnectionManager {
             }
         }
 
-        private void insertOrphans(byte[] parentBlockID) throws SQLException {
+        private void insertOrphans(BlockID parentBlockID) throws SQLException {
             Block b = orphanBlocks.remove(parentBlockID);
             if (b != null) {
                 // could fail due to duplicate, but if so we don't care, we've still unorphaned it
@@ -718,7 +718,7 @@ public class ConnectionManager {
                         break;
                 }
                 // now see if this allows us to unorphan any more blocks
-                insertOrphans(b.getBlockID());
+                insertOrphans(new BlockID(b.getBlockID()));
             }
         }
 
