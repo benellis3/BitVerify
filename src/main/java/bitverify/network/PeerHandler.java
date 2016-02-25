@@ -85,18 +85,20 @@ public class PeerHandler {
      * @throws ExecutionException   a socket IO error occurred
      * @throws TimeoutException     a timeout occurred while waiting for a connection setup message
      */
-    public void establishConnection(InetSocketAddress listenAddress)
+    public boolean establishConnection(InetSocketAddress listenAddress)
             throws InterruptedException, ExecutionException, TimeoutException {
         this.peerAddress = listenAddress;
         // 1. send version message
         executorService.submit(new PeerSend());
         sendVersionMessage(ourListenPort);
         // 2. receive version-ack message
-        executorService.submit(() -> receiveMessage(Message.Type.VERSION_ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        if (executorService.submit(() -> receiveMessage(Message.Type.VERSION_ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS) == null)
+            return false;
         // 3. send ack message
         sendAckMessage();
         // can now send and receive other messages
         executorService.submit(new PeerReceive());
+        return true;
     }
 
     /**
@@ -108,12 +110,15 @@ public class PeerHandler {
     public InetSocketAddress acceptConnection() throws ExecutionException, InterruptedException, TimeoutException {
         // 1. receive and check version message
         Message m = executorService.submit(() -> receiveMessage(Message.Type.VERSION)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        if (m == null)
+            return null;
         peerAddress = new InetSocketAddress(socket.getInetAddress(), m.getVersion().getListenPort());
         // 2. send version-ack message
         executorService.submit(new PeerSend());
         sendVersionAckMessage();
         // 3. receive ack message
-        executorService.submit(() -> receiveMessage(Message.Type.ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        if (executorService.submit(() -> receiveMessage(Message.Type.ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS) == null)
+            return null;
         // can now send and receive other messages
         executorService.submit(new PeerReceive());
         return peerAddress;
@@ -124,7 +129,7 @@ public class PeerHandler {
         Message msg;
         do {
             msg = Message.parseDelimitedFrom(is);
-        } while (msg.getType() != type);
+        } while (msg != null && msg.getType() != type);
         return msg;
     }
 

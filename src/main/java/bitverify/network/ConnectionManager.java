@@ -105,7 +105,11 @@ public class ConnectionManager {
                                     PeerHandler ph = new PeerHandler(s, es, dataStore, bus, ourListenPort, blockProtocol::onBlockTimeout);
                                     try {
                                         InetSocketAddress address = ph.acceptConnection();
-                                        peers.put(address, ph);
+                                        if (address == null) {
+                                            ph.shutdown();
+                                        } else {
+                                            peers.put(address, ph);
+                                        }
                                         // do block download against this peer
                                         blockProtocol.blockDownload(ph);
                                     } catch (TimeoutException time) {
@@ -179,7 +183,9 @@ public class ConnectionManager {
                 }
                 for (Future<?> f : futures) {
                     try {
-                        f.get();
+                        f.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    } catch (TimeoutException e) {
+                        log("timed out trying to connect to an initial peer", Level.FINE);
                     } catch (InterruptedException|ExecutionException e) {
                         e.printStackTrace();
                         log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
@@ -208,8 +214,12 @@ public class ConnectionManager {
             // safe
             PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort(), blockProtocol::onBlockTimeout);
             try {
-                ph.establishConnection(peerAddress);
-                peers.put(peerAddress, ph);
+                if (ph.establishConnection(peerAddress)) {
+                    peers.put(peerAddress, ph);
+                    return ph;
+                } else {
+                    ph.shutdown();
+                }
             } catch (TimeoutException toe) {
                 // this means the connection could not be established before timeout
                 log("Did not establish connection to peer within time limit", Level.INFO);
@@ -218,7 +228,6 @@ public class ConnectionManager {
                 log("An error occurred while establishing connection to peer", Level.WARNING, e);
                 ph.shutdown();
             }
-            return ph;
         } catch (IOException e) {
             log("An error occurred while creating an outgoing socket to a new peer: " + e.getMessage(), Level.INFO, e);
         }
