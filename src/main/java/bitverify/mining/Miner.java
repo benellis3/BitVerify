@@ -261,14 +261,14 @@ public class Miner implements Runnable{
 					newMiningBlock(new ArrayList<Entry>());
 				}
 				//Proof of mining
-				// else if (mineSuccess(result, currentMiningProofTarget)){
+				else if (mineSuccess(result, currentMiningProofTarget)){
 					//Application logic must broadcast to peers
 					//Must maintain a list of peers in database that have received proof from
 					//Reject incoming entries from public IPs not from the list
-					// eventBus.post(new NewMiningProofEvent(blockMining));
-					//eventBus.post(new LogEvent("Successful proof of mining"+result,LogEventSource.MINING,Level.INFO));
+					eventBus.post(new NewMiningProofEvent(blockMining));
+					//eventBus.post(new LogEvent("Successful proof of mining",LogEventSource.MINING,Level.INFO));
 					//eventBus.post(new LogEvent("Proof Block Hash:	"+result,LogEventSource.MINING,Level.INFO));
-				// }
+				}
 				
 				//Increment the header's nonce to generate a new hash
 				blockMining.incrementNonce();
@@ -319,6 +319,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
+    	eventBus.post(new LogEvent("Got a new entry",LogEventSource.MINING,Level.INFO));
     	List<Entry> newEntries = new ArrayList<>(blockMining.getEntriesList());
 		newEntries.add(e.getNewEntry());
     	newMiningBlock(newEntries);

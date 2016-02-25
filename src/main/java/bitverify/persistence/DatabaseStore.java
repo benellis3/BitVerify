@@ -216,7 +216,7 @@ public class DatabaseStore implements DataStore {
                 // see if this will be the new latest block
                 Block parent = getBlock(b.getPrevBlockHash());
                 if (parent == null) {
-                    // orphan blocks are not be inserted in the database
+                    // orphan blocks are not inserted into the database
                     return InsertBlockResult.FAIL_ORPHAN;
 
                 } else {

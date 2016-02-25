@@ -81,18 +81,30 @@ public class Node {
 		switch (startType) {
 			case CLI:
 				mScanner = new Scanner(System.in);
-				setupDatabase();
-				setupUser();
-				setupNetwork();
+				setUpModules();
 				userCLISetup();
 				break;
 			default:
-				setupDatabase();
-				setupUser();
-				setupNetwork();
+				setUpModules();
+				
 				if (mGUI != null) {
 					mGUI.onNodeSetupComplete();
 				}
+		}
+	}
+	
+	private void setUpModules(){
+		setupDatabase();
+		setupUser();
+		setupNetwork();
+		try {
+			mMiner = new Miner(mEventBus, mDatabase);
+		} catch (SQLException e) {
+			// TODO Handle this
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Handle this as well
+			e.printStackTrace();
 		}
 	}
 	
@@ -158,19 +170,6 @@ public class Node {
 	}
 	
 	public void startMiner() {
-		while (mMiner != null) {
-			stopMiner();
-		}
-		try {
-			mMiner = new Miner(mEventBus, mDatabase);
-		} catch (SQLException e) {
-			// TODO Handle this
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Handle this as well
-			e.printStackTrace();
-		}
-		
 		Thread miningThread = new Thread(mMiner);
 		miningThread.start();
 		mOptions[mMiningOptionNum] = "Stop mining";
@@ -180,7 +179,7 @@ public class Node {
 	public void stopMiner() {
 		if (mMiner != null) {
 			mMiner.stopMining(); // best way to handle this I believe.
-			mMiner = null;
+			//mMiner = null;
 		}
 		mOptions[mMiningOptionNum] = "Start mining";
 		isMining = false;
