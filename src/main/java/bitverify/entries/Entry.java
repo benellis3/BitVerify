@@ -433,6 +433,10 @@ public class Entry {
 	public long getDocTimeStamp(){
 		return docTimeStamp;
 	}
+	
+	public boolean isConfirmed(){
+	    return confirmed;
+	}
 
 	/**
 	 * Gets the document tags. May be null.
