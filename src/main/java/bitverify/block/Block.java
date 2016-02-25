@@ -13,12 +13,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 
+import bitverify.network.BlockID;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.squareup.otto.Bus;
@@ -148,7 +146,7 @@ public class Block {
         return false;
     }
 
-    private byte[] hashEntries() {
+    public byte[] hashEntries() {
         byte[] entriesSerial = serializeEntries();
         byte[] firstHash = Hash.hashBytes(entriesSerial);
         byte[] secondHash = Hash.hashBytes(firstHash);

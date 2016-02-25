@@ -592,12 +592,12 @@ public class ConnectionManager {
 
                 // check we don't already have it in our store
                 if (dataStore.blockExists(block.getBlockID())) {
-                    log("block was rejected because it was a duplicate", Level.FINE);
+                    log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     return;
                 }
                 // verify its hash meets its target
                 if (!Miner.blockHashMeetDifficulty(block)) {
-                    log("block was rejected because its hash didn't meet target difficulty", Level.FINE);
+                    log("block was rejected because its hash didn't meet target difficulty; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     return;
                 }
 
@@ -605,7 +605,7 @@ public class ConnectionManager {
                 Block parent = dataStore.getBlock(block.getPrevBlockHash());
 
                 if (parent == null) {
-                    log("block is an orphan and therefore wasn't added to database", Level.FINE);
+                    log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
                     orphanBlocks.put(block.getPrevBlockHash(), block);
                     log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
@@ -621,7 +621,7 @@ public class ConnectionManager {
                 } else {
                     // verify it was mined with the right difficulty
                     if (!Miner.checkBlockDifficulty(dataStore, block, parent, bus)) {
-                        log("block should be rejected because the difficulty was too low, but we won't do that", Level.FINE);
+                        log("block should be rejected because the difficulty was too low, but we won't do that; ID " + new BlockID(block.getBlockID()), Level.FINE);
                         // TODO: return;
                     }
 
@@ -633,7 +633,12 @@ public class ConnectionManager {
 
                     // check entries are valid
                     if (!block.setEntriesList(entryList)) {
-                        log("block was rejected because entries hash didn't match block header field", Level.FINE);
+                        log("block was rejected because entries hash didn't match block header field; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                        bus.post(new LogEvent("entries hash comparison failed for block " + new BlockID(block.getBlockID())
+                                + " expected hash "+ Base64.getEncoder().encodeToString(block.getEntriesHash())
+                                + ", actual hash" + Base64.getEncoder().encodeToString(block.hashEntries()),
+                                LogEventSource.NETWORK, Level.FINER));
+                        log("received block had " + entryList.size() + " entries", Level.FINE);
                         return;
                     }
 
@@ -650,7 +655,7 @@ public class ConnectionManager {
                             assert false;
                             break;
                         case FAIL_DUPLICATE:
-                            log("block was rejected because it was a duplicate", Level.FINE);
+                            log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
                             break;
                     }
                 }
