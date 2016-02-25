@@ -604,6 +604,23 @@ public class ConnectionManager {
                 // get the parent block
                 Block parent = dataStore.getBlock(block.getPrevBlockHash());
 
+                List<ByteString> entryBytesList = message.getEntriesList();
+                List<Entry> entryList = new ArrayList<>();
+                for (ByteString string : entryBytesList) {
+                    entryList.add(Entry.deserialize(string.toByteArray()));
+                }
+
+                // check entries are valid
+                if (!block.setEntriesList(entryList)) {
+                    log("block was rejected because entries hash didn't match block header field; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                    bus.post(new LogEvent("entries hash comparison failed for block " + new BlockID(block.getBlockID())
+                            + " expected hash "+ Base64.getEncoder().encodeToString(block.getEntriesHash())
+                            + ", actual hash" + Base64.getEncoder().encodeToString(block.hashEntries()),
+                            LogEventSource.NETWORK, Level.FINER));
+                    log("received block had " + entryList.size() + " entries", Level.FINE);
+                    return;
+                }
+
                 if (parent == null) {
                     log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
@@ -621,24 +638,7 @@ public class ConnectionManager {
                 } else {
                     // verify it was mined with the right difficulty
                     if (!Miner.checkBlockDifficulty(dataStore, block, parent, bus)) {
-                        log("block should be rejected because the difficulty was too low, but we won't do that; ID " + new BlockID(block.getBlockID()), Level.FINE);
-                        // TODO: return;
-                    }
-
-                    List<ByteString> entryBytesList = message.getEntriesList();
-                    List<Entry> entryList = new ArrayList<>();
-                    for (ByteString string : entryBytesList) {
-                        entryList.add(Entry.deserialize(string.toByteArray()));
-                    }
-
-                    // check entries are valid
-                    if (!block.setEntriesList(entryList)) {
-                        log("block was rejected because entries hash didn't match block header field; ID " + new BlockID(block.getBlockID()), Level.FINE);
-                        bus.post(new LogEvent("entries hash comparison failed for block " + new BlockID(block.getBlockID())
-                                + " expected hash "+ Base64.getEncoder().encodeToString(block.getEntriesHash())
-                                + ", actual hash" + Base64.getEncoder().encodeToString(block.hashEntries()),
-                                LogEventSource.NETWORK, Level.FINER));
-                        log("received block had " + entryList.size() + " entries", Level.FINE);
+                        log("block was rejected because the difficulty was too low, ID " + new BlockID(block.getBlockID()), Level.FINE);
                         return;
                     }
 
@@ -649,7 +649,7 @@ public class ConnectionManager {
                             log("block was successfully added to database", Level.FINE);
                             bus.post(new NewBlockEvent(block));
                             // may now be able to insert orphan blocks
-                            insertOrphans(new BlockID(block.getBlockID()));
+                            insertOrphans(block);
                             break;
                         case FAIL_ORPHAN:
                             assert false;
@@ -704,21 +704,30 @@ public class ConnectionManager {
             }
         }
 
-        private void insertOrphans(BlockID parentBlockID) throws SQLException {
-            Block b = orphanBlocks.remove(parentBlockID);
+        private void insertOrphans(Block parentBlock) throws SQLException {
+            Block b = orphanBlocks.remove(new BlockID(parentBlock.getBlockID()));
             if (b != null) {
+                // verify it was mined with the right difficulty
+                if (!Miner.checkBlockDifficulty(dataStore, b, parentBlock, bus)) {
+                    log("previously orphaned block was rejected because the difficulty was too low, ID " + new BlockID(b.getBlockID()), Level.FINE);
+                    return;
+                }
+
                 // could fail due to duplicate, but if so we don't care, we've still unorphaned it
                 InsertBlockResult r =  dataStore.insertBlock(b);
                 switch (r) {
                     case SUCCESS:
                         log("managed to insert a block that was previously an orphan", Level.FINE);
                         break;
+                    case FAIL_DUPLICATE:
+                        log("tried to insert a block that was previously an orphan, but it's now a duplicate so all OK", Level.FINE);
+                        break;
                     case FAIL_ORPHAN:
                         assert false;
                         break;
                 }
                 // now see if this allows us to unorphan any more blocks
-                insertOrphans(new BlockID(b.getBlockID()));
+                insertOrphans(b);
             }
         }
 
