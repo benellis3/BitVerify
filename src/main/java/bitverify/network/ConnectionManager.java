@@ -726,6 +726,7 @@ public class ConnectionManager {
                         assert false;
                         break;
                 }
+                log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
                 // now see if this allows us to unorphan any more blocks
                 insertOrphans(b);
             }
