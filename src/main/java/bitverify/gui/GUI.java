@@ -80,7 +80,7 @@ public class GUI extends Application {
 	private Text numPeersText;
 	private Text numEntryText;
 	private Text numBlocksText;
-	private ObservableList<String> minerLog;
+	private ObservableList<String> minerLog = FXCollections.observableArrayList();
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
 	private Bus mEventBus;
@@ -316,7 +316,7 @@ public class GUI extends Application {
 		messageList.setMouseTransparent( false );
 		messageList.setFocusTraversable( false );
 		
-		minerLog = FXCollections.observableArrayList(constructLogMessage("Miner ready."));
+		minerLog.add(constructLogMessage("Miner ready."));
 		messageList.setItems(minerLog);
 		
 		VBox vLay = new VBox();
