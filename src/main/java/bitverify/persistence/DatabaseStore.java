@@ -112,7 +112,12 @@ public class DatabaseStore implements DataStore {
     }
 
     public DatabaseIterator<Block> getAllBlocks() throws SQLException {
-        return new DatabaseIterator<>(blockDao.closeableIterator());
+        CloseableIterator<Block> blocks = blockDao.queryBuilder()
+                .orderBy("height", false)
+                .orderBy("timeStamp", true)
+                .iterator();
+
+        return new DatabaseIterator<>(blocks);
     }
 
 
