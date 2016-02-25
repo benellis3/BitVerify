@@ -1,5 +1,7 @@
 package bitverify.network;
 
+import com.google.protobuf.ByteString;
+
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -11,6 +13,10 @@ public class BlockID {
 
     public BlockID(byte[] blockID) {
         this.blockID = blockID;
+    }
+
+    public BlockID(ByteString blockID) {
+        this.blockID = blockID.toByteArray();
     }
 
     public byte[] getBlockID() {

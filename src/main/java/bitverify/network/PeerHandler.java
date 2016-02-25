@@ -39,11 +39,13 @@ public class PeerHandler {
     private volatile boolean shutdown;
 
     private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
-    private static final int BLOCK_TIMEOUT_SECONDS = 5;
-    private static final int SETUP_TIMEOUT_SECONDS = 5;
+    private static final int BLOCK_TIMEOUT_SECONDS = 10;
+    private static final int SETUP_TIMEOUT_SECONDS = 10;
 
     private ArrayBlockingQueue<BlockID> blocksInFlight = new ArrayBlockingQueue<>(MAX_SIMULTANEOUS_BLOCKS_PER_PEER);
     private RestartableTimer blockTimer;
+    // all the blocks this peer said they didn't have. We shouldn't ask them again for these blocks.
+    private Set<BlockID> blocksNotFound = ConcurrentHashMap.newKeySet();
 
 
     /**
@@ -54,16 +56,15 @@ public class PeerHandler {
      * @param ds  the Database access class
      * @param bus the application event bus.
      * @param ourListenPort the port our client is listening on
-     * @param onBlockTimeout the function to call when this peer times out waiting to receive a requested block.
      */
-    public PeerHandler(Socket s, ExecutorService es, DataStore ds, Bus bus, int ourListenPort, Consumer<PeerHandler> onBlockTimeout) {
+    public PeerHandler(Socket s, ExecutorService es, DataStore ds, Bus bus, int ourListenPort) {
         socket = s;
         executorService = es;
         this.bus = bus;
         this.dataStore = ds;
         this.ourListenPort = ourListenPort;
 
-        blockTimer = new RestartableTimer(() -> onBlockTimeout.accept(this), BLOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        blockTimer = new RestartableTimer(() -> bus.post(new BlockTimeoutEvent(this)), BLOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
@@ -200,7 +201,7 @@ public class PeerHandler {
      * @return true if the request was sent, false if we're already downloading the maximum number of blocks or this peer is being shut down.
      */
     public boolean requestBlock(BlockID blockID) {
-        if (!blocksInFlight.offer(blockID))
+        if (blocksNotFound.contains(blockID) || !blocksInFlight.offer(blockID))
             return false;
 
         MessageProto.GetBlockMessage gbm = MessageProto.GetBlockMessage.newBuilder()
@@ -354,6 +355,7 @@ public class PeerHandler {
         }
 
         private void handleBlockNotFoundMessage(BlockNotFoundMessage m) {
+            blocksNotFound.add(new BlockID(m.getBlockID()));
             bus.post(new BlockNotFoundMessageEvent(m, PeerHandler.this));
         }
 
@@ -379,8 +381,6 @@ public class PeerHandler {
 
         private void handleGetHeaders(GetHeadersMessage message) throws SQLException {
             try {
-
-
                 // for each start at ID,
                 for (ByteString bytes : message.getFromList()) {
                     byte[] blockID = bytes.toByteArray();

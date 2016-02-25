@@ -102,7 +102,7 @@ public class ConnectionManager {
                                 Socket s = serverSocket.accept();
                                 // separate thread since it blocks waiting for messages.
                                 es.execute(() -> {
-                                    PeerHandler ph = new PeerHandler(s, es, dataStore, bus, ourListenPort, blockProtocol::onBlockTimeout);
+                                    PeerHandler ph = new PeerHandler(s, es, dataStore, bus, ourListenPort);
                                     try {
                                         InetSocketAddress address = ph.acceptConnection();
                                         if (address == null) {
@@ -212,7 +212,7 @@ public class ConnectionManager {
             // may throw IOException
             socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
             // safe
-            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort(), blockProtocol::onBlockTimeout);
+            PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort());
             try {
                 if (ph.establishConnection(peerAddress)) {
                     peers.put(peerAddress, ph);
@@ -428,7 +428,6 @@ public class ConnectionManager {
                     List<Block> receivedHeaders;
                     try {
                         receivedHeaders = h.get(HEADERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                        log("received headers reply", Level.FINE);
                     } catch (InterruptedException e) {
                         // this ought not to happen
                         log("unexpected InterruptedException while getting block headers", Level.WARNING, e);
@@ -442,12 +441,15 @@ public class ConnectionManager {
 
                     if (receivedHeaders == null) {
                         // choose a new peer and try again
+                        log("did not get a valid headers response. Disconnecting peer " + peer.getPeerAddress(), Level.FINE);
+                        disconnectPeer(peer);
                         return false;
                     } else if (receivedHeaders.isEmpty()) {
                         // we're done
+                        log("headers download complete, 0 headers were received", Level.FINE);
                         return true;
                     } else {
-
+                        log("received headers reply with " + receivedHeaders.size() + " headers", Level.FINE);
                         byte[] firstPredecessorID = receivedHeaders.get(0).getPrevBlockHash();
                         // first header must follow some older block we have on our primary chain
                         Block firstPredecessor = dataStore.getBlock(firstPredecessorID);
@@ -480,7 +482,8 @@ public class ConnectionManager {
                                 log("headers download complete", Level.FINE);
                                 return true;
                             } else {
-                                // TODO: make sure this works
+                                // add the last block id provided to the FRONT of the list of block IDs to put in next getheaders message
+                                log("may be some more headers to get, about to send another request", Level.FINE);
                                 fromBlockIDs.add(0, receivedHeaders.get(receivedHeaders.size() - 1).getBlockID());
                             }
                         }
@@ -510,7 +513,6 @@ public class ConnectionManager {
                 if (blockDownload(p))
                     return;
             }
-
         }
 
         /**
@@ -535,7 +537,6 @@ public class ConnectionManager {
                 // if all peers won't accept another block request, stop.
                 allPeersFull = true;
                 for (PeerHandler peer : peers.values()) {
-                    // provide the future headers queue so the peer can obtain more blocks to download when done
                     // break if there are no more blocks to be downloaded
                     if (b == null) {
                         break;
@@ -566,8 +567,10 @@ public class ConnectionManager {
                 Block block = Block.deserialize(blockBytes);
                 log("Block received with ID " + Base64.getEncoder().encodeToString(block.getBlockID()), Level.FINE);
                 log("there were " + peer.getBlocksInFlight().size() + " blocks in flight from peer " + peer.getPeerAddress(), Level.FINER);
+
                 // see if we requested this block from this peer
-                if (peer.getBlocksInFlight().remove(new BlockID(block.getBlockID()))) {
+                boolean blockWasExpected = peer.getBlocksInFlight().remove(new BlockID(block.getBlockID()));
+                if (blockWasExpected) {
                     log("there are now " + peer.getBlocksInFlight().size() + " blocks in flight from peer " + peer.getPeerAddress(), Level.FINER);
                     log("timer restarted - in flight block received from peer " + peer.getPeerAddress(), Level.FINE);
                     // if so restart the timer for blocks
@@ -624,17 +627,26 @@ public class ConnectionManager {
                 if (parent == null) {
                     log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
-                    orphanBlocks.put(new BlockID(block.getPrevBlockHash()), block);
+                    final BlockID orphanBlockKey = new BlockID(block.getEntriesHash());
+                    orphanBlocks.put(orphanBlockKey, block);
                     log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
-                    // TODO: do some more block downloading
-//                    es.execute(() -> {
-//                        try {
-//                            blockDownload(peer);
-//                        } catch (SQLException ex) {
-//                            log("block download failed with a SQLException: " + ex.getMessage(), Level.WARNING, ex);
-//                        }
-//                    });
 
+                    // do some more block downloading if this block was broadcast to us
+                    if (!blockWasExpected) {
+                        es.execute(() -> {
+                            try {
+                                // lock on monitor so we can first check if the block is still an orphan
+                                synchronized (blockDownloadMonitor) {
+                                    // block may become unorphaned by the time we finish our previous block download
+                                    if (orphanBlocks.containsKey(orphanBlockKey)) {
+                                        blockDownload(peer);
+                                    }
+                                }
+                            } catch (SQLException ex) {
+                                log("block download was initiated because of orphan but failed with a SQLException: " + ex.getMessage(), Level.SEVERE, ex);
+                            }
+                        });
+                    }
                 } else {
                     // verify it was mined with the right difficulty
                     if (!Miner.checkBlockDifficulty(dataStore, block, parent, bus)) {
@@ -685,7 +697,7 @@ public class ConnectionManager {
                     peer.getBlockTimer().stop();
                 } else {
                     if (!peer.requestBlock(next)) {
-                        // put it back on the queue if we can't download another block (due to a race)
+                        // put it back on the queue if we can't download another block (due to a race or it being previously not found)
                         futureBlockIDs.addFirst(next);
                     }
                 }
@@ -732,7 +744,9 @@ public class ConnectionManager {
             }
         }
 
-        private void onBlockTimeout(PeerHandler peer) {
+        @Subscribe
+        public void onBlockTimeout(BlockTimeoutEvent e) {
+            PeerHandler peer = e.getPeer();
             log("block request timed out, disconnecting peer " + peer.getPeerAddress(), Level.FINE);
             disconnectPeer(peer);
             // re-request all of that peer's in-flight blocks from other peers.
@@ -740,11 +754,6 @@ public class ConnectionManager {
             // these might be the only blocks outstanding so trigger more downloads.
             downloadQueuedBlocks();
         }
-
-
-
     }
-
-
 }
 
