@@ -1,6 +1,7 @@
 package bitverify.entries;
 
 import java.io.*;
+import java.util.Date;
 import java.util.UUID;
 
 import com.j256.ormlite.field.DataType;
@@ -311,6 +312,10 @@ public class Entry {
 		return entryTimeStamp;
 	}
 	
+	public String getEntryTimeStampString() {
+		return new Date(getEntryTimeStamp()).toString();
+	}
+	
 	public byte[] getUploaderID(){
 		return uploaderID;
 	}
@@ -325,6 +330,10 @@ public class Entry {
 
 	public void setConfirmed(boolean confirmed) {
 		this.confirmed = confirmed;
+	}
+	
+	public boolean getConfirmed() {
+		return confirmed;
 	}
 	
 	

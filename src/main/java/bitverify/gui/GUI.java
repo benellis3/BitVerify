@@ -84,6 +84,7 @@ public class GUI extends Application {
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
 	private Bus mEventBus;
+	private Button searchButton;
 	
 	long UPDATE_TIME = 5_000;
 	
@@ -108,7 +109,7 @@ public class GUI extends Application {
         scenetitle.setFont(Font.font("Tahoma", FontWeight.NORMAL, 80));
         scenetitle.setTextAlignment(TextAlignment.CENTER);
         
-        Image image = new Image("/ic_launcher.png");
+        Image image = new Image("main/resources/ic_launcher.png");
         ImageView imgView = new ImageView();
         imgView.setImage(image);
         
@@ -186,14 +187,14 @@ public class GUI extends Application {
 	        	tabs.setPadding(new Insets(15));
 
 	        	Tab minerTab = getMinerTab();
-	            Image miningImage = new Image("/mining_icon.png");
+	            Image miningImage = new Image("main/resources/mining_icon.png");
 	            ImageView miningImgView = new ImageView(miningImage);
 	            miningImgView.setFitHeight(20);
 	            miningImgView.setFitWidth(20);
 	        	minerTab.setGraphic(miningImgView);
 	        	
 	        	Tab addEntryTab = getAddEntryTab();
-	        	Image entryImage = new Image("/entry_icon.png");
+	        	Image entryImage = new Image("main/resources/entry_icon.png");
 	        	ImageView entryImgView = new ImageView(entryImage);
 	        	entryImgView.setFitHeight(20);
 	        	entryImgView.setFitWidth(20);
@@ -201,21 +202,21 @@ public class GUI extends Application {
 	        	
 	        	
 	        	Tab searchTab = getSearchTab();
-	        	Image searchImage = new Image("/search_icon.png");
+	        	Image searchImage = new Image("main/resources/search_icon.png");
 	        	ImageView searchImgView = new ImageView(searchImage);
 	        	searchImgView.setFitHeight(20);
 	        	searchImgView.setFitWidth(20);
 	        	searchTab.setGraphic(searchImgView);
 	        	
 	        	Tab networkTab = getNetworkTab();
-	        	Image networkImage = new Image("/network_icon.png");
+	        	Image networkImage = new Image("main/resources/network_icon.png");
 	        	ImageView networkImgView = new ImageView(networkImage);
 	        	networkImgView.setFitHeight(20);
 	        	networkImgView.setFitWidth(20);
 	        	networkTab.setGraphic(networkImgView);
 	        	
 	        	Tab hashTab = getDocumentCheckTab();
-	        	Image hashImage = new Image("/hash_icon.png");
+	        	Image hashImage = new Image("main/resources/hash_icon.png");
 	        	ImageView hashImgView = new ImageView(hashImage);
 	        	hashImgView.setFitHeight(20);
 	        	hashImgView.setFitWidth(20);
@@ -503,6 +504,9 @@ public class GUI extends Application {
 					ft.setFromValue(1.0);
 				    ft.setToValue(0.0);
 				    ft.play();
+				    
+				    if (searchButton != null)
+				    	searchButton.fire();
 					
 				} catch (KeyDecodingException | IOException | SQLException ex) {
 					errorText.setFill(Color.RED);
@@ -561,7 +565,13 @@ public class GUI extends Application {
     	TableView<Entry> tableView = new TableView<Entry>();
     	
     	// Create all our columns
-    	TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
+    	timeStampColumn.setText("TimeStamp");
+    	timeStampColumn.setPrefWidth(175);
+    	timeStampColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
+    	
     	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
     	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
     	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
@@ -588,10 +598,11 @@ public class GUI extends Application {
     	// Back to normal columns now
     	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
     	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
     	
     	// Order of columns
     	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn);
+    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
     	
     	//tableView.getColumns().setAll(nameColumn);
     	
@@ -602,7 +613,7 @@ public class GUI extends Application {
     	searchField.setPrefWidth(600);
     	searchField.setPromptText("Search");
     	
-    	Button searchButton = new Button("Search");
+    	searchButton = new Button("Search");
     	searchButton.setPrefHeight(searchButton.getHeight());
     	
     	searchButton.setOnAction(new EventHandler<ActionEvent>() {
