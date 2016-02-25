@@ -319,7 +319,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
-    	eventBus.post(new LogEvent("Got a new entry",LogEventSource.MINING,Level.INFO));
+    	eventBus.post(new LogEvent("Received new entry",LogEventSource.MINING,Level.INFO));
     	List<Entry> newEntries = new ArrayList<>(blockMining.getEntriesList());
 		newEntries.add(e.getNewEntry());
     	newMiningBlock(newEntries);
@@ -335,12 +335,11 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewBlockEvent(NewBlockEvent e) throws IOException, SQLException {
     	//A new block as been found elsewhere, abort our current block
-    	newMiningBlock(new ArrayList<Entry>());
-		
-		//Get entries that are still unconfirmed from the database
-		List<Entry> pool = dataStore.getUnconfirmedEntries();
-		
-		blockMining.setEntriesList(pool);
+    	
+    	//Get entries that are still unconfirmed from the database
+    	List<Entry> pool = dataStore.getUnconfirmedEntries();
+    	
+    	newMiningBlock(pool);
     }
 	
     /**
