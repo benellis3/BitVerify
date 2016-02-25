@@ -332,6 +332,10 @@ public class Entry {
 		this.confirmed = confirmed;
 	}
 	
+	public boolean getConfirmed() {
+		return confirmed;
+	}
+	
 	
 	// ------------------------------------> metadata methods
 	

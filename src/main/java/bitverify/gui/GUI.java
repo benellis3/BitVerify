@@ -598,10 +598,11 @@ public class GUI extends Application {
     	// Back to normal columns now
     	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
     	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
     	
     	// Order of columns
     	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn);
+    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
     	
     	//tableView.getColumns().setAll(nameColumn);
     	
