@@ -212,8 +212,8 @@ public class Node {
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
 		
-		System.out.println("Enter recieved id (leave blank if none):");
-		String recieverID = mScanner.nextLine();
+		System.out.println("Enter received id (leave blank if none):");
+		String receiverID = mScanner.nextLine();
 		
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
@@ -222,7 +222,7 @@ public class Node {
 		String tagString = mScanner.nextLine();
 		
 		try {
-			addEntry(hash, fileDownload, fileName, recieverID, fileDescription, fileGeo, tagString);
+			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
 		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
@@ -230,7 +230,7 @@ public class Node {
 	}
 	
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
-			String recieverID, String fileDescription, String fileGeo, 
+			String receiverID, String fileDescription, String fileGeo, 
 			String tagString) throws KeyDecodingException, IOException, SQLException {
 		
 		// We need to split the input into an array of tags
@@ -242,9 +242,9 @@ public class Node {
 		// Construct entry object 
 		Entry entry;
 		
-		// RecieverID is optional 
-		if (recieverID.length() > 0) {
-			entry = new Entry(mIdentity.getKeyPair(), recieverID.getBytes(), hash, fileDownload, fileName, 
+		// ReceiverID is optional 
+		if (receiverID.length() > 0) {
+			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
 					fileDescription, fileGeo, System.currentTimeMillis(), tags);
 		} else {
 			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
@@ -261,7 +261,7 @@ public class Node {
 	
 	private void listConfirmedEntries() {
 		try (DatabaseIterator<Entry> di = mDatabase.getConfirmedEntries()) {
-			int entryCount = 0;
+			int entryCount = 0; //this is needed, as the number of entries could have changed since the prev call
 			System.out.println("######################################");
 			System.out.println("Confirmed entries:");
 		    while (di.moveNext()) {
@@ -383,7 +383,8 @@ public class Node {
 	
 	private void listPrimaryBlocks() {
 		try {
-			List<Block> blocks = mDatabase.getNMostRecentBlocks(2000); //TODO cheating here for now...
+			int numPrBlocks = (int)mDatabase.getActiveBlocksCount();
+			List<Block> blocks = mDatabase.getNMostRecentBlocks(numPrBlocks);
 			System.out.println("######################################");
 			System.out.println("Blocks on the primary chain:");
 			for (int i=0; i<blocks.size(); i++){
@@ -391,7 +392,7 @@ public class Node {
 						blocks.get(i).getHeight(), Base64.getEncoder().encodeToString(blocks.get(i).getBlockID()),
 						Base64.getEncoder().encodeToString(blocks.get(i).getEntriesHash()) );
 			}
-			System.out.println("There are "+blocks.size()+" blocks on the primary chain.");
+			System.out.println("There are "+numPrBlocks+" blocks on the primary chain.");
 			System.out.println("######################################");
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -401,7 +402,7 @@ public class Node {
 	
 	private void listAllBlocks() {
 		try (DatabaseIterator<Block> di = mDatabase.getAllBlocks()) {
-			int blockCount = 0;
+			int blockCount = 0; //this is needed, as the number of blocks could have changed since the prev call
 			System.out.println("######################################");
 			System.out.println("All blocks:");
 		    while (di.moveNext()) {
