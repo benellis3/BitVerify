@@ -638,7 +638,7 @@ public class ConnectionManager {
                 if (parent == null) {
                     log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
                     // keep block in memory and try to store it once its parent has been downloaded.
-                    final BlockID orphanBlockKey = new BlockID(block.getEntriesHash());
+                    final BlockID orphanBlockKey = new BlockID(block.getPrevBlockHash());
                     orphanBlocks.put(orphanBlockKey, block);
                     log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
 
