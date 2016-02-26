@@ -288,6 +288,10 @@ public class ConnectionManager {
     public Collection<PeerHandler> peers() {
         return Collections.unmodifiableCollection(peers.values());
     }
+    
+    public Set<InetSocketAddress> getPeerSet() {
+    	return peers.keySet();
+    }
 
     /**
      * Create a peers message to send to the sender of the

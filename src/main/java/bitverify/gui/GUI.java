@@ -3,6 +3,7 @@ package bitverify.gui;
 import bitverify.LogEvent;
 import bitverify.LogEventSource;
 import bitverify.Node;
+import bitverify.block.Block;
 import bitverify.crypto.Hash;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
@@ -40,6 +41,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Scene;
+import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -51,6 +53,7 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -86,9 +89,10 @@ public class GUI extends Application {
 	private Bus mEventBus;
 	private Button searchButton;
 	
-	long UPDATE_TIME = 5_000;
+	private static final long UPDATE_TIME = 5_000;
 	
-	int MAX_ENTRIES_AT_ONCE = 100;
+	private static final int MAX_ENTRIES_AT_ONCE = 100;
+	private static final int MAX_BLOCKS_AT_ONCE = 50;
 	
 	public static void StartGUI() {
 		launch();
@@ -187,43 +191,25 @@ public class GUI extends Application {
 	        	tabs.setPadding(new Insets(15));
 
 	        	Tab minerTab = getMinerTab();
-	            Image miningImage = new Image("/mining_icon.png");
-	            ImageView miningImgView = new ImageView(miningImage);
-	            miningImgView.setFitHeight(20);
-	            miningImgView.setFitWidth(20);
-	        	minerTab.setGraphic(miningImgView);
+	        	minerTab.setGraphic(getTabIconView("/mining_icon.png"));
 	        	
 	        	Tab addEntryTab = getAddEntryTab();
-	        	Image entryImage = new Image("/entry_icon.png");
-	        	ImageView entryImgView = new ImageView(entryImage);
-	        	entryImgView.setFitHeight(20);
-	        	entryImgView.setFitWidth(20);
-	        	addEntryTab.setGraphic(entryImgView);
-	        	
+	        	addEntryTab.setGraphic(getTabIconView("/entry_icon.png"));
 	        	
 	        	Tab searchTab = getSearchTab();
-	        	Image searchImage = new Image("/search_icon.png");
-	        	ImageView searchImgView = new ImageView(searchImage);
-	        	searchImgView.setFitHeight(20);
-	        	searchImgView.setFitWidth(20);
-	        	searchTab.setGraphic(searchImgView);
+	        	searchTab.setGraphic(getTabIconView("/search_icon.png"));
 	        	
 	        	Tab networkTab = getNetworkTab();
-	        	Image networkImage = new Image("/network_icon.png");
-	        	ImageView networkImgView = new ImageView(networkImage);
-	        	networkImgView.setFitHeight(20);
-	        	networkImgView.setFitWidth(20);
-	        	networkTab.setGraphic(networkImgView);
+	        	networkTab.setGraphic(getTabIconView("/network_icon.png"));
 	        	
 	        	Tab hashTab = getDocumentCheckTab();
-	        	Image hashImage = new Image("/hash_icon.png");
-	        	ImageView hashImgView = new ImageView(hashImage);
-	        	hashImgView.setFitHeight(20);
-	        	hashImgView.setFitWidth(20);
-	        	hashTab.setGraphic(hashImgView);
+	        	hashTab.setGraphic(getTabIconView("/hash_icon.png"));
 	        	
+	        	Tab nodeTab = getNodesTab();
 	        	
-	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, hashTab, networkTab);
+	        	Tab blockTab = getBlockBreakdownTab();
+	        	
+	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, hashTab, networkTab, nodeTab, blockTab);
 	       
 	        	hbox.getChildren().addAll(tabs);
 	        	hbox.setAlignment(Pos.CENTER);
@@ -253,6 +239,14 @@ public class GUI extends Application {
 	    		});
 	        }
 	     });
+	}
+	
+	private ImageView getTabIconView(String imagePath) {
+    	Image image = new Image(imagePath);
+    	ImageView imageView = new ImageView(image);
+    	imageView.setFitHeight(20);
+    	imageView.setFitWidth(20);
+    	return imageView;
 	}
 	
 	private Tab getMinerTab() {
@@ -328,6 +322,60 @@ public class GUI extends Application {
 		minerTab.setContent(vLay);
 		
 		return minerTab;
+	}
+	
+	
+	private Tab getNodesTab() {
+		Tab nodesTab = new Tab();
+		nodesTab.setText("Nodes");
+        
+        HBox networkBox = new HBox();
+        networkBox.setPadding(new Insets(5));
+        networkBox.setSpacing(30);
+        networkBox.setAlignment(Pos.CENTER);
+        
+        HBox lowerBtnBox = new HBox();
+        lowerBtnBox.setPadding(new Insets(5));
+        lowerBtnBox.setSpacing(10);
+        lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+        
+        Button reloadBtn = new Button("Reload");
+
+        numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
+        
+        networkBox.getChildren().addAll(new Text("Acitve Nodes:"));
+        
+        ListView<String> nodesView = new ListView<String>();
+        nodesView.setPrefHeight(400);
+        nodesView.setMouseTransparent( false );
+        nodesView.setFocusTraversable( false );
+        
+        ObservableList<String> nodeList = FXCollections.observableArrayList();
+        
+        reloadBtn.setOnAction(new EventHandler<ActionEvent>(){
+            @Override public void handle(ActionEvent e) {
+                if (mNode != null)
+                	nodeList.setAll(mNode.getPeerListAsStrings());
+                else
+                	nodeList.clear();
+            }
+        });
+        
+        reloadBtn.fire();
+       
+        nodesView.setItems(nodeList);
+        
+        lowerBtnBox.getChildren().add(reloadBtn);
+        
+        VBox vLay = new VBox();
+        vLay.setPadding(new Insets(15));
+        vLay.setSpacing(25);
+        
+        vLay.getChildren().addAll(networkBox, nodesView,lowerBtnBox);
+        
+        nodesTab.setContent(vLay);
+        
+        return nodesTab;
 	}
 	
 	private Tab getNetworkTab(){
@@ -604,8 +652,6 @@ public class GUI extends Application {
     	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
     			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
     	
-    	//tableView.getColumns().setAll(nameColumn);
-    	
     	tableView.setItems(data);
     	
     	HBox hLay = new HBox();
@@ -749,6 +795,98 @@ public class GUI extends Application {
 		return documentTab;
 	}
 	
+	private Tab getBlockBreakdownTab() {
+		Tab breakdownTab = new Tab();
+		breakdownTab.setText("Blocks");
+		
+		VBox vLay = new VBox();
+		
+		HBox hLay = new HBox();
+		hLay.setAlignment(Pos.CENTER_RIGHT);
+		Button reloadButton = new Button("Reload");
+		
+		Accordion accordion = new Accordion();
+		reloadButton.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	accordion.getPanes().clear();
+		    	DatabaseIterator<Block> iterator = mNode.getBlockList();
+		    	if (iterator != null) {
+		    		for (int i = 0; i < MAX_BLOCKS_AT_ONCE; i++) {
+		    			try {
+							if (iterator.moveNext()) {
+								Block block = iterator.current();
+								// Create a table view to display the data
+				    	    	ObservableList<Entry> data = FXCollections.observableArrayList();
+				    	    	TableView<Entry> tableView = new TableView<Entry>();
+				    	    	
+				    	    	// Create all our columns
+				    	    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+				    	    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
+				    	    	timeStampColumn.setText("TimeStamp");
+				    	    	timeStampColumn.setPrefWidth(175);
+				    	    	timeStampColumn.setCellValueFactory(
+				    	    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
+				    	    	
+				    	    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
+				    	    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
+				    	    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
+				    	    	
+				    	    	// These columns are byte arrays, so we have to do them a little differently
+				    	    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
+				    	    	receiverColumn.setText("Receiver");
+				    	    	receiverColumn.setPrefWidth(75);
+				    	    	receiverColumn.setCellValueFactory(
+				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
+				    	    	
+				    	    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
+				    	    	uploaderColumn.setText("Uploader");
+				    	    	uploaderColumn.setPrefWidth(75);
+				    	    	uploaderColumn.setCellValueFactory(
+				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
+				    	    	
+				    	    	TableColumn<Entry, String> hashColumn = new TableColumn<Entry, String>();
+				    	    	hashColumn.setText("Hash");
+				    	    	hashColumn.setPrefWidth(75);
+				    	    	hashColumn.setCellValueFactory(
+				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getDocHash()))));
+				    	   
+				    	    	// Back to normal columns now
+				    	    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
+				    	    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+				    	    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
+				    	    	
+				    	    	// Order of columns
+				    	    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
+				    	    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
+				    	    	
+				    	    	List<Entry> entries = block.getEntriesList();
+				    	    	if (entries == null) {
+				    	    		entries = new LinkedList<Entry>();
+				    	    	}
+				    	    	
+				    	    	data.addAll(entries);
+				    	    	tableView.setItems(data);
+				    	    	TitledPane tPane = new TitledPane(block.toString(), tableView);
+				    	    	accordion.getPanes().add(tPane);
+							}
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+		    			
+		    		}
+		    	}
+		    }
+		});
+		reloadButton.fire();
+		
+		
+		hLay.getChildren().add(reloadButton);
+		vLay.getChildren().addAll(accordion, hLay);
+		breakdownTab.setContent(vLay);
+		return breakdownTab;
+	}
+	
 	private void updateHashText(File selectedFile, Text hashText) {
 		try {
 			FileInputStream inputStream = new FileInputStream(selectedFile);
@@ -794,6 +932,8 @@ public class GUI extends Application {
         	        case NETWORK:
         	            networkLog.add(constructLogMessage(o.getMessage()));
         	            break;
+        	        default:
+        	        	break;
         	    }
             }
          });
@@ -804,5 +944,7 @@ public class GUI extends Application {
 		Date date = new Date();
 		return String.format("[%s] %s", dateFormat.format(date), message);
 	}
+	
+	
 	
 }

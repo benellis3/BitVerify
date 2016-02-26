@@ -3,11 +3,13 @@ package bitverify;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Scanner;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.logging.Level;
 
@@ -492,8 +494,31 @@ public class Node {
 		}
 	}
 	
-	public int getNumPeers(){
+	public int getNumPeers() {
 	    return mConnectionManager.peers().size();
+	}
+	
+	public List<String> getPeerListAsStrings() {
+		List<String> peers = new ArrayList<String>();
+		if (mConnectionManager != null) {
+			for (InetSocketAddress address : mConnectionManager.getPeerSet()) {
+				peers.add(address.toString());
+			}
+		}
+		return peers;
+	}
+	
+	public DatabaseIterator<Block> getBlockList() {
+		
+		if (mDatabase != null){
+			try {
+				return mDatabase.getAllBlocks();
+			} catch (SQLException e) {
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 	
    
