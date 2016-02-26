@@ -12,9 +12,11 @@ public class BlocksInFlightCounter {
      * Wait for there to be no more blocks in flight, then execute some action
      * @param c the function to call
      */
-    public synchronized <T> T onceZero(Callable<T> c) throws Exception {
-        while (blocksInFlight > 0)
-            this.wait();
+    public <T> T onceZero(Callable<T> c) throws Exception {
+        synchronized (this) {
+            while (blocksInFlight > 0)
+                this.wait();
+        }
         return c.call();
     }
 
@@ -23,8 +25,10 @@ public class BlocksInFlightCounter {
      * @param r the action to execute
      */
     public synchronized void onceZero(Runnable r) throws InterruptedException {
-        while (blocksInFlight > 0)
-            this.wait();
+        synchronized (this) {
+            while (blocksInFlight > 0)
+                this.wait();
+        }
         r.run();
     }
 
