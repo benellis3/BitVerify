@@ -43,7 +43,7 @@ public class ConnectionManager {
     private BlockProtocol blockProtocol;
     private InetSocketAddress ourListenAddress;
 
-    private static int GET_PEERS_TIMEOUT_SECONDS = 5;
+    private static final int GET_PEERS_TIMEOUT_SECONDS = 5;
 
     /**
      * Instantiate a new Connection Manager, which will establish networking communications
@@ -111,7 +111,7 @@ public class ConnectionManager {
                                             peers.put(address, ph);
                                         }
                                         // do block download against this peer
-                                        blockProtocol.blockDownload(ph);
+                                        blockProtocol.blockDownloadSynchronized(ph);
                                     } catch (TimeoutException time) {
                                         // this means the connection could not be established before timeout
                                         log("Did not establish connection to peer within time limit", Level.INFO);
@@ -120,8 +120,6 @@ public class ConnectionManager {
                                         log("An error occurred while establishing connection to peer", Level.INFO);
                                         log("Cause: " + ie.getCause().getMessage(), Level.INFO);
                                         ph.shutdown();
-                                    } catch (SQLException e) {
-                                        log("Database error occurred while doing block download", Level.SEVERE, e);
                                     }
                                 });
                             }
@@ -138,64 +136,59 @@ public class ConnectionManager {
 
         // connect to each given peer and do get peers. For now, only ask our initial peers for more peers.
         es.submit(() -> {
-            try {
-                List<Future<?>> futures = new ArrayList<>();
-                for (InetSocketAddress peerAddress : initialPeers) {
-                    if (ourListenAddress.equals(peerAddress))
-                        continue;
+            List<Future<?>> futures = new ArrayList<>();
 
-                    futures.add(es.submit(() -> {
+            for (InetSocketAddress peerAddress : initialPeers) {
+                if (ourListenAddress.equals(peerAddress))
+                    continue;
+
+                futures.add(es.submit(() -> {
+                    try {
+                        PeerHandler newPeerHandler = connectToPeer(peerAddress);
+                        if (newPeerHandler == null)
+                            return;
+
+                        // do getpeers
+                        log("sending get peers message", Level.FINE);
+                        PeersFuture pf = new PeersFuture(newPeerHandler, bus);
+                        pf.run();
+                        Set<InetSocketAddress> newPeers = null;
                         try {
-                            PeerHandler newPeerHandler = connectToPeer(peerAddress);
-                            if (newPeerHandler == null)
-                                return;
+                            newPeers = pf.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                            log("received peers reply with " + newPeers.size() + " peers", Level.FINE);
+                        } catch (InterruptedException e) {
+                            // this ought not to happen
+                            log("while doing get peers, a mysterious InterruptedException occurred", Level.WARNING, e);
+                        } catch (TimeoutException e) {
+                            // in this case shutdown the peer .
+                            log("timed out while waiting for headers reply. Disconnecting peer " + newPeerHandler.getPeerAddress(), Level.FINE);
+                            disconnectPeer(newPeerHandler);
+                        }
 
-                            // do getpeers
-                            log("sending get peers message", Level.FINE);
-                            PeersFuture pf = new PeersFuture(newPeerHandler, bus);
-                            pf.run();
-                            Set<InetSocketAddress> newPeers = null;
-                            try {
-                                newPeers = pf.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                                log("received peers reply", Level.FINE);
-                            } catch (InterruptedException e) {
-                                // this ought not to happen
-                                log("while doing get peers, a mysterious InterruptedException occurred", Level.WARNING, e);
-                            } catch (TimeoutException e) {
-                                // in this case shutdown the peer .
-                                log("timed out while waiting for headers reply. Disconnecting peer " + newPeerHandler.getPeerAddress(), Level.FINE);
-                                disconnectPeer(newPeerHandler);
-                            }
-
-                            if (newPeers != null) {
-                                for (InetSocketAddress address : newPeers) {
-                                    if (!peers.containsKey(address) && !ourListenAddress.equals(address)) {
-                                        log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
-                                        connectToPeer(address);
-                                    }
+                        if (newPeers != null) {
+                            for (InetSocketAddress address : newPeers) {
+                                if (!peers.containsKey(address) && !ourListenAddress.equals(address)) {
+                                    log("Connecting to a new peer as a result of peers message with address " + address, Level.FINE);
+                                    connectToPeer(address);
                                 }
                             }
-                        } catch (Exception ex) {
-                            log("oh dear : " + ex.getMessage(), Level.FINE);
-                            ex.printStackTrace();
                         }
-                    }));
-                }
-                for (Future<?> f : futures) {
-                    try {
-                        f.get(GET_PEERS_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-                    } catch (TimeoutException e) {
-                        log("timed out trying to connect to an initial peer", Level.FINE);
-                    } catch (InterruptedException|ExecutionException e) {
-                        e.printStackTrace();
-                        log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
+                    } catch (Exception ex) {
+                        log("oh dear : " + ex.getMessage(), Level.FINE);
+                        ex.printStackTrace();
                     }
-                }
-                // once peers are connected, do block download from everyone
-                initiateBlockDownload();
-            } catch (SQLException e) {
-                log("Database error while commencing block download", Level.SEVERE, e);
+                }));
             }
+            for (Future<?> f : futures) {
+                try {
+                    f.get();
+                } catch (InterruptedException|ExecutionException e) {
+                    e.printStackTrace();
+                    log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
+                }
+            }
+            // once peers are connected, do block download from everyone
+            initiateBlockDownload();
         });
     }
 
@@ -209,8 +202,9 @@ public class ConnectionManager {
     private PeerHandler connectToPeer(InetSocketAddress peerAddress) {
         Socket socket;
         try {
+            socket = new Socket();
             // may throw IOException
-            socket = new Socket(peerAddress.getAddress(), peerAddress.getPort());
+            socket.connect(peerAddress, GET_PEERS_TIMEOUT_SECONDS);
             // safe
             PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort());
             try {
@@ -228,7 +222,10 @@ public class ConnectionManager {
                 log("An error occurred while establishing connection to peer", Level.WARNING, e);
                 ph.shutdown();
             }
-        } catch (IOException e) {
+        } catch (SocketTimeoutException e) {
+            log("Could not connect to peer within time limit" + e.getMessage(), Level.INFO, e);
+        }
+        catch (IOException e) {
             log("An error occurred while creating an outgoing socket to a new peer: " + e.getMessage(), Level.INFO, e);
         }
         return null;
@@ -383,8 +380,11 @@ public class ConnectionManager {
         disconnectPeer(e.getPeer());
     }
 
-    public void initiateBlockDownload() throws SQLException {
-        blockProtocol.initiateBlockDownload();
+    /**
+     * Commences the block download process. This call does not block.
+     */
+    public void initiateBlockDownload() {
+        es.execute(() -> blockProtocol.initiateBlockDownload());
     }
 
     private void log(String message, Level level) {
@@ -405,23 +405,32 @@ public class ConnectionManager {
         private static final int HEADERS_TIMEOUT_SECONDS = 10;
 
         // blocks we will download in the future
-        private Deque<BlockID> futureBlockIDs = new ConcurrentLinkedDeque<>();
+        private final Deque<BlockID> futureBlockIDs = new ConcurrentLinkedDeque<>();
 
         // blocks we've received but don't yet have the parent of
         // a map from parentID => Block
         // TODO: limit the size of this collection (like a sliding download window)
-        private Map<BlockID, Block> orphanBlocks = new ConcurrentHashMap<>();
-        private Object blockDownloadMonitor = new Object();
+        private final Map<BlockID, Block> orphanBlocks = new ConcurrentHashMap<>();
+        //
+        private final BlocksInFlightCounter blocksInFlightCounter = new BlocksInFlightCounter();
 
         public BlockProtocol() {
             bus.register(this);
         }
 
-        private boolean blockDownload(PeerHandler peer) throws SQLException {
-            synchronized (blockDownloadMonitor) {
-                List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(HEADERS_NUM_BLOCK_IDS);
+        private boolean blockDownloadSynchronized(PeerHandler peer) {
+            try {
+                return blocksInFlightCounter.onceZero(() -> blockDownload(peer));
+            } catch (Exception e) {
+                log("unexpected exception while performing block download: " + e.getMessage(), Level.SEVERE, e);
+                return false;
+            }
+        }
 
-                while(true) {
+        private boolean blockDownload(PeerHandler peer) {
+            try {
+                List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(MAX_HEADERS);
+                while (true) {
                     log("sending get headers message", Level.FINE);
                     HeadersFuture h = new HeadersFuture(peer, fromBlockIDs, bus);
                     h.run();
@@ -475,7 +484,7 @@ public class ConnectionManager {
                             }
                             log("About to download " + blockIDs.size() + " blocks", Level.FINE);
                             futureBlockIDs.addAll(blockIDs);
-                            es.execute(this::downloadQueuedBlocks);
+                            downloadQueuedBlocks();
 
                             if (receivedHeaders.size() < MAX_HEADERS) {
                                 // TODO: verify against other peers
@@ -489,29 +498,41 @@ public class ConnectionManager {
                         }
                     }
                 }
+            } catch (SQLException e) {
+                log("Database exception occurred while performing block download: " + e.getMessage(), Level.SEVERE, e);
+                return false;
             }
         }
 
+
+
         /**
          * Performs the initial block download process. Best to call this on a separate thread as it will block.
-         * @throws SQLException A database error occurred.
+         * @return true if we successfully got a chain of headers, false otherwise.
          */
-
-        private void initiateBlockDownload() throws SQLException {
+        private boolean initiateBlockDownload() {
             // only do this once at any one time.
-            log("Initiating block download", Level.FINE);
+            try {
+                return blocksInFlightCounter.onceZero(() -> {
+                    log("Initiating block download", Level.FINE);
 
-            // First obtain block headers from some particular peer - send a GetBlockHeaders message
-            // then validate this sequence of headers upon receiving a BlockHeaders message
+                    // First obtain block headers from some particular peer - send a GetBlockHeaders message
+                    // then validate this sequence of headers upon receiving a BlockHeaders message
 
-            // take snapshot of peers
-            List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
-            shufflePeers(peersSnapshot);
+                    // take snapshot of peers
+                    List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
+                    shufflePeers(peersSnapshot);
 
-            // we will break once we've got all the headers, having dispatched download tasks asynchronously.
-            for (PeerHandler p : peersSnapshot) {
-                if (blockDownload(p))
-                    return;
+                    // we will break once we've got all the headers, having dispatched download tasks asynchronously.
+                    for (PeerHandler p : peersSnapshot) {
+                        if (blockDownload(p))
+                            return true;
+                    }
+                    return false;
+                });
+            } catch (Exception e) {
+                log("unexpected exception while performing block download: " + e.getMessage(), Level.SEVERE, e);
+                return false;
             }
         }
 
@@ -542,6 +563,7 @@ public class ConnectionManager {
                         break;
                     }
                     if (peer.requestBlock(b)) {
+                        blocksInFlightCounter.increment();
                         allPeersFull = false;
                         // take the next block
                         b = futureBlockIDs.pollFirst();
@@ -578,19 +600,8 @@ public class ConnectionManager {
                     peer.getBlockTimer().start();
 
                     // can download another block from peer (providing there are more queued up)
-                    BlockID next = futureBlockIDs.poll();
-                    if (next == null) {
-                        if (peer.getBlocksInFlight().isEmpty()) {
-                            // stop the timer if there are no more blocks in flight
-                            log("timer stopped - no more blocks in flight from peer " + peer.getPeerAddress(), Level.FINE);
-                            peer.getBlockTimer().stop();
-                        }
-                    } else {
-                        if (!peer.requestBlock(next)) {
-                            // put it back on the queue if we can't download another block (due to a race)
-                            futureBlockIDs.addFirst(next);
-                        }
-                    }
+                    if (!downloadAnotherBlock(peer))
+                        blocksInFlightCounter.decrement(); // only if we failed to download another.
                 }
 
                 // check we don't already have it in our store
@@ -635,16 +646,20 @@ public class ConnectionManager {
                     if (!blockWasExpected) {
                         es.execute(() -> {
                             try {
-                                // lock on monitor so we can first check if the block is still an orphan
-                                synchronized (blockDownloadMonitor) {
+                                blocksInFlightCounter.onceZero(() -> {
                                     // block may become unorphaned by the time we finish our previous block download
                                     if (orphanBlocks.containsKey(orphanBlockKey)) {
+                                        log("initiating another block download because an orphan block was broadcast to us", Level.FINE);
                                         blockDownload(peer);
+                                    } else {
+                                        log("aborted another block download because the block was unorphaned.", Level.FINE);
                                     }
-                                }
-                            } catch (SQLException ex) {
-                                log("block download was initiated because of orphan but failed with a SQLException: " + ex.getMessage(), Level.SEVERE, ex);
+
+                                });
+                            } catch (InterruptedException ex) {
+                                log("unexpected interrupted exception while performing block download: " + ex.getMessage(), Level.SEVERE, ex);
                             }
+
                         });
                     }
                 } else {
@@ -683,7 +698,7 @@ public class ConnectionManager {
             PeerHandler peer = e.getPeer();
 
             // see if we requested this block from this peer
-            BlockID blockID = new BlockID(e.getMessage().getBlockID().toByteArray());
+            BlockID blockID = new BlockID(e.getMessage().getBlockID());
             if (peer.getBlocksInFlight().remove(blockID)) {
 
                 // if so restart the timer for blocks
@@ -691,28 +706,43 @@ public class ConnectionManager {
                 peer.getBlockTimer().start();
 
                 // can download another block from peer (providing there are more queued up)
-                BlockID next = futureBlockIDs.poll();
-                if (next == null && peer.getBlocksInFlight().isEmpty()) {
-                    // stop the timer if there are no more blocks in flight
-                    peer.getBlockTimer().stop();
-                } else {
-                    if (!peer.requestBlock(next)) {
-                        // put it back on the queue if we can't download another block (due to a race or it being previously not found)
-                        futureBlockIDs.addFirst(next);
-                    }
-                }
+                if (!downloadAnotherBlock(peer))
+                    blocksInFlightCounter.decrement(); // only if we failed to download another block
 
                 // now ask another peer for this block.
                 // Shuffle in case the first two peers both don't have the block - otherwise we would alternate between them and never obtain it.
-                for (PeerHandler p : new ArrayList<>(peers.values())) {
-                    // provide the future headers queue so the peer can obtain more blocks to download when done
+                for (PeerHandler p : shufflePeers(new ArrayList<>(peers.values()))) {
                     if (p != peer && peer.requestBlock(blockID)) {
+                        blocksInFlightCounter.increment();
                         return;
                     }
                 }
                 // if we get here, all peers were full, so put this block back on the queue
                 // full peers imply it will be taken and requested at some point without having to trigger a download ourselves
+                // it's also possible but unlikely that nobody has it, in which case it will linger on the futureBlockIDs queue forever.
                 futureBlockIDs.addFirst(blockID);
+            }
+        }
+
+        /**
+         * Try to download another block from the same peer
+         * @return true if we requested another block, false otherwise. To be used to determine whether to mutate the blocksInFlightCounter.
+         */
+        private boolean downloadAnotherBlock(PeerHandler peer) {
+            BlockID next = futureBlockIDs.poll();
+            if (next == null) {
+                if (peer.getBlocksInFlight().isEmpty()) {
+                    // stop the timer if there are no more blocks in flight
+                    log("timer stopped - no more blocks in flight from peer " + peer.getPeerAddress(), Level.FINE);
+                    peer.getBlockTimer().stop();
+                }
+                return false;
+            } else if (peer.requestBlock(next)) {
+                return true;
+            } else {
+                // put it back on the queue if we can't download another block (e.g. due to a race or it being not found by this peer)
+                futureBlockIDs.addFirst(next);
+                return false;
             }
         }
 
@@ -752,7 +782,7 @@ public class ConnectionManager {
             // re-request all of that peer's in-flight blocks from other peers.
             futureBlockIDs.addAll(peer.getBlocksInFlight());
             // these might be the only blocks outstanding so trigger more downloads.
-            downloadQueuedBlocks();
+            es.execute(this::downloadQueuedBlocks);
         }
     }
 }
