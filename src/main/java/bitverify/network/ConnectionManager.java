@@ -204,7 +204,7 @@ public class ConnectionManager {
         try {
             socket = new Socket();
             // may throw IOException
-            socket.connect(peerAddress, GET_PEERS_TIMEOUT_SECONDS);
+            socket.connect(peerAddress, GET_PEERS_TIMEOUT_SECONDS * 1000);
             // safe
             PeerHandler ph = new PeerHandler(socket, es, dataStore, bus, ourListenAddress.getPort());
             try {
