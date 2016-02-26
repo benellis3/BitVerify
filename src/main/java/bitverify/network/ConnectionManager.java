@@ -43,7 +43,7 @@ public class ConnectionManager {
     private BlockProtocol blockProtocol;
     private InetSocketAddress ourListenAddress;
 
-    private static final int GET_PEERS_TIMEOUT_SECONDS = 5;
+    private static final int GET_PEERS_TIMEOUT_SECONDS = 10;
 
     /**
      * Instantiate a new Connection Manager, which will establish networking communications
@@ -746,6 +746,11 @@ public class ConnectionManager {
             } else {
                 // put it back on the queue if we can't download another block (e.g. due to a race or it being not found by this peer)
                 futureBlockIDs.addFirst(next);
+                if (peer.getBlocksInFlight().isEmpty()) {
+                    // stop the timer if there are no more blocks in flight
+                    log("timer stopped - no more blocks in flight from peer " + peer.getPeerAddress(), Level.FINE);
+                    peer.getBlockTimer().stop();
+                }
                 return false;
             }
         }
