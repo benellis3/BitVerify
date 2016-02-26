@@ -187,40 +187,19 @@ public class GUI extends Application {
 	        	tabs.setPadding(new Insets(15));
 
 	        	Tab minerTab = getMinerTab();
-	            Image miningImage = new Image("/mining_icon.png");
-	            ImageView miningImgView = new ImageView(miningImage);
-	            miningImgView.setFitHeight(20);
-	            miningImgView.setFitWidth(20);
-	        	minerTab.setGraphic(miningImgView);
+	        	minerTab.setGraphic(getTabIconView("/mining_icon.png"));
 	        	
 	        	Tab addEntryTab = getAddEntryTab();
-	        	Image entryImage = new Image("/entry_icon.png");
-	        	ImageView entryImgView = new ImageView(entryImage);
-	        	entryImgView.setFitHeight(20);
-	        	entryImgView.setFitWidth(20);
-	        	addEntryTab.setGraphic(entryImgView);
-	        	
+	        	addEntryTab.setGraphic(getTabIconView("/entry_icon.png"));
 	        	
 	        	Tab searchTab = getSearchTab();
-	        	Image searchImage = new Image("/search_icon.png");
-	        	ImageView searchImgView = new ImageView(searchImage);
-	        	searchImgView.setFitHeight(20);
-	        	searchImgView.setFitWidth(20);
-	        	searchTab.setGraphic(searchImgView);
+	        	searchTab.setGraphic(getTabIconView("/search_icon.png"));
 	        	
 	        	Tab networkTab = getNetworkTab();
-	        	Image networkImage = new Image("/network_icon.png");
-	        	ImageView networkImgView = new ImageView(networkImage);
-	        	networkImgView.setFitHeight(20);
-	        	networkImgView.setFitWidth(20);
-	        	networkTab.setGraphic(networkImgView);
+	        	networkTab.setGraphic(getTabIconView("/network_icon.png"));
 	        	
 	        	Tab hashTab = getDocumentCheckTab();
-	        	Image hashImage = new Image("/hash_icon.png");
-	        	ImageView hashImgView = new ImageView(hashImage);
-	        	hashImgView.setFitHeight(20);
-	        	hashImgView.setFitWidth(20);
-	        	hashTab.setGraphic(hashImgView);
+	        	hashTab.setGraphic(getTabIconView("/hash_icon.png"));
 	        	
 	        	Tab nodeTab = getNodesTab();
 	        	
@@ -254,6 +233,14 @@ public class GUI extends Application {
 	    		});
 	        }
 	     });
+	}
+	
+	private ImageView getTabIconView(String imagePath) {
+    	Image image = new Image(imagePath);
+    	ImageView imageView = new ImageView(image);
+    	imageView.setFitHeight(20);
+    	imageView.setFitWidth(20);
+    	return imageView;
 	}
 	
 	private Tab getMinerTab() {
