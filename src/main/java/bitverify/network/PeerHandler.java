@@ -37,6 +37,8 @@ public class PeerHandler {
     private InetSocketAddress peerAddress;
 
     private volatile boolean shutdown;
+    // allows sending thread to be shut down
+    private Future<?> sendFuture;
 
     private static final int MAX_SIMULTANEOUS_BLOCKS_PER_PEER = 20;
     private static final int BLOCK_TIMEOUT_SECONDS = 10;
@@ -73,6 +75,8 @@ public class PeerHandler {
     public void shutdown() {
         shutdown = true;
         try {
+            // interrupt the sending thread
+            sendFuture.cancel(true);
             socket.close();
         } catch (IOException e) {
             // nothing we can do here.
@@ -90,7 +94,7 @@ public class PeerHandler {
             throws InterruptedException, ExecutionException, TimeoutException {
         this.peerAddress = listenAddress;
         // 1. send version message
-        executorService.submit(new PeerSend());
+        sendFuture = executorService.submit(new PeerSend());
         sendVersionMessage(ourListenPort);
         // 2. receive version-ack message
         if (executorService.submit(() -> receiveMessage(Message.Type.VERSION_ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS) == null)
@@ -115,7 +119,7 @@ public class PeerHandler {
             return null;
         peerAddress = new InetSocketAddress(socket.getInetAddress(), m.getVersion().getListenPort());
         // 2. send version-ack message
-        executorService.submit(new PeerSend());
+        sendFuture = executorService.submit(new PeerSend());
         sendVersionAckMessage();
         // 3. receive ack message
         if (executorService.submit(() -> receiveMessage(Message.Type.ACK)).get(SETUP_TIMEOUT_SECONDS, TimeUnit.SECONDS) == null)
