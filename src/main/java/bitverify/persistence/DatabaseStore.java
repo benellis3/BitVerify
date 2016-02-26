@@ -492,7 +492,11 @@ public class DatabaseStore implements DataStore {
     }
 
     private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
-        return new DatabaseIterator<>(blockDao.queryBuilder().where().eq("active", true).iterator());
+        return new DatabaseIterator<>(blockDao.queryBuilder()
+                .orderBy("height", false)
+                .orderBy("timeStamp", true)
+                .where().eq("active", true)
+                .iterator());
     }
 
 }
