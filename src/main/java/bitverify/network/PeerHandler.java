@@ -335,7 +335,9 @@ public class PeerHandler {
                 try {
                     BlockMessage.Builder bmb = BlockMessage.newBuilder()
                             .setBlockBytes(ByteString.copyFrom(b.serializeHeader()));
-                    for (Entry e : b.getEntriesList())
+                    List<Entry> entries = b.getEntriesList();
+                    log("This block came out of the store with " + entries.size() + " entries", Level.FINER);
+                    for (Entry e : entries)
                         bmb.addEntries(ByteString.copyFrom(e.serialize()));
 
                     BlockMessage bm = bmb.build();

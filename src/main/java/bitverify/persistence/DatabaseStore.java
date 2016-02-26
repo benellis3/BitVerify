@@ -135,7 +135,14 @@ public class DatabaseStore implements DataStore {
         return latestBlock;
     }
 
-    private List<Entry> getEntriesForBlock(byte[] blockID) throws SQLException {
+    /**
+     * Must be synchronised since we set the argument value, then query,
+     * and don't want another thread to change the argument in the mean time.
+     * @param blockID
+     * @return
+     * @throws SQLException
+     */
+    private synchronized List<Entry> getEntriesForBlock(byte[] blockID) throws SQLException {
         entriesForBlockQuery.setArgumentHolderValue(0, blockID);
         return entryDao.query(entriesForBlockQuery);
     }
