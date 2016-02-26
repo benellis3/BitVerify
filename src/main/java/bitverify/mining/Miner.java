@@ -418,7 +418,7 @@ public class Miner implements Runnable{
 			long difference = mostRecentTime - nAgoTime;
 			
 			eventBus.post(new LogEvent("Calculating new target",LogEventSource.MINING,Level.INFO));
-			eventBus.post(new LogEvent("Previous "+adjustTargetFrequency+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("Previous "+(adjustTargetFrequency+1)+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
 			eventBus.post(new LogEvent("We want it to take "+idealMiningTime+" milliseconds",LogEventSource.MINING,Level.INFO));
 		
 			if (printTarget) printTarget = false;
