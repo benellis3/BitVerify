@@ -1,5 +1,5 @@
-/bitverify.db.lock.db
-/bitverify.db.h2.db
+# application database files
+*.db
 
 *.class
 
@@ -7,6 +7,7 @@
 .mtj.tmp/
 
 # Package Files #
+# n.b. we do include the bitverify jar
 *.war
 *.ear
 
