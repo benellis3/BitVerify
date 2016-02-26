@@ -314,6 +314,8 @@ public class DatabaseStore implements DataStore {
                 if (blockIsNewLatest) {
                     setBlockEntriesConfirmed(b, true, true);
                     setLatestBlock(b);
+                } else {
+                    setBlockEntriesConfirmed(b, false, true);
                 }
 
                 // now insert block-entry mappings into link table
