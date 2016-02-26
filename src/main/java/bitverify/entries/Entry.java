@@ -74,21 +74,32 @@ public class Entry implements Comparable<Entry> {
 	@DatabaseField
 	private long docTimeStamp = 0;
 	
-	private String[] docTags = null;
+	private String[] docTags = new String[0];
 	// <-- metadata
 	
+	@Deprecated
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
-			byte[] docHash, String linkToDownloadFile, String docName, String docDescription,
-			String docGeoLocation, long docTimeStamp, String[] tags) throws KeyDecodingException{
+			byte[] docHash, String docLink, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException{
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
-		setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
-				docGeoLocation, docTimeStamp, tags);
+		setMetadataFields(docHash, docLink, docName, docDescription,
+				docGeoLocation, docTimeStamp, docTags);
+	}
+	
+	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
+			byte[] docHash, String docLink, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp) throws KeyDecodingException{
+		entryTimeStamp = System.currentTimeMillis();
+		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
+		setMetadataFields(docHash, docLink, docName, docDescription,
+				docGeoLocation, docTimeStamp);
 	}
 
 	// no-argument constructor required for database framework
 	Entry() { }
-
+	
+	@Deprecated
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
 				 String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
@@ -99,6 +110,17 @@ public class Entry implements Comparable<Entry> {
 		finalise(uploaderKeyPair);
 	}
 	
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
+			 String docName, String docDescription,
+			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink,
+				docName, docDescription, docGeoLocation, docTimeStamp);
+		
+		//and finally:
+		finalise(uploaderKeyPair);
+	}
+	
+	@Deprecated
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
 				 byte[] docHash, String docLink, String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
@@ -113,6 +135,21 @@ public class Entry implements Comparable<Entry> {
 		//and finally:
 		finalise(uploaderKeyPair);
 	}
+	
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
+			 byte[] docHash, String docLink, String docName, String docDescription,
+			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
+	_constructEntryCore(uploaderKeyPair, docHash, docLink,
+			docName, docDescription, docGeoLocation, docTimeStamp);
+
+	if (!Asymmetric.isValidKey(receiverID)){
+		throw new KeyDecodingException();
+	}
+	this.receiverID = receiverID;
+	
+	//and finally:
+	finalise(uploaderKeyPair);
+}
 	
 	private Entry(UUID entryID, byte[] entryHashSigned, byte[] uploaderID, byte[] receiverID, long entryTimeStamp,
 			byte[] metadataBytes, byte[] encryptedSymmetricKey) throws IOException{
@@ -339,8 +376,15 @@ public class Entry implements Comparable<Entry> {
 	
 	// ------------------------------------> metadata methods
 	
+	@Deprecated
 	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
 			String docGeoLocation, long docTimeStamp, String[] docTags){
+		setMetadataFields(docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
+		this.docTags = docTags;
+	}
+	
+	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp){
 		this.docHash = docHash;
 		if (docLink.length() > DOC_LINK_LENGTH)
 			throw new IllegalArgumentException("Link must be at most " + DOC_LINK_LENGTH + " characters long");
@@ -359,7 +403,6 @@ public class Entry implements Comparable<Entry> {
 		this.docGeoLocation = docGeoLocation;
 
 		this.docTimeStamp = docTimeStamp;
-		this.docTags = docTags;
 	}
 	
 	private void deserializeMetadata(InputStream in) throws IOException {
@@ -446,6 +489,7 @@ public class Entry implements Comparable<Entry> {
 	/**
 	 * Gets the document tags. May be null.
      */
+	@Deprecated
 	public String[] getDocTags(){
 		return docTags;
 	}

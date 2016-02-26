@@ -151,8 +151,9 @@ public class EntryTest {
 			assertEquals(e1.getDocDescription(), e2.getDocDescription());
 			assertEquals(e1.getDocGeoLocation(), e2.getDocGeoLocation());
 			assertEquals(e1.getDocTimeStamp(), e2.getDocTimeStamp());
-
-			if (e1.getDocTags() != null) {
+			
+			//tags have been removed
+			/*if (e1.getDocTags() != null) {
 				int numTags = e1.getDocTags().length;
 				assertEquals(e1.getDocTags().length, e2.getDocTags().length);
 				for (int i = 0; i < numTags; i++) {
@@ -161,7 +162,7 @@ public class EntryTest {
 			} else {
 				//e1.getDocTags() == null
 				assertTrue(null == e2.getDocTags());
-			}
+			}*/
 		} catch (Exception e){
 			return false;
 		}

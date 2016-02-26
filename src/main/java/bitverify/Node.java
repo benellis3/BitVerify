@@ -224,8 +224,7 @@ public class Node {
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
 		
-		System.out.println("Enter tags seperated by commas:");
-		String tagString = mScanner.nextLine();
+		String tagString = "";
 		
 		try {
 			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
@@ -268,10 +267,10 @@ public class Node {
 		// ReceiverID is optional 
 		if (receiverID.length() > 0) {
 			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+					fileDescription, fileGeo, System.currentTimeMillis());
 		} else {
 			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+					fileDescription, fileGeo, System.currentTimeMillis());
 		}
 		
 		// Notify the relevant authorities of this important incident
@@ -279,7 +278,28 @@ public class Node {
 		mDatabase.insertEntry(entry);
 		mEventBus.post(event);
 		mConnectionManager.broadcastEntry(entry);
+	}
+	
+	public void addEntry(byte [] hash, String fileDownload, String fileName, 
+			String receiverID, String fileDescription, String fileGeo 
+			) throws KeyDecodingException, IOException, SQLException {
+		// Construct entry object 
+		Entry entry;
 		
+		// ReceiverID is optional 
+		if (receiverID.length() > 0) {
+			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis());
+		} else {
+			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis());
+		}
+		
+		// Notify the relevant authorities of this important incident
+		NewEntryEvent event = new NewEntryEvent(entry);
+		mDatabase.insertEntry(entry);
+		mEventBus.post(event);
+		mConnectionManager.broadcastEntry(entry);
 	}
 	
 	private void listConfirmedEntries() {
