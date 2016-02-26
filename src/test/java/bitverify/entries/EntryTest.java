@@ -25,10 +25,9 @@ public class EntryTest {
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
 			Entry entry = new Entry(uploaderKeyPair, docHash, docLink, docName, docDescription,
-					docGeoLocation, docTimeStamp, docTags);
+					docGeoLocation, docTimeStamp);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -46,11 +45,10 @@ public class EntryTest {
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
 			byte[] receiverID = Asymmetric.stringKeyToByteKey(AsymmetricTest.myPubKey);
 			Entry entry = new Entry(uploaderKeyPair, receiverID, docHash, docLink, docName, docDescription,
-					docGeoLocation, docTimeStamp, docTags);
+					docGeoLocation, docTimeStamp);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -151,18 +149,6 @@ public class EntryTest {
 			assertEquals(e1.getDocDescription(), e2.getDocDescription());
 			assertEquals(e1.getDocGeoLocation(), e2.getDocGeoLocation());
 			assertEquals(e1.getDocTimeStamp(), e2.getDocTimeStamp());
-			
-			//tags have been removed
-			/*if (e1.getDocTags() != null) {
-				int numTags = e1.getDocTags().length;
-				assertEquals(e1.getDocTags().length, e2.getDocTags().length);
-				for (int i = 0; i < numTags; i++) {
-					assertEquals(e1.getDocTags()[i], e2.getDocTags()[i]);
-				}
-			} else {
-				//e1.getDocTags() == null
-				assertTrue(null == e2.getDocTags());
-			}*/
 		} catch (Exception e){
 			return false;
 		}

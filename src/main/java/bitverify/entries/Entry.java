@@ -77,16 +77,6 @@ public class Entry implements Comparable<Entry> {
 	private String[] docTags = new String[0];
 	// <-- metadata
 	
-	@Deprecated
-	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
-			byte[] docHash, String docLink, String docName, String docDescription,
-			String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException{
-		entryTimeStamp = System.currentTimeMillis();
-		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
-		setMetadataFields(docHash, docLink, docName, docDescription,
-				docGeoLocation, docTimeStamp, docTags);
-	}
-	
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
 			byte[] docHash, String docLink, String docName, String docDescription,
 			String docGeoLocation, long docTimeStamp) throws KeyDecodingException{
@@ -103,11 +93,7 @@ public class Entry implements Comparable<Entry> {
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
 				 String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, docHash, docLink,
-				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
-		
-		//and finally:
-		finalise(uploaderKeyPair);
+		this(uploaderKeyPair, docHash, docLink,	docName, docDescription, docGeoLocation, docTimeStamp);
 	}
 	
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
@@ -124,9 +110,14 @@ public class Entry implements Comparable<Entry> {
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
 				 byte[] docHash, String docLink, String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, docHash, docLink,
-				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
-
+		this(uploaderKeyPair, receiverID, docHash, docLink,	docName, docDescription, docGeoLocation, docTimeStamp);
+	}
+	
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
+			 byte[] docHash, String docLink, String docName, String docDescription,
+			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
+	
 		if (!Asymmetric.isValidKey(receiverID)){
 			throw new KeyDecodingException();
 		}
@@ -135,21 +126,6 @@ public class Entry implements Comparable<Entry> {
 		//and finally:
 		finalise(uploaderKeyPair);
 	}
-	
-	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
-			 byte[] docHash, String docLink, String docName, String docDescription,
-			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
-	_constructEntryCore(uploaderKeyPair, docHash, docLink,
-			docName, docDescription, docGeoLocation, docTimeStamp);
-
-	if (!Asymmetric.isValidKey(receiverID)){
-		throw new KeyDecodingException();
-	}
-	this.receiverID = receiverID;
-	
-	//and finally:
-	finalise(uploaderKeyPair);
-}
 	
 	private Entry(UUID entryID, byte[] entryHashSigned, byte[] uploaderID, byte[] receiverID, long entryTimeStamp,
 			byte[] metadataBytes, byte[] encryptedSymmetricKey) throws IOException{
@@ -376,13 +352,6 @@ public class Entry implements Comparable<Entry> {
 	
 	// ------------------------------------> metadata methods
 	
-	@Deprecated
-	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
-			String docGeoLocation, long docTimeStamp, String[] docTags){
-		setMetadataFields(docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
-		this.docTags = docTags;
-	}
-	
 	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
 			String docGeoLocation, long docTimeStamp){
 		this.docHash = docHash;
@@ -417,15 +386,9 @@ public class Entry implements Comparable<Entry> {
 			String docDescription = d.readUTF();
 			String docGeoLocation = d.readUTF();
 			long docTimeStamp = d.readLong();
-			
-			int numTags = d.readInt();
-			String[] tags = new String[numTags];
-			for (int i=0; i<numTags; i++){
-				tags[i] = d.readUTF();
-			}
 
 			setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
-					docGeoLocation, docTimeStamp, tags);
+					docGeoLocation, docTimeStamp);
 		}
 	}
 	
@@ -446,11 +409,6 @@ public class Entry implements Comparable<Entry> {
 			d.writeUTF(docDescription);
 			d.writeUTF(docGeoLocation);
 			d.writeLong(docTimeStamp);
-			
-			d.writeInt(docTags.length);
-			for (String tag : docTags) {
-				d.writeUTF(tag);
-			}
 
 			d.flush();
 		}

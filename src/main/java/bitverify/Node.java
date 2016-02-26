@@ -241,43 +241,20 @@ public class Node {
 		String fileDescription = "welllllllll";
 		String receiverID = "";
 		String fileGeo = "Israel... or stuff";
-		String tagString = "";
 		
 		try {
-			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
+			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
 		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Oops. Error generating the predefined entry...");
 			return;
 		} 
 	}
 	
+	@Deprecated
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
 			String receiverID, String fileDescription, String fileGeo, 
 			String tagString) throws KeyDecodingException, IOException, SQLException {
-		
-		// We need to split the input into an array of tags
-		String [] tags = tagString.split(",");
-		for (int i = 0; i < tags.length; i++) {
-			tags[i] = tags[i].trim();
-		}
-		
-		// Construct entry object 
-		Entry entry;
-		
-		// ReceiverID is optional 
-		if (receiverID.length() > 0) {
-			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis());
-		} else {
-			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis());
-		}
-		
-		// Notify the relevant authorities of this important incident
-		NewEntryEvent event = new NewEntryEvent(entry);
-		mDatabase.insertEntry(entry);
-		mEventBus.post(event);
-		mConnectionManager.broadcastEntry(entry);
+		addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
 	}
 	
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
