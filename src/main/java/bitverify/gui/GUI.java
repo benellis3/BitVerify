@@ -805,6 +805,42 @@ public class GUI extends Application {
 		hLay.setAlignment(Pos.CENTER_RIGHT);
 		Button reloadButton = new Button("Reload");
 		
+    	// Create all our columns
+    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
+    	timeStampColumn.setText("TimeStamp");
+    	timeStampColumn.setPrefWidth(175);
+    	timeStampColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
+    	
+    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
+    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
+    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
+    	
+    	// These columns are byte arrays, so we have to do them a little differently
+    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
+    	receiverColumn.setText("Receiver");
+    	receiverColumn.setPrefWidth(75);
+    	receiverColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
+    	
+    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
+    	uploaderColumn.setText("Uploader");
+    	uploaderColumn.setPrefWidth(75);
+    	uploaderColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
+    	
+    	TableColumn<Entry, String> hashColumn = new TableColumn<Entry, String>();
+    	hashColumn.setText("Hash");
+    	hashColumn.setPrefWidth(75);
+    	hashColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getDocHash()))));
+   
+    	// Back to normal columns now
+    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
+    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
+    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
+		
 		Accordion accordion = new Accordion();
 		reloadButton.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
@@ -818,43 +854,7 @@ public class GUI extends Application {
 								// Create a table view to display the data
 				    	    	ObservableList<Entry> data = FXCollections.observableArrayList();
 				    	    	TableView<Entry> tableView = new TableView<Entry>();
-				    	    	
-				    	    	// Create all our columns
-				    	    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
-				    	    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
-				    	    	timeStampColumn.setText("TimeStamp");
-				    	    	timeStampColumn.setPrefWidth(175);
-				    	    	timeStampColumn.setCellValueFactory(
-				    	    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
-				    	    	
-				    	    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
-				    	    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
-				    	    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
-				    	    	
-				    	    	// These columns are byte arrays, so we have to do them a little differently
-				    	    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
-				    	    	receiverColumn.setText("Receiver");
-				    	    	receiverColumn.setPrefWidth(75);
-				    	    	receiverColumn.setCellValueFactory(
-				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
-				    	    	
-				    	    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
-				    	    	uploaderColumn.setText("Uploader");
-				    	    	uploaderColumn.setPrefWidth(75);
-				    	    	uploaderColumn.setCellValueFactory(
-				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
-				    	    	
-				    	    	TableColumn<Entry, String> hashColumn = new TableColumn<Entry, String>();
-				    	    	hashColumn.setText("Hash");
-				    	    	hashColumn.setPrefWidth(75);
-				    	    	hashColumn.setCellValueFactory(
-				    	    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getDocHash()))));
-				    	   
-				    	    	// Back to normal columns now
-				    	    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
-				    	    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
-				    	    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
-				    	    	
+				    	    
 				    	    	// Order of columns
 				    	    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
 				    	    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
