@@ -388,9 +388,11 @@ public class Node {
 			System.out.println("######################################");
 			System.out.println("Blocks on the primary chain:");
 			for (int i=0; i<blocks.size(); i++){
-				System.out.printf("height: %d, blockID: %s, entriesHash: %s\n",
-						blocks.get(i).getHeight(), Base64.getEncoder().encodeToString(blocks.get(i).getBlockID()),
-						Base64.getEncoder().encodeToString(blocks.get(i).getEntriesHash()) );
+				System.out.printf("height: %d, blockID: %s, entriesHash: %s, nEntries: %d\n",
+						blocks.get(i).getHeight(),
+						Base64.getEncoder().encodeToString(blocks.get(i).getBlockID()),
+						Base64.getEncoder().encodeToString(blocks.get(i).getEntriesHash()),
+						blocks.get(i).getEntriesList().size() );
 			}
 			System.out.println("There are "+numPrBlocks+" blocks on the primary chain.");
 			System.out.println("######################################");
@@ -408,9 +410,12 @@ public class Node {
 		    while (di.moveNext()) {
 		    	blockCount++;
 		        Block block = di.current();
-		        System.out.printf("i: %d, height: %d, blockID: %s, entriesHash: %s\n",
-		        		blockCount, block.getHeight(), Base64.getEncoder().encodeToString(block.getBlockID()),
-						Base64.getEncoder().encodeToString(block.getEntriesHash()) );
+		        System.out.printf("i: %d, height: %d, blockID: %s, entriesHash: %s, nEntries: %d\n",
+		        		blockCount,
+		        		block.getHeight(),
+		        		Base64.getEncoder().encodeToString(block.getBlockID()),
+						Base64.getEncoder().encodeToString(block.getEntriesHash()),
+						block.getEntriesList().size() );
 		    }
 		    System.out.println("There are "+blockCount+" blocks total.");
 		    System.out.println("######################################");
