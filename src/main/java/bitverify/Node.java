@@ -212,7 +212,7 @@ public class Node {
 		System.out.println("Enter file description:");
 		String fileDescription = mScanner.nextLine();
 		
-		System.out.println("Enter recieved id (leave blank if none):");
+		System.out.println("Enter received id (leave blank if none):");
 		String receiverID = mScanner.nextLine();
 		
 		System.out.println("Enter file geolocation:");
