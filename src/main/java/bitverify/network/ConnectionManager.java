@@ -377,6 +377,17 @@ public class ConnectionManager {
         peers.remove(peer.getPeerAddress());
         // disconnect the peer
         peer.shutdown();
+
+        // re-request all of that peer's in-flight blocks from other peers.
+        blockProtocol.futureBlockIDs.addAll(peer.getBlocksInFlight());
+        final int numInFlight = peer.getBlocksInFlight().size();
+        // these might be the only blocks outstanding so trigger more downloads.
+        es.execute(() -> {
+            blockProtocol.downloadQueuedBlocks();
+            // only decrease the number of blocks in flight after trying to re-download, because it
+            // mustn't look like we've finished our block download before we try to re-download those lost.
+            blockProtocol.blocksInFlightCounter.decrease(numInFlight);
+        });
     }
 
     @Subscribe
@@ -710,8 +721,7 @@ public class ConnectionManager {
                 peer.getBlockTimer().start();
 
                 // can download another block from peer (providing there are more queued up)
-                if (!downloadAnotherBlock(peer))
-                    blocksInFlightCounter.decrement(); // only if we failed to download another block
+                boolean downloadedAnother = downloadAnotherBlock(peer);
 
                 // now ask another peer for this block.
                 // Shuffle in case the first two peers both don't have the block - otherwise we would alternate between them and never obtain it.
@@ -721,6 +731,10 @@ public class ConnectionManager {
                         return;
                     }
                 }
+
+                if (!downloadedAnother)
+                    blocksInFlightCounter.decrement(); // only if we failed to download another block
+
                 // if we get here, all peers were full, so put this block back on the queue
                 // full peers imply it will be taken and requested at some point without having to trigger a download ourselves
                 // it's also possible but unlikely that nobody has it, in which case it will linger on the futureBlockIDs queue forever.
@@ -787,17 +801,8 @@ public class ConnectionManager {
         public void onBlockTimeout(BlockTimeoutEvent e) {
             PeerHandler peer = e.getPeer();
             log("block request timed out, disconnecting peer " + peer.getPeerAddress(), Level.FINE);
+            // will re-request all of that peer's in-flight blocks from other peers.
             disconnectPeer(peer);
-            // re-request all of that peer's in-flight blocks from other peers.
-            futureBlockIDs.addAll(peer.getBlocksInFlight());
-            final int numInFlight = peer.getBlocksInFlight().size();
-            // these might be the only blocks outstanding so trigger more downloads.
-            es.execute(() -> {
-                downloadQueuedBlocks();
-                // only decrease the number of blocks in flight after trying to re-download, because it
-                // mustn't look like we've finished our block download before we try to re-download those lost.
-                blocksInFlightCounter.decrease(numInFlight);
-            });
         }
     }
 }
