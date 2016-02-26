@@ -52,4 +52,14 @@ public class BlocksInFlightCounter {
                 break;
         }
     }
+
+    public synchronized void decrease(int by) {
+        int newCount = blocksInFlight - by;
+        if (newCount <= 0) {
+            blocksInFlight = 0;
+            this.notifyAll();
+        } else {
+            blocksInFlight = newCount;
+        }
+    }
 }

@@ -781,8 +781,14 @@ public class ConnectionManager {
             disconnectPeer(peer);
             // re-request all of that peer's in-flight blocks from other peers.
             futureBlockIDs.addAll(peer.getBlocksInFlight());
+            final int numInFlight = peer.getBlocksInFlight().size();
             // these might be the only blocks outstanding so trigger more downloads.
-            es.execute(this::downloadQueuedBlocks);
+            es.execute(() -> {
+                downloadQueuedBlocks();
+                // only decrease the number of blocks in flight after trying to re-download, because it
+                // mustn't look like we've finished our block download before we try to re-download those lost.
+                blocksInFlightCounter.decrease(numInFlight);
+            });
         }
     }
 }
