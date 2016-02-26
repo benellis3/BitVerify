@@ -117,7 +117,17 @@ public class DatabaseStore implements DataStore {
                 .orderBy("timeStamp", true)
                 .iterator();
 
-        return new DatabaseIterator<>(blocks);
+        return new DatabaseIterator<Block>(blocks) {
+            @Override
+            public boolean moveNext() throws SQLException {
+                current = ci.nextThrow();
+                if (current != null) {
+                    current.setEntriesList(getEntriesForBlock(current.getBlockID()));
+                    return true;
+                }
+                return false;
+            }
+        };
     }
 
 
@@ -150,6 +160,7 @@ public class DatabaseStore implements DataStore {
                 Block b = initialResults.next();
                 if (Arrays.equals(b.getBlockID(), expectedID)) {
                     output.add(b);
+                    b.setEntriesList(getEntriesForBlock(b.getBlockID()));
                     expectedID = b.getPrevBlockHash();
                 }
             }

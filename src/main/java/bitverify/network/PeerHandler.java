@@ -344,6 +344,8 @@ public class PeerHandler {
                             .setType(Message.Type.BLOCK)
                             .setBlock(bm)
                             .build();
+
+                    log("This block has " + bmb.getEntriesCount() + " entries. Entries hash is supposed to be " + Base64.getEncoder().encodeToString(b.getEntriesHash()), Level.FINE);
                     send(m);
                 } catch (Exception e) {
                     log("Oh dear: " + e.toString(), Level.SEVERE, e);
