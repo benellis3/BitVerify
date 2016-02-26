@@ -222,8 +222,9 @@ public class GUI extends Application {
 	        	hashImgView.setFitWidth(20);
 	        	hashTab.setGraphic(hashImgView);
 	        	
+	        	Tab nodeTab = getNodesTab();
 	        	
-	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, hashTab, networkTab);
+	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, hashTab, networkTab, nodeTab);
 	       
 	        	hbox.getChildren().addAll(tabs);
 	        	hbox.setAlignment(Pos.CENTER);
@@ -328,6 +329,60 @@ public class GUI extends Application {
 		minerTab.setContent(vLay);
 		
 		return minerTab;
+	}
+	
+	
+	private Tab getNodesTab() {
+		Tab nodesTab = new Tab();
+		nodesTab.setText("Nodes");
+        
+        HBox networkBox = new HBox();
+        networkBox.setPadding(new Insets(5));
+        networkBox.setSpacing(30);
+        networkBox.setAlignment(Pos.CENTER);
+        
+        HBox lowerBtnBox = new HBox();
+        lowerBtnBox.setPadding(new Insets(5));
+        lowerBtnBox.setSpacing(10);
+        lowerBtnBox.setAlignment(Pos.BOTTOM_RIGHT);
+        
+        Button reloadBtn = new Button("Reload");
+
+        numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
+        
+        networkBox.getChildren().addAll(new Text("Acitve Nodes:"));
+        
+        ListView<String> nodesView = new ListView<String>();
+        nodesView.setPrefHeight(400);
+        nodesView.setMouseTransparent( false );
+        nodesView.setFocusTraversable( false );
+        
+        ObservableList<String> nodeList = FXCollections.observableArrayList();
+        
+        reloadBtn.setOnAction(new EventHandler<ActionEvent>(){
+            @Override public void handle(ActionEvent e) {
+                if (mNode != null)
+                	nodeList.setAll(mNode.getPeerListAsStrings());
+                else
+                	nodeList.clear();
+            }
+        });
+        
+        reloadBtn.fire();
+       
+        nodesView.setItems(nodeList);
+        
+        lowerBtnBox.getChildren().add(reloadBtn);
+        
+        VBox vLay = new VBox();
+        vLay.setPadding(new Insets(15));
+        vLay.setSpacing(25);
+        
+        vLay.getChildren().addAll(networkBox, nodesView,lowerBtnBox);
+        
+        nodesTab.setContent(vLay);
+        
+        return nodesTab;
 	}
 	
 	private Tab getNetworkTab(){
