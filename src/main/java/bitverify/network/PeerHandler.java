@@ -253,63 +253,68 @@ public class PeerHandler {
         @Override
         public void run() {
             try {
-                Message message;
                 InputStream is = socket.getInputStream();
                 while (true) {
-                    message = Message.parseDelimitedFrom(is);
+                    final Message message = Message.parseDelimitedFrom(is);
                     log("received message of type " + message.getType(), Level.FINER);
-                    switch (message.getType()) {
-                        case GETPEERS:
-                            handleGetPeers(message.getGetPeers());
-                            break;
-                        case ENTRY:
-                            handleEntryMessage(message.getEntry());
-                            break;
-                        case BLOCK:
-                            handleBlockMessage(message.getBlock());
-                            break;
-                        case BLOCK_NOT_FOUND:
-                            handleBlockNotFoundMessage(message.getBlockNotFound());
-                            break;
-                        case PEERS:
-                            handlePeers(message.getPeers());
-                            break;
-                        case GET_HEADERS:
-                            handleGetHeaders(message.getGetHeaders());
-                            break;
-                        case GET_BLOCK:
-                            handleGetBlock(message.getGetBlock());
-                            break;
-                        case HEADERS:
-                            handleHeaders(message.getHeaders());
-                            break;
-                        default:
-                            bus.post(new LogEvent("Network message went unhandled, type " + message.getType().toString(), LogEventSource.NETWORK, Level.WARNING));
-                            break;
-                    }
+                    executorService.execute(() -> {
+                        try {
+                            switch (message.getType()) {
+                                case GETPEERS:
+                                    handleGetPeers(message.getGetPeers());
+                                    break;
+                                case ENTRY:
+                                    handleEntryMessage(message.getEntry());
+                                    break;
+                                case BLOCK:
+                                    handleBlockMessage(message.getBlock());
+                                    break;
+                                case BLOCK_NOT_FOUND:
+                                    handleBlockNotFoundMessage(message.getBlockNotFound());
+                                    break;
+                                case PEERS:
+                                    handlePeers(message.getPeers());
+                                    break;
+                                case GET_HEADERS:
+                                    handleGetHeaders(message.getGetHeaders());
+                                    break;
+                                case GET_BLOCK:
+                                    handleGetBlock(message.getGetBlock());
+                                    break;
+                                case HEADERS:
+                                    handleHeaders(message.getHeaders());
+                                    break;
+                                default:
+                                    log("Network message went unhandled, type " + message.getType().toString(), Level.WARNING);
+                                    break;
+                            }
+                        } catch (SQLException e) {
+                            log("Database exception while processing an incoming message: " + e.getMessage(), Level.SEVERE, e);
+                        }
 
+                    });
                 }
-            } catch (IOException | SQLException e) {
-                log("exception while receiving: " + e.getMessage(), Level.WARNING, e);
+            } catch (IOException e) {
+                log("IOException while receiving: " + e.getMessage(), Level.WARNING, e);
                 // Connection manager already knows we are closing if shutdown is true.
                 if (!shutdown)
                     bus.post(new PeerErrorEvent(PeerHandler.this, e));
             }
         }
 
-        private void handleEntryMessage(EntryMessage message) throws SQLException, IOException {
+        private void handleEntryMessage(EntryMessage message) throws SQLException {
             byte[] bytes = message.getEntryBytes().toByteArray();
-            Entry entry = Entry.deserialize(bytes);
-
-            // check the validity of the entry
-            if (entry.testEntryHashSignature()) {
-                try {
+            Entry entry = null;
+            try {
+                entry = Entry.deserialize(bytes);
+                // check the validity of the entry
+                if (entry.testEntryHashSignature()) {
                     dataStore.insertEntry(entry);
-                } catch (Exception ex) {
-                    System.out.println(ex);
+                    // raise a NewEntryEvent on the event bus
+                    bus.post(new NewEntryEvent(entry));
                 }
-                // raise a NewEntryEvent on the event bus
-                bus.post(new NewEntryEvent(entry));
+            } catch (IOException e) {
+                log("Corrupt entry received and rejected", Level.INFO, e);
             }
         }
 
