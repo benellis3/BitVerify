@@ -487,6 +487,19 @@ public class Node {
 		return peers;
 	}
 	
+	public DatabaseIterator<Block> getBlockList() {
+		
+		if (mDatabase != null){
+			try {
+				return mDatabase.getAllBlocks();
+			} catch (SQLException e) {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
    
     @Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {
