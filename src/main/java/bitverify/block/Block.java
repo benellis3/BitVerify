@@ -31,7 +31,7 @@ import com.squareup.otto.Bus;
 public class Block {
 	
 	private static final int TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS = 11;
-	private static final long TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE = 5 * 60 * 1000; //we allow blocks to have a timestamp 5 minutes into the future
+	private static final long TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE = 10 * 60 * 1000; //we allow blocks to have a timestamp couple minutes into the future
 	
     // Block header
     @DatabaseField(dataType = DataType.BYTE_ARRAY)
