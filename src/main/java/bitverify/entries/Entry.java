@@ -1,6 +1,7 @@
 package bitverify.entries;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ import org.bouncycastle.util.encoders.Hex;
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.DataSizeException;
 import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.crypto.NotMatchingKeyException;
 import bitverify.crypto.Symmetric;
@@ -180,6 +182,29 @@ public class Entry implements Comparable<Entry> {
 		deserializeMetadata(in);
 		
 		decryptHasBeenCalled = true;
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(byte[] myPublicKey){
+		return Arrays.equals(myPublicKey, receiverID);
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(AsymmetricCipherKeyPair myKeyPair){
+		byte[] myPublicKey = Asymmetric.keyToByteKey(myKeyPair.getPublic());
+		return isThisEntryJustForMe(myPublicKey);
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(Identity myID){
+		byte[] myPublicKey = myID.getPublicKey();
+		return isThisEntryJustForMe(myPublicKey);
 	}
 
 	public static Entry deserialize(InputStream in) throws IOException {
