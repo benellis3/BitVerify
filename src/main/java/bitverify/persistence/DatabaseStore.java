@@ -231,6 +231,10 @@ public class DatabaseStore implements DataStore {
             List<Block> blocksToActivate = new ArrayList<>();
             List<Block> blocksToDeactivate = new ArrayList<>();
 
+            // safe to check early now this method is synchronised
+            if (blockExists(b.getBlockID()))
+                return InsertBlockResult.FAIL_DUPLICATE;
+
             if (Arrays.equals(b.getPrevBlockHash(), latestBlock.getBlockID())) {
 
                 // extending the active blockchain
@@ -292,53 +296,44 @@ public class DatabaseStore implements DataStore {
                 }
             }
 
+            // We already checked if the block is a duplicate so exceptions expected from now on.
 
-            try {
-                if (blockIsNewLatest)
-                    b.setActive(true);
-
-
-                // deactivate first, in case an entry will get reactivated.
-                for (Block block : blocksToDeactivate) {
-                    updateBlockActive(block, false);
-                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
-                    setBlockEntriesConfirmed(block, false, false);
-                }
-
-                if (!blockIsNewLatest)
-                    setBlockEntriesConfirmed(b, false, true);
-
-                for (Block block : blocksToActivate) {
-                    updateBlockActive(block, true);
-                    block.setEntriesList(getEntriesForBlock(block.getBlockID()));
-                    setBlockEntriesConfirmed(block, true, false);
-                }
-
-                if (blockIsNewLatest)
-                    setBlockEntriesConfirmed(b, true, true);
+            if (blockIsNewLatest)
+                b.setActive(true);
 
 
-
-                // now insert block-entry mappings into link table
-                for (Entry e : b.getEntriesList())
-                    blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
-
-                if (blockIsNewLatest)
-                    setLatestBlock(b);
-
-                // always add block to database
-                blockDao.create(b);
-
-                // block was successfully inserted
-                return InsertBlockResult.SUCCESS;
-
-            } catch (SQLException e) {
-                // catch duplicate block error
-                if (isDuplicateError(e))
-                    return InsertBlockResult.FAIL_DUPLICATE;
-                else
-                    throw e;
+            // deactivate first, in case an entry will get reactivated.
+            for (Block block : blocksToDeactivate) {
+                updateBlockActive(block, false);
+                block.setEntriesList(getEntriesForBlock(block.getBlockID()));
+                setBlockEntriesConfirmed(block, false, false);
             }
+
+            if (!blockIsNewLatest)
+                setBlockEntriesConfirmed(b, false, true);
+
+            for (Block block : blocksToActivate) {
+                updateBlockActive(block, true);
+                block.setEntriesList(getEntriesForBlock(block.getBlockID()));
+                setBlockEntriesConfirmed(block, true, false);
+            }
+
+            if (blockIsNewLatest)
+                setBlockEntriesConfirmed(b, true, true);
+
+
+            // now insert block-entry mappings into link table
+            for (Entry e : b.getEntriesList())
+                blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+
+            if (blockIsNewLatest)
+                setLatestBlock(b);
+
+            // always add block to database
+            blockDao.create(b);
+
+            // block was successfully inserted
+            return InsertBlockResult.SUCCESS;
         });
     }
 
