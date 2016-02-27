@@ -45,6 +45,7 @@ public class Node {
 			"List blocks on primary chain",
 			"List all blocks",
 			"Quick add predef. entry",
+			"Print out my public ID",
 			"Exit",
 			}; // see mapping in handleUserInput
 	private boolean isMining = false;
@@ -100,17 +101,8 @@ public class Node {
 		setupDatabase();
 		setupUser();
 		setupNetwork();
-		try {
-			mMiner = new Miner(mEventBus, mDatabase);
-		} catch (SQLException e) {
-			// TODO Handle this
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Handle this as well
-			e.printStackTrace();
-		}
+		setupMiner();
 	}
-	
 	
 	private void userCLISetup() {
 		// Print out the command options for the user
@@ -119,6 +111,7 @@ public class Node {
 		for (int i = 0; i < mOptions.length; i++) {
 			System.out.printf("(%d)%s\n", i, mOptions[i]);
 		}
+		System.out.println("----------");
 		
 		// Get the user input and run command if valid
 		System.out.println("Enter number to run command:");
@@ -169,6 +162,9 @@ public class Node {
 				quickAddPredefinedEntry();
 				break;
 			case 8:
+				printPublicID();
+				break;
+			case 9:
 				exitProgram();
 				return false;
 		}
@@ -333,6 +329,13 @@ public class Node {
 		}
 	}
 	
+	private void printPublicID() {
+		System.out.println("######################################");
+		System.out.println("Your public identity:");
+		System.out.println( Base64.getEncoder().encodeToString(mIdentity.getPublicKey()) );
+		System.out.println("######################################");
+	}
+	
 	private void searchEntries() {
 		System.out.println("Enter search query");
 		String searchQuery = mScanner.nextLine();
@@ -479,6 +482,18 @@ public class Node {
 		mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 	}
 	
+	private void setupMiner(){
+		informUserOfProgress("Setting up miner");
+		try {
+			mMiner = new Miner(mEventBus, mDatabase);
+		} catch (SQLException e) {
+			// TODO Handle this
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Handle this as well
+			e.printStackTrace();
+		}
+	}
 	
 	private void setupDatabase() {
 		informUserOfProgress("Setting up database...");
