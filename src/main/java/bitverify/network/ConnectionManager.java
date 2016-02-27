@@ -616,7 +616,6 @@ public class ConnectionManager {
 
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) throws SQLException {
-            log("Block message received", Level.FINE);
             BlockMessage message = e.getBlockMessage();
             PeerHandler peer = e.getPeer();
 
@@ -708,22 +707,29 @@ public class ConnectionManager {
                             return;
                         }
 
-                        InsertBlockResult result = dataStore.insertBlock(block);
-                        switch (result) {
-                            case SUCCESS:
-                                // parent exists so store this block
-                                log("block was successfully added to database", Level.FINE);
-                                bus.post(new NewBlockEvent(block));
-                                // may now be able to insert orphan blocks
-                                insertOrphans(block);
-                                break;
-                            case FAIL_ORPHAN:
-                                assert false;
-                                break;
-                            case FAIL_DUPLICATE:
-                                log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
-                                break;
+                        try {
+                            InsertBlockResult result = dataStore.insertBlock(block);
+
+                            switch (result) {
+                                case SUCCESS:
+                                    // parent exists so store this block
+                                    log("block was successfully added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                                    bus.post(new NewBlockEvent(block));
+                                    // may now be able to insert orphan blocks
+                                    insertOrphans(block);
+                                    break;
+                                case FAIL_ORPHAN:
+                                    assert false;
+                                    break;
+                                case FAIL_DUPLICATE:
+                                    log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                                    break;
+                            }
+                        } catch (Exception ex) {
+                            log("OH DEAR: " + ex.getMessage(), Level.SEVERE, ex);
+                            ex.printStackTrace();
                         }
+
                     }
                 }
             } catch (IOException ioe) {
@@ -805,21 +811,30 @@ public class ConnectionManager {
                 }
 
                 // could fail due to duplicate, but if so we don't care, we've still unorphaned it
-                InsertBlockResult r =  dataStore.insertBlock(b);
-                switch (r) {
-                    case SUCCESS:
-                        log("managed to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()), Level.FINE);
-                        break;
-                    case FAIL_DUPLICATE:
-                        log("tried to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()) + ", but it's now a duplicate so all OK", Level.FINE);
-                        break;
-                    case FAIL_ORPHAN:
-                        assert false;
-                        break;
+                try {
+                    InsertBlockResult r =  dataStore.insertBlock(b);
+
+                    switch (r) {
+                        case SUCCESS:
+                            log("managed to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()), Level.FINE);
+                            break;
+                        case FAIL_DUPLICATE:
+                            log("tried to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()) + ", but it's now a duplicate so all OK", Level.FINE);
+                            break;
+                        case FAIL_ORPHAN:
+                            assert false;
+                            break;
+                    }
+                    log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
+                    // now see if this allows us to unorphan any more blocks
+                    insertOrphans(b);
+
+                } catch (Exception ex) {
+                    log("OH DEAR: " + ex.getMessage(), Level.SEVERE, ex);
+                    ex.printStackTrace();
                 }
-                log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
-                // now see if this allows us to unorphan any more blocks
-                insertOrphans(b);
+
+
             }
         }
 
