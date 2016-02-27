@@ -151,16 +151,16 @@ public class MinerTest {
 		
 		//We expect the blocks calculated targets to be
 		// Target calculated for b2 - the same as b1 	4
-		// Target calculated for b3 - based on b0-b2 	1	(due to genesis block being after the other times, reach lower bound of 0)
-		// Target calculated for b4 - the same as b3 	4	(same as b3 as added to the database - 2)
+		// Target calculated for b3 - the same as b2 	4
+		// Target calculated for b4 - based on b3-b1 	4	(it took 200 milliseconds vs the intended 200, we ignore the genesis block)	4 * 1
 		// Target calculated for b5 - the same as b4 	4
-		// Target calculated for b6 - based on b3-b5 	8	(it took 400 milliseconds vs the intended 200)
-		// Target calculated for b7 - the same as b6 	4	(same as b3 as added to the database - 2)
-		// Target calculated for b8 - the same as b7	4
-		// Target calculated for b9 - based on b6-b8 	12	(it took 600 milliseconds vs the intended 200)	
-		// Target calculated for b10 - the same as b9 	5
+		// Target calculated for b6 - the same as b5 	4
+		// Target calculated for b7 - based on b6-b3 	8	(it took 400 milliseconds vs the intended 200)	4 * 2
+		// Target calculated for b8 - the same as b7	4	(b7 as we hard-coded the target as being 4 below)
+		// Target calculated for b9 - the same as b8 	4
+		// Target calculated for b10 - based on b9-b6 	20	(it took 800 milliseconds vs the intended 200)	5 * 4
 		// Target calculated for b11 - the same as b10 	5
-		// Target calculated for b12 - based on b9-b11 	2	(it took 100 milliseconds vs the intended 200, integer part of 5/2 = 2.5)
+		// Target calculated for b12 - the same as b11 	5
 		
 		ArrayList<Entry> emtpyEntryList = new ArrayList<Entry>();
 		
@@ -168,8 +168,8 @@ public class MinerTest {
 		Block b2 = new Block(b1,200,0x03000004,0,emtpyEntryList);
 		Block b3 = new Block(b2,300,0x03000004,0,emtpyEntryList);
 		Block b4 = new Block(b3,400,0x03000004,0,emtpyEntryList);
-		Block b5 = new Block(b4,700,0x03000004,0,emtpyEntryList);
-		Block b6 = new Block(b5,800,0x03000004,0,emtpyEntryList);
+		Block b5 = new Block(b4,600,0x03000004,0,emtpyEntryList);
+		Block b6 = new Block(b5,700,0x03000004,0,emtpyEntryList);
 		Block b7 = new Block(b6,900,0x03000004,0,emtpyEntryList);
 		Block b8 = new Block(b7,1400,0x03000004,0,emtpyEntryList);
 		Block b9 = new Block(b8,1500,0x03000005,0,emtpyEntryList);
@@ -210,16 +210,16 @@ public class MinerTest {
 		
 		int output[] = {
 				4,
-				1,
+				4,
+				4,
 				4,
 				4,
 				8,
 				4,
 				4,
-				12,
+				20,
 				5,
-				5,
-				2	//rounds down
+				5
 		};
 		for (int i=0; i<input.length; i++){
 			assertEquals( output[i], Integer.parseInt(Miner.unpackTarget(input[i]),16));	
@@ -287,41 +287,43 @@ public class MinerTest {
 		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
 		
 		DataStore d = new DatabaseStore("jdbc:h2:mem:bitverify");
-		ArrayList<Entry> emtpyEntryList = new ArrayList<Entry>();
+		ArrayList<Entry> emptyEntryList = new ArrayList<Entry>();
 		
-		Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,emtpyEntryList);
-		Block b2 = new Block(b1,200,0x03000004,0,emtpyEntryList);
+		Block b1 = new Block(Block.getGenesisBlock(),100,0x03000004,0,emptyEntryList);
+		Block b2 = new Block(b1,115,0x03000004,0,emptyEntryList);
+		Block b3 = new Block(b2,120,0x03000004,0,emptyEntryList);
+		Block b4 = new Block(b3,175,0x03000004,0,emptyEntryList);
 		
 		d.insertBlock(b1);
 		d.insertBlock(b2);
+		d.insertBlock(b3);
+		d.insertBlock(b4);
 		
 		Bus eventBus = new Bus(ThreadEnforcer.ANY);
 
-		//Recalculate after every 3 blocks
+		//Recalculate after every time to mine 3 blocks (every 4 blocks)
 		Miner m = new Miner(eventBus,d,3,150,10);
 		
 		m.stopMining();	//to prevent warning
 		
-		Block b3 = new Block(b2,300,0x03000004,0,emtpyEntryList);
+		Block b5 = new Block(b4,200,0x03000002,0,emptyEntryList);
+		d.insertBlock(b5);
 		
-		boolean result = Miner.checkBlockDifficulty(d, b3, b2, eventBus);
+		boolean result = Miner.checkBlockDifficulty(d, b5, b4, eventBus);
 		
 		assertEquals(result, true);
 		
-		Block b4 = new Block(b3,400,0x03000004,0,emtpyEntryList);
-		Block b5 = new Block(b4,500,0x03000004,0,emtpyEntryList);
-		Block b6 = new Block(b5,525,0x03000004,0,emtpyEntryList);
-		Block b7 = new Block(b6,700,0x03000004,0,emtpyEntryList);
+		Block b6 = new Block(b5,400,0x03000002,0,emptyEntryList);
+		Block b7 = new Block(b6,500,0x03000002,0,emptyEntryList);
+		Block b8 = new Block(b7,625,0x03000002,0,emptyEntryList);		
 		
-		d.insertBlock(b3);
-		d.insertBlock(b4);
-		d.insertBlock(b5);
 		d.insertBlock(b6);
 		d.insertBlock(b7);
+		d.insertBlock(b8);
 		
-		Block b8 = new Block(b7,700,0x03000008,0,emtpyEntryList);
+		Block b9 = new Block(b8,450,0x03000006,0,emptyEntryList);
 		
-		boolean result2 = Miner.checkBlockDifficulty(d, b8, b7, eventBus);
+		boolean result2 = Miner.checkBlockDifficulty(d, b9, b8, eventBus);
 		
 		assertEquals(result2, true);
 	}
