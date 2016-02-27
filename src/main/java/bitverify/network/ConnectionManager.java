@@ -658,6 +658,8 @@ public class ConnectionManager {
                     entryList.add(Entry.deserialize(string.toByteArray()));
                 }
 
+                log("Block " + new BlockID(block.getBlockID()) + " was received with " + entryList.size() + " entries; entry hash is " + Base64.getEncoder().encodeToString(block.getEntriesHash()), Level.FINER);
+
                 // check entries are valid
                 if (!block.setEntriesList(entryList)) {
                     log("block was rejected because entries hash didn't match block header field; ID " + new BlockID(block.getBlockID()), Level.FINE);

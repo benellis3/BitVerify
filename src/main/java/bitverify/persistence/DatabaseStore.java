@@ -288,19 +288,13 @@ public class DatabaseStore implements DataStore {
                             // must be sure to close the iterator
                             blocksFromHighest.close();
                         }
-
-                    } else {
-                        // this block will be inactive
-                        blocksToDeactivate.add(b);
                     }
                 }
             }
 
             // We already checked if the block is a duplicate so exceptions expected from now on.
 
-            if (blockIsNewLatest)
-                b.setActive(true);
-
+            b.setActive(blockIsNewLatest);
 
             // deactivate first, in case an entry will get reactivated.
             for (Block block : blocksToDeactivate) {
