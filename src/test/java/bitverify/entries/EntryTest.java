@@ -11,6 +11,7 @@ import org.junit.Test;
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.AsymmetricTest;
 import bitverify.crypto.Hash;
+import bitverify.crypto.KeyDecodingException;
 
 public class EntryTest {
 		
@@ -25,10 +26,9 @@ public class EntryTest {
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
 			Entry entry = new Entry(uploaderKeyPair, docHash, docLink, docName, docDescription,
-					docGeoLocation, docTimeStamp, docTags);
+					docGeoLocation, docTimeStamp);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -46,11 +46,10 @@ public class EntryTest {
 			String docDescription = "2+2 is sometimes 4";
 			String docGeoLocation = "some random coords near Cambridge";
 			long docTimeStamp = 1455524447;
-			String[] docTags = {"cool", "terminator", "random"};
 			// <-- metadata
 			byte[] receiverID = Asymmetric.stringKeyToByteKey(AsymmetricTest.myPubKey);
 			Entry entry = new Entry(uploaderKeyPair, receiverID, docHash, docLink, docName, docDescription,
-					docGeoLocation, docTimeStamp, docTags);
+					docGeoLocation, docTimeStamp);
 			return entry;
 		} catch (Exception e) {
 			throw new RuntimeException();
@@ -138,6 +137,40 @@ public class EntryTest {
 		assertTrue( entry2.testEntryHashSignature() );
 	}
 	
+	@Test
+	public void testIsThisEntryJustForMe_keyPair() {
+		Entry entry1, entry2;
+		try {
+			entry1 = generateEntry1();
+			entry2 = generateEntry2();
+		} catch (Exception e) {
+			fail();
+			return;
+		}
+		AsymmetricCipherKeyPair keyPair1, keyPair2;
+		try {
+			keyPair1 = Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey, AsymmetricTest.myPrivKey);
+			keyPair2 = Asymmetric.getKeyPairFromStringKeys(AsymmetricTest.myPubKey2, AsymmetricTest.myPrivKey2);
+		} catch (KeyDecodingException e) {
+			fail();
+			return;
+		}
+		
+		assertFalse( entry1.isThisEntryJustForMe(keyPair1) );
+		assertFalse( entry1.isThisEntryJustForMe(keyPair2) );
+		assertTrue( entry2.isThisEntryJustForMe(keyPair1) );
+		assertFalse( entry2.isThisEntryJustForMe(keyPair2) );
+		
+		byte[] pubKey1, pubKey2;
+		pubKey1 = Asymmetric.keyToByteKey(keyPair1.getPublic());
+		pubKey2 = Asymmetric.keyToByteKey(keyPair2.getPublic());
+		
+		assertFalse( entry1.isThisEntryJustForMe(pubKey1) );
+		assertFalse( entry1.isThisEntryJustForMe(pubKey2) );
+		assertTrue( entry2.isThisEntryJustForMe(pubKey1) );
+		assertFalse( entry2.isThisEntryJustForMe(pubKey2) );
+	}
+	
 	/**
 	 * note: do NOT use this in production code; testing only
 	 * 
@@ -151,17 +184,6 @@ public class EntryTest {
 			assertEquals(e1.getDocDescription(), e2.getDocDescription());
 			assertEquals(e1.getDocGeoLocation(), e2.getDocGeoLocation());
 			assertEquals(e1.getDocTimeStamp(), e2.getDocTimeStamp());
-
-			if (e1.getDocTags() != null) {
-				int numTags = e1.getDocTags().length;
-				assertEquals(e1.getDocTags().length, e2.getDocTags().length);
-				for (int i = 0; i < numTags; i++) {
-					assertEquals(e1.getDocTags()[i], e2.getDocTags()[i]);
-				}
-			} else {
-				//e1.getDocTags() == null
-				assertTrue(null == e2.getDocTags());
-			}
 		} catch (Exception e){
 			return false;
 		}

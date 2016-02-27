@@ -45,6 +45,7 @@ public class Node {
 			"List blocks on primary chain",
 			"List all blocks",
 			"Quick add predef. entry",
+			"Print out my public ID",
 			"Exit",
 			}; // see mapping in handleUserInput
 	private boolean isMining = false;
@@ -100,17 +101,8 @@ public class Node {
 		setupDatabase();
 		setupUser();
 		setupNetwork();
-		try {
-			mMiner = new Miner(mEventBus, mDatabase);
-		} catch (SQLException e) {
-			// TODO Handle this
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Handle this as well
-			e.printStackTrace();
-		}
+		setupMiner();
 	}
-	
 	
 	private void userCLISetup() {
 		// Print out the command options for the user
@@ -119,6 +111,7 @@ public class Node {
 		for (int i = 0; i < mOptions.length; i++) {
 			System.out.printf("(%d)%s\n", i, mOptions[i]);
 		}
+		System.out.println("----------");
 		
 		// Get the user input and run command if valid
 		System.out.println("Enter number to run command:");
@@ -169,6 +162,9 @@ public class Node {
 				quickAddPredefinedEntry();
 				break;
 			case 8:
+				printPublicID();
+				break;
+			case 9:
 				exitProgram();
 				return false;
 		}
@@ -223,12 +219,9 @@ public class Node {
 		
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
-		
-		System.out.println("Enter tags seperated by commas:");
-		String tagString = mScanner.nextLine();
-		
+				
 		try {
-			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
+			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
 		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
@@ -242,36 +235,41 @@ public class Node {
 		String fileDescription = "welllllllll";
 		String receiverID = "";
 		String fileGeo = "Israel... or stuff";
-		String tagString = "";
 		
 		try {
-			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
+			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
 		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Oops. Error generating the predefined entry...");
 			return;
 		} 
 	}
 	
+	@Deprecated
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
 			String receiverID, String fileDescription, String fileGeo, 
 			String tagString) throws KeyDecodingException, IOException, SQLException {
-		
-		// We need to split the input into an array of tags
-		String [] tags = tagString.split(",");
-		for (int i = 0; i < tags.length; i++) {
-			tags[i] = tags[i].trim();
-		}
-		
+		addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
+	}
+	
+	public void addEntry(byte [] hash, String fileDownload, String fileName, 
+			String receiverID, String fileDescription, String fileGeo 
+			) throws KeyDecodingException, IOException, SQLException {
 		// Construct entry object 
 		Entry entry;
 		
 		// ReceiverID is optional 
 		if (receiverID.length() > 0) {
-			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+			byte[] processedReceiverID;
+			try {
+				processedReceiverID = Base64.getDecoder().decode(receiverID);
+			} catch (IllegalArgumentException e){
+				throw new KeyDecodingException();
+			}
+			entry = new Entry(mIdentity.getKeyPair(), processedReceiverID, hash, fileDownload, fileName, 
+					fileDescription, fileGeo, System.currentTimeMillis());
 		} else {
 			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
-					fileDescription, fileGeo, System.currentTimeMillis(), tags);
+					fileDescription, fileGeo, System.currentTimeMillis());
 		}
 		
 		// Notify the relevant authorities of this important incident
@@ -279,7 +277,6 @@ public class Node {
 		mDatabase.insertEntry(entry);
 		mEventBus.post(event);
 		mConnectionManager.broadcastEntry(entry);
-		
 	}
 	
 	private void listConfirmedEntries() {
@@ -334,6 +331,13 @@ public class Node {
 		} else {
 			return 0;
 		}
+	}
+	
+	private void printPublicID() {
+		System.out.println("######################################");
+		System.out.println("Your public identity:");
+		System.out.println( Base64.getEncoder().encodeToString(mIdentity.getPublicKey()) );
+		System.out.println("######################################");
 	}
 	
 	private void searchEntries() {
@@ -482,6 +486,18 @@ public class Node {
 		mConnectionManager = new ConnectionManager(32903, mDatabase, mEventBus);
 	}
 	
+	private void setupMiner(){
+		informUserOfProgress("Setting up miner...");
+		try {
+			mMiner = new Miner(mEventBus, mDatabase);
+		} catch (SQLException e) {
+			// TODO Handle this
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Handle this as well
+			e.printStackTrace();
+		}
+	}
 	
 	private void setupDatabase() {
 		informUserOfProgress("Setting up database...");

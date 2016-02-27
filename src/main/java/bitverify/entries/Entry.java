@@ -1,6 +1,7 @@
 package bitverify.entries;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ import org.bouncycastle.util.encoders.Hex;
 import bitverify.crypto.Asymmetric;
 import bitverify.crypto.DataSizeException;
 import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.crypto.NotMatchingKeyException;
 import bitverify.crypto.Symmetric;
@@ -74,37 +76,50 @@ public class Entry implements Comparable<Entry> {
 	@DatabaseField
 	private long docTimeStamp = 0;
 	
-	private String[] docTags = null;
+	private boolean decryptHasBeenCalled = false;
+	
 	// <-- metadata
 	
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
-			byte[] docHash, String linkToDownloadFile, String docName, String docDescription,
-			String docGeoLocation, long docTimeStamp, String[] tags) throws KeyDecodingException{
+			byte[] docHash, String docLink, String docName, String docDescription,
+			String docGeoLocation, long docTimeStamp) throws KeyDecodingException{
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
-		setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
-				docGeoLocation, docTimeStamp, tags);
+		setMetadataFields(docHash, docLink, docName, docDescription,
+				docGeoLocation, docTimeStamp);
 	}
 
 	// no-argument constructor required for database framework
 	Entry() { }
-
+	
+	@Deprecated
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
 				 String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, docHash, docLink,
-				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
+		this(uploaderKeyPair, docHash, docLink,	docName, docDescription, docGeoLocation, docTimeStamp);
+	}
+	
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
+			 String docName, String docDescription,
+			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
 		
 		//and finally:
 		finalise(uploaderKeyPair);
 	}
 	
+	@Deprecated
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
 				 byte[] docHash, String docLink, String docName, String docDescription,
 				 String docGeoLocation, long docTimeStamp, String[] docTags) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, docHash, docLink,
-				docName, docDescription, docGeoLocation, docTimeStamp, docTags);
-
+		this(uploaderKeyPair, receiverID, docHash, docLink,	docName, docDescription, docGeoLocation, docTimeStamp);
+	}
+	
+	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] receiverID,
+			 byte[] docHash, String docLink, String docName, String docDescription,
+			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
+		_constructEntryCore(uploaderKeyPair, docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
+	
 		if (!Asymmetric.isValidKey(receiverID)){
 			throw new KeyDecodingException();
 		}
@@ -152,6 +167,7 @@ public class Entry implements Comparable<Entry> {
 	public void decrypt(AsymmetricCipherKeyPair receiverKeyPair)
 			throws NotMatchingKeyException, KeyDecodingException, InvalidCipherTextException, IOException{
 		if (!isPrivatelyShared()) return;
+		if (decryptHasBeenCalled) return;
 		
 		String providedPublicKey = Asymmetric.keyToStringKey(receiverKeyPair.getPublic());
 		String expectedPublicKey = Asymmetric.byteKeyToStringKey(receiverID);
@@ -164,6 +180,31 @@ public class Entry implements Comparable<Entry> {
 		
 		ByteArrayInputStream in = new ByteArrayInputStream(metadataBytes_decrypted);
 		deserializeMetadata(in);
+		
+		decryptHasBeenCalled = true;
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(byte[] myPublicKey){
+		return Arrays.equals(myPublicKey, receiverID);
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(AsymmetricCipherKeyPair myKeyPair){
+		byte[] myPublicKey = Asymmetric.keyToByteKey(myKeyPair.getPublic());
+		return isThisEntryJustForMe(myPublicKey);
+	}
+	
+	/**
+	 * Call this to figure out whether you are the sole receiver of the entry
+	 */
+	public boolean isThisEntryJustForMe(Identity myID){
+		byte[] myPublicKey = myID.getPublicKey();
+		return isThisEntryJustForMe(myPublicKey);
 	}
 
 	public static Entry deserialize(InputStream in) throws IOException {
@@ -340,7 +381,7 @@ public class Entry implements Comparable<Entry> {
 	// ------------------------------------> metadata methods
 	
 	private void setMetadataFields(byte[] docHash, String docLink, String docName, String docDescription,
-			String docGeoLocation, long docTimeStamp, String[] docTags){
+			String docGeoLocation, long docTimeStamp){
 		this.docHash = docHash;
 		if (docLink.length() > DOC_LINK_LENGTH)
 			throw new IllegalArgumentException("Link must be at most " + DOC_LINK_LENGTH + " characters long");
@@ -359,7 +400,6 @@ public class Entry implements Comparable<Entry> {
 		this.docGeoLocation = docGeoLocation;
 
 		this.docTimeStamp = docTimeStamp;
-		this.docTags = docTags;
 	}
 	
 	private void deserializeMetadata(InputStream in) throws IOException {
@@ -374,15 +414,9 @@ public class Entry implements Comparable<Entry> {
 			String docDescription = d.readUTF();
 			String docGeoLocation = d.readUTF();
 			long docTimeStamp = d.readLong();
-			
-			int numTags = d.readInt();
-			String[] tags = new String[numTags];
-			for (int i=0; i<numTags; i++){
-				tags[i] = d.readUTF();
-			}
 
 			setMetadataFields(docHash, linkToDownloadFile, docName, docDescription,
-					docGeoLocation, docTimeStamp, tags);
+					docGeoLocation, docTimeStamp);
 		}
 	}
 	
@@ -403,11 +437,6 @@ public class Entry implements Comparable<Entry> {
 			d.writeUTF(docDescription);
 			d.writeUTF(docGeoLocation);
 			d.writeLong(docTimeStamp);
-			
-			d.writeInt(docTags.length);
-			for (String tag : docTags) {
-				d.writeUTF(tag);
-			}
 
 			d.flush();
 		}
@@ -446,8 +475,9 @@ public class Entry implements Comparable<Entry> {
 	/**
 	 * Gets the document tags. May be null.
      */
+	@Deprecated
 	public String[] getDocTags(){
-		return docTags;
+		return null;
 	}
 
 	@Override

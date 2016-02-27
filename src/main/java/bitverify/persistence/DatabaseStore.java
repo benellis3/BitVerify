@@ -297,8 +297,6 @@ public class DatabaseStore implements DataStore {
                 if (blockIsNewLatest)
                     b.setActive(true);
 
-                // always add block to database
-                blockDao.create(b);
 
                 // deactivate first, in case an entry will get reactivated.
                 for (Block block : blocksToDeactivate) {
@@ -319,6 +317,8 @@ public class DatabaseStore implements DataStore {
                 if (blockIsNewLatest)
                     setBlockEntriesConfirmed(b, true, true);
 
+
+
                 // now insert block-entry mappings into link table
                 for (Entry e : b.getEntriesList())
                     blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
@@ -326,14 +326,17 @@ public class DatabaseStore implements DataStore {
                 if (blockIsNewLatest)
                     setLatestBlock(b);
 
+                // always add block to database
+                blockDao.create(b);
+
                 // block was successfully inserted
                 return InsertBlockResult.SUCCESS;
 
             } catch (SQLException e) {
                 // catch duplicate block error
-                  if (isDuplicateError(e))
-//                    return InsertBlockResult.FAIL_DUPLICATE;
-//                else
+                if (isDuplicateError(e))
+                    return InsertBlockResult.FAIL_DUPLICATE;
+                else
                     throw e;
             }
         });
@@ -347,7 +350,7 @@ public class DatabaseStore implements DataStore {
     /**
      * Sets all of the entries in this block as confirmed or unconfirmed.
      * Not an atomic operation so should call this from a transaction.
-     * @param block the block whose entries will be affacted
+     * @param block the block whose entries will be affected
      * @param confirmed whether the entries are now confirmed or unconfirmed
      * @param insert whether to inset entries from the block if they're not already present
      * @throws SQLException
@@ -412,12 +415,14 @@ public class DatabaseStore implements DataStore {
         String[] queries = searchQuery.split("\\s+"); // split on groups of whitespace
         Where<Entry, UUID> w = entryDao.queryBuilder().where();
         for (String query : queries) {
-            String likeQuery = "%" + searchQuery + "%";
+            String likeQuery = "%" + query + "%";
             w.like("docName", likeQuery);
             w.like("docDescription", likeQuery);
+            w.like("docGeoLocation", likeQuery);
+            w.like("docLink", likeQuery);
         }
         // OR all of our like clauses together
-        return new DatabaseIterator<>(w.or(queries.length * 2).iterator());
+        return new DatabaseIterator<>(w.or(queries.length * 4).iterator());
     }
 
     public boolean insertEntry(Entry entry) throws SQLException {
