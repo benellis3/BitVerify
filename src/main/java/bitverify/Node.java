@@ -219,11 +219,9 @@ public class Node {
 		
 		System.out.println("Enter file geolocation:");
 		String fileGeo = mScanner.nextLine();
-		
-		String tagString = "";
-		
+				
 		try {
-			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo, tagString);
+			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
 		} catch (KeyDecodingException | IOException | SQLException e) {
 			System.out.println("Error generating entry. Try again...");
 			return;
@@ -261,7 +259,13 @@ public class Node {
 		
 		// ReceiverID is optional 
 		if (receiverID.length() > 0) {
-			entry = new Entry(mIdentity.getKeyPair(), receiverID.getBytes(), hash, fileDownload, fileName, 
+			byte[] processedReceiverID;
+			try {
+				processedReceiverID = Base64.getDecoder().decode(receiverID);
+			} catch (IllegalArgumentException e){
+				throw new KeyDecodingException();
+			}
+			entry = new Entry(mIdentity.getKeyPair(), processedReceiverID, hash, fileDownload, fileName, 
 					fileDescription, fileGeo, System.currentTimeMillis());
 		} else {
 			entry = new Entry(mIdentity.getKeyPair(), hash, fileDownload, fileName, 
