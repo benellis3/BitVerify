@@ -32,6 +32,7 @@ public class Block {
 	
 	private static final int TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS = 11;
 	private static final long TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE = 10 * 60 * 1000; //we allow blocks to have a timestamp couple minutes into the future
+	public static final long GENESIS_TIMESTAMP = 1455745984018l;
 	
     // Block header
     @DatabaseField(dataType = DataType.BYTE_ARRAY)
@@ -123,7 +124,7 @@ public class Block {
         String itsComing = "You hear that, Mr. Anderson. That is the sound inevitability.";
         byte[] prevHash = Hash.hashString(mythology);
         byte[] entryHash = Hash.hashString(itsComing);
-        long timeStamp = 1455745984018l;
+        long timeStamp = GENESIS_TIMESTAMP;
         int target = Miner.packTarget("00000fa1e3800000000000000000000000000000000000000000000000000000");
         int nonce = 10136621;
         Block resultBlock = new Block(prevHash,entryHash,timeStamp,target,nonce);
@@ -192,6 +193,8 @@ public class Block {
             boolean matchingHash;
             boolean validNonce;
             
+            boolean timeInvar0;
+            
             long[] prevBlockTimes = new long[TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS];
             long medianTime = 0;
             boolean timeInvar1;
@@ -206,6 +209,9 @@ public class Block {
                 matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
                 
+                //time invariant 0: older than genesis block
+                timeInvar0 = (currentBlockTime > GENESIS_TIMESTAMP);
+                
                 //time invariant 1: currentBlockTime > median of prev TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS block times
                 if (i>=11){ //only check if there are enough previous blocks
                 	for (int jBlocksBack=1; jBlocksBack<=TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS; jBlocksBack++){
@@ -219,13 +225,19 @@ public class Block {
                 	timeInvar1 = true;
                 }
                 
-                //time invariant 2
+                //time invariant 2: future times are not allowed
                 timeInvar2 = (currentBlockTime < currentSysTime + TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE);
 
                 if (!matchingHash)
                     bus.post(new LogEvent("chain validation failed: child-parent hashes didn't match", LogEventSource.BLOCK, Level.FINER));
                 if (!validNonce)
                     bus.post(new LogEvent("chain validation failed: block hash did not meet its difficulty", LogEventSource.BLOCK, Level.FINER));
+                if (!timeInvar0) {
+                    bus.post(new LogEvent("chain validation failed: time invariant 0 test failed", LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("genesis block timestamp is " + new Date(GENESIS_TIMESTAMP), LogEventSource.BLOCK, Level.FINER));
+                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
+                }
                 if (!timeInvar1) {
                     bus.post(new LogEvent("chain validation failed: time invariant 1 test failed", LogEventSource.BLOCK, Level.FINER));
                     bus.post(new LogEvent("median of prev "+TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS+" timestamps was "
@@ -236,11 +248,11 @@ public class Block {
                 if (!timeInvar2) {
                     bus.post(new LogEvent("chain validation failed: time invariant 2 test failed", LogEventSource.BLOCK, Level.FINER));
                     bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("current system time was plus allowance buffer was" +
+                    bus.post(new LogEvent("current system time plus allowance buffer was" +
                     		new Date(currentSysTime + TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE), LogEventSource.BLOCK, Level.FINER));
                     bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
                 }
-                if (!matchingHash || !validNonce || !timeInvar1 || !timeInvar2) {
+                if (!matchingHash || !validNonce || !timeInvar0 || !timeInvar1 || !timeInvar2) {
                     return false;
                 }
 
