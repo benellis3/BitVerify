@@ -539,12 +539,12 @@ public class GUI extends Application {
 				String name = nameText.getText();
 				String download = downloadText.getText();
 				String description = descriptionText.getText();
-		    	String recieverID = receiverText.getText();
+		    	String receiverID = receiverText.getText();
 		    	String geoLoc = geoText.getText();
 		    	String tags = tagsText.getText();
 		    	
 		    	try {
-					mNode.addEntry(hash, download, name, recieverID, description, geoLoc, tags);
+					mNode.addEntry(hash, download, name, receiverID, description, geoLoc, tags);
 					errorText.setFill(Color.GREEN);
 					errorText.setText("Added file succesfully.");
 					
