@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
@@ -16,7 +15,6 @@ import com.squareup.otto.ThreadEnforcer;
 import bitverify.LogEvent;
 import bitverify.LogEventSource;
 import bitverify.block.Block;
-import bitverify.entries.Entry;
 import bitverify.network.NewBlockEvent;
 import bitverify.network.NewEntryEvent;
 import bitverify.network.NewMiningProofEvent;
@@ -61,10 +59,11 @@ public class Miner implements Runnable{
 	
 	//The maximum factor that the target may grow or shrink by on each target recalculation
 	private static int growthFactorLimit = 4;
-	//We recalculate the mining difficulty every adjustTargetFrequency blocks
-	private static int adjustTargetFrequency = 3;	//For actual system use rather than demoing it might be 1008;
-	//The amount of time, in milliseconds, we want adjustTargetFrequency blocks to take to mine
-	private static long idealMiningTime = 30000;	//For actual system use rather than demoing it might be 604800000;
+	//We recalculate the mining difficulty adjustTargetFrequency + 1 blocks (so it is the time to mine adjustTargetFrequency blocks)
+	private static int adjustTargetFrequency = 3;	//For actual system use rather than demoing it might be 1008
+	//The amount of time, in milliseconds, we want adjustTargetFrequency + 2 blocks to take to mine
+	//(+2 due to removing gaps between periods, we use +1 for the first period to avoid using the genesis timestamp)
+	private static long idealMiningTime = 30000;	//For actual system use rather than demoing it might be 604800000
 	//this means
 	//we want 3 blocks to be mined every 30 seconds/a block every 10 seconds
 	
@@ -308,7 +307,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
-    	eventBus.post(new LogEvent("About to mine on new entry",LogEventSource.MINING,Level.INFO));
+    	eventBus.post(new LogEvent("About to mine new entry",LogEventSource.MINING,Level.INFO));
     	newMiningBlock();
     }
     
@@ -323,7 +322,6 @@ public class Miner implements Runnable{
     public void onNewBlockEvent(NewBlockEvent e) throws IOException, SQLException {
     	//A new block as been found elsewhere, abort our current block
     	
-    	//Get entries that are still unconfirmed from the database
     	newMiningBlock();
     }
 	
@@ -398,37 +396,41 @@ public class Miner implements Runnable{
      *  @throws SQLException
      */
 	public static int calculatePackedTarget(DataStore ds, Block block, Bus eventBus) throws SQLException{
-		//Every adjustTargetFrequency blocks we calculate the new mining difficulty
+		//Every adjustTargetFrequency + 1 blocks (the time to time adjustTargetFrequency blocks) we calculate the new mining difficulty
 		long blocksCount = block.getHeight();
 		
-		// We adjust the target after every 'adjustTargetFrequency' blocks
+		// We adjust the target every adjustTargetFrequency + 1 blocks
 		// i.e.
 		// adjustTargetFrequency = 2
 		// idealMiningTime = 100
 		// b0 is the genesis block
 		// b0 - b1 - b2 - b3 - b4 - b5 - b6 - b7 - b8 - b9 - b10
-		// recalculate on b4 based on the time from b1 to b3 (we want b1 to b3 to take 100 milliseconds)
+		// recalculate on b4 based on the time from b1 to b3 (we want b1 to b3 to take 100 milliseconds) due to avoiding genesis block timestamp
 		// recalculate on b7 based on time from b3 to b6 (we want b3 to b6 to take 100 milliseconds)
 		// recalculate on b10 based on time from b6 to b9 (we want b6 to b9 to take 100 milliseconds)
 		//
 		// for attack mitigation purposes, there must be no unaccounted time (no gap between calculations)
 		// e.g. we don't want to calculate times b1 to b3, then b4 to b6, as the b3 to b4 time is a security risk
+		// (since the block chain no longer ensures subsequent blocks have later time stamps)
 		if (((blocksCount + 1) % (adjustTargetFrequency + 1) == 1) && (blocksCount > 1)) {
 			List<Block> nMostRecent = ds.getNMostRecentBlocks(adjustTargetFrequency + 2, block);
 			
 			//We require that the timestamp for n blocks ago is earlier than the most recent
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
 			long nAgoTime;
+			int excludingDueToGenesis;
 			if (blocksCount+1 == adjustTargetFrequency+1+1){
-				//avoid using genesis timestamp
+				//avoid using genesis timestamp for first recalculation
 				nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
+				excludingDueToGenesis = 1;
 			} else {
 				nAgoTime = nMostRecent.get(adjustTargetFrequency+1).getTimeStamp();
+				excludingDueToGenesis = 0;
 			}
 			long difference = mostRecentTime - nAgoTime;
 			
 			eventBus.post(new LogEvent("Calculating new target",LogEventSource.MINING,Level.INFO));
-			eventBus.post(new LogEvent("Previous "+(adjustTargetFrequency+1)+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("Previous "+(adjustTargetFrequency+(1-excludingDueToGenesis))+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
 			eventBus.post(new LogEvent("We want it to take "+idealMiningTime+" milliseconds",LogEventSource.MINING,Level.INFO));
 		
 			if (printTarget) printTarget = false;
