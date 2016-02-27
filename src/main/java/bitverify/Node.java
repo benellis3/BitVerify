@@ -487,7 +487,7 @@ public class Node {
 	}
 	
 	private void setupMiner(){
-		informUserOfProgress("Setting up miner");
+		informUserOfProgress("Setting up miner...");
 		try {
 			mMiner = new Miner(mEventBus, mDatabase);
 		} catch (SQLException e) {

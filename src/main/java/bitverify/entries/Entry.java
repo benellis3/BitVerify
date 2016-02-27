@@ -74,7 +74,8 @@ public class Entry implements Comparable<Entry> {
 	@DatabaseField
 	private long docTimeStamp = 0;
 	
-	private String[] docTags = new String[0];
+	private boolean decryptHasBeenCalled = false;
+	
 	// <-- metadata
 	
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
@@ -99,8 +100,7 @@ public class Entry implements Comparable<Entry> {
 	public Entry(AsymmetricCipherKeyPair uploaderKeyPair, byte[] docHash, String docLink,
 			 String docName, String docDescription,
 			 String docGeoLocation, long docTimeStamp) throws KeyDecodingException, IOException{
-		_constructEntryCore(uploaderKeyPair, docHash, docLink,
-				docName, docDescription, docGeoLocation, docTimeStamp);
+		_constructEntryCore(uploaderKeyPair, docHash, docLink, docName, docDescription, docGeoLocation, docTimeStamp);
 		
 		//and finally:
 		finalise(uploaderKeyPair);
@@ -165,6 +165,7 @@ public class Entry implements Comparable<Entry> {
 	public void decrypt(AsymmetricCipherKeyPair receiverKeyPair)
 			throws NotMatchingKeyException, KeyDecodingException, InvalidCipherTextException, IOException{
 		if (!isPrivatelyShared()) return;
+		if (decryptHasBeenCalled) return;
 		
 		String providedPublicKey = Asymmetric.keyToStringKey(receiverKeyPair.getPublic());
 		String expectedPublicKey = Asymmetric.byteKeyToStringKey(receiverID);
@@ -177,6 +178,8 @@ public class Entry implements Comparable<Entry> {
 		
 		ByteArrayInputStream in = new ByteArrayInputStream(metadataBytes_decrypted);
 		deserializeMetadata(in);
+		
+		decryptHasBeenCalled = true;
 	}
 
 	public static Entry deserialize(InputStream in) throws IOException {
@@ -449,7 +452,7 @@ public class Entry implements Comparable<Entry> {
      */
 	@Deprecated
 	public String[] getDocTags(){
-		return docTags;
+		return null;
 	}
 
 	@Override
