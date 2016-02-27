@@ -406,15 +406,25 @@ public class Miner implements Runnable{
 		// adjustTargetFrequency = 2
 		// idealMiningTime = 100
 		// b0 is the genesis block
-		// b0 - b1 - b2 - b3 - b4 - b5 - b6 - b7
+		// b0 - b1 - b2 - b3 - b4 - b5 - b6 - b7 - b8 - b9 - b10
 		// recalculate on b4 based on the time from b1 to b3 (we want b1 to b3 to take 100 milliseconds)
-		// recalculate on b7 based on time from b4 to b6 (we want b4 to b6 to take 100 milliseconds)
+		// recalculate on b7 based on time from b3 to b6 (we want b3 to b6 to take 100 milliseconds)
+		// recalculate on b10 based on time from b6 to b9 (we want b6 to b9 to take 100 milliseconds)
+		//
+		// for attack mitigation purposes, there must be no unaccounted time (no gap between calculations)
+		// e.g. we don't want to calculate times b1 to b3, then b4 to b6, as the b3 to b4 time is a security risk
 		if (((blocksCount + 1) % (adjustTargetFrequency + 1) == 1) && (blocksCount > 1)) {
-			List<Block> nMostRecent = ds.getNMostRecentBlocks(adjustTargetFrequency + 1, block);
+			List<Block> nMostRecent = ds.getNMostRecentBlocks(adjustTargetFrequency + 2, block);
 			
 			//We require that the timestamp for n blocks ago is earlier than the most recent
 			long mostRecentTime = nMostRecent.get(0).getTimeStamp();
-			long nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
+			long nAgoTime;
+			if (blocksCount+1 == adjustTargetFrequency+1+1){
+				//avoid using genesis timestamp
+				nAgoTime = nMostRecent.get(adjustTargetFrequency).getTimeStamp();
+			} else {
+				nAgoTime = nMostRecent.get(adjustTargetFrequency+1).getTimeStamp();
+			}
 			long difference = mostRecentTime - nAgoTime;
 			
 			eventBus.post(new LogEvent("Calculating new target",LogEventSource.MINING,Level.INFO));
