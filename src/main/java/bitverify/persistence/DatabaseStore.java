@@ -277,10 +277,12 @@ public class DatabaseStore implements DataStore {
 
                                 if (Arrays.equals(current.getBlockID(), prevBlockOnNewChain)) {
                                     prevBlockOnNewChain = current.getPrevBlockHash();
+                                    current.setEntriesList(getEntriesForBlock(current.getBlockID()));
                                     blocksToActivate.add(current);
 
                                 } else if (Arrays.equals(current.getBlockID(), prevBlockOnOldChain)) {
                                     prevBlockOnOldChain = current.getPrevBlockHash();
+                                    current.setEntriesList(getEntriesForBlock(current.getBlockID()));
                                     blocksToDeactivate.add(current);
                                 }
                             }
@@ -299,7 +301,6 @@ public class DatabaseStore implements DataStore {
             // deactivate first, in case an entry will get reactivated.
             for (Block block : blocksToDeactivate) {
                 updateBlockActive(block, false);
-                block.setEntriesList(getEntriesForBlock(block.getBlockID()));
                 setBlockEntriesConfirmed(block, false, false);
             }
 
@@ -308,7 +309,6 @@ public class DatabaseStore implements DataStore {
 
             for (Block block : blocksToActivate) {
                 updateBlockActive(block, true);
-                block.setEntriesList(getEntriesForBlock(block.getBlockID()));
                 setBlockEntriesConfirmed(block, true, false);
             }
 
