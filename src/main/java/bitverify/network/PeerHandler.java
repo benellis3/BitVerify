@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import bitverify.ExceptionLogEvent;
@@ -321,7 +320,7 @@ public class PeerHandler {
         private void handleGetBlock(GetBlockMessage message) throws SQLException {
             Block b = dataStore.getBlock(message.getBlockID().toByteArray());
             if (b == null) {
-                log("Sending block not found message in response to get block for " + Base64.getEncoder().encodeToString(message.getBlockID().toByteArray()), Level.FINE);
+                log("Sending block not found message to " + peerAddress + " in response to get block for " + Base64.getEncoder().encodeToString(message.getBlockID().toByteArray()), Level.FINE);
                 BlockNotFoundMessage bm = BlockNotFoundMessage.newBuilder()
                         .setBlockID(message.getBlockID())
                         .build();
@@ -331,12 +330,11 @@ public class PeerHandler {
                         .build();
                 send(m);
             } else {
-                log("Sending block message in response to get block for " + Base64.getEncoder().encodeToString(b.getBlockID()), Level.FINE);
+                log("Sending block message to " + peerAddress + " in response to get block for " + Base64.getEncoder().encodeToString(b.getBlockID()), Level.FINE);
                 try {
                     BlockMessage.Builder bmb = BlockMessage.newBuilder()
                             .setBlockBytes(ByteString.copyFrom(b.serializeHeader()));
                     List<Entry> entries = b.getEntriesList();
-                    log("This block came out of the store with " + entries.size() + " entries", Level.FINER);
                     for (Entry e : entries)
                         bmb.addEntries(ByteString.copyFrom(e.serialize()));
 
@@ -347,7 +345,7 @@ public class PeerHandler {
                             .setBlock(bm)
                             .build();
 
-                    log("This block has " + bmb.getEntriesCount() + " entries. Entries hash is supposed to be " + Base64.getEncoder().encodeToString(b.getEntriesHash()), Level.FINE);
+                    log("block " + new BlockID(b.getBlockID()) + " has " + bmb.getEntriesCount() + " entries. Entries hash is supposed to be " + Base64.getEncoder().encodeToString(b.getEntriesHash()), Level.FINE);
                     send(m);
                 } catch (Exception e) {
                     log("Oh dear: " + e.toString(), Level.SEVERE, e);
@@ -384,11 +382,11 @@ public class PeerHandler {
             for (NetAddress netAddress : netAddressList) {
                 socketAddressList.add(new InetSocketAddress(netAddress.getHostName(), netAddress.getPort()));
             }
-            bus.post(new PeersEvent(socketAddressList));
+            bus.post(new PeersEvent(socketAddressList, PeerHandler.this));
         }
 
         private void handleHeaders(HeadersMessage message) {
-            bus.post(new HeadersMessageEvent(message));
+            bus.post(new HeadersMessageEvent(message, PeerHandler.this));
         }
 
 

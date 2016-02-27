@@ -111,7 +111,7 @@ public class ConnectionManager {
                                             peers.put(address, ph);
                                         }
                                         // do block download against this peer
-                                        blockProtocol.blockDownloadSynchronized(ph);
+                                        blockProtocol.blockDownloadSynchronized(ph, false);
                                     } catch (TimeoutException time) {
                                         // this means the connection could not be established before timeout
                                         log("Did not establish connection to peer within time limit", Level.INFO);
@@ -188,7 +188,7 @@ public class ConnectionManager {
                 }
             }
             // once peers are connected, do block download from everyone
-            initiateBlockDownload();
+            es.execute(() -> blockProtocol.initiateBlockDownload());
         });
     }
 
@@ -325,9 +325,6 @@ public class ConnectionManager {
         });
     }
 
-    /**
-     * @param
-     */
     private static List<InetSocketAddress> getInitialPeers() {
         URL url;
         try {
@@ -395,13 +392,6 @@ public class ConnectionManager {
         disconnectPeer(e.getPeer());
     }
 
-    /**
-     * Commences the block download process. This call does not block.
-     */
-    public void initiateBlockDownload() {
-        es.execute(() -> blockProtocol.initiateBlockDownload());
-    }
-
     private void log(String message, Level level) {
         bus.post(new LogEvent(message, LogEventSource.NETWORK, level));
     }
@@ -428,21 +418,35 @@ public class ConnectionManager {
         private final Map<BlockID, Block> orphanBlocks = new ConcurrentHashMap<>();
         //
         private final BlocksInFlightCounter blocksInFlightCounter = new BlocksInFlightCounter();
+        private final Object insertBlockMonitor = new Object();
 
         public BlockProtocol() {
             bus.register(this);
         }
 
-        private boolean blockDownloadSynchronized(PeerHandler peer) {
+        /**
+         * Start block download by requesting headers from the given peer.
+         * This method is synchronized such that at most one block download can happen at a time.
+         * @param peer the peer
+         * @param distribute whether to distribute get block requests to all peers, or just to this one.
+         * @return
+         */
+        private boolean blockDownloadSynchronized(PeerHandler peer, boolean distribute) {
             try {
-                return blocksInFlightCounter.onceZero(() -> blockDownload(peer));
+                return blocksInFlightCounter.onceZero(() -> blockDownload(peer, distribute));
             } catch (Exception e) {
                 log("unexpected exception while performing block download: " + e.getMessage(), Level.SEVERE, e);
                 return false;
             }
         }
 
-        private boolean blockDownload(PeerHandler peer) {
+        /**
+         * Start block download by requesting headers from the given peer
+         * @param peer the peer
+         * @param distribute whether to distribute get block requests to all peers, or just to this one.
+         * @return
+         */
+        private boolean blockDownload(PeerHandler peer, boolean distribute) {
             try {
                 List<byte[]> fromBlockIDs = dataStore.getActiveBlocksSample(MAX_HEADERS);
                 while (true) {
@@ -499,7 +503,11 @@ public class ConnectionManager {
                             }
                             log("About to download " + blockIDs.size() + " blocks", Level.FINE);
                             futureBlockIDs.addAll(blockIDs);
-                            downloadQueuedBlocks();
+
+                            if (distribute)
+                                downloadQueuedBlocks();
+                            else
+                                downloadQueuedBlocks(peer);
 
                             if (receivedHeaders.size() < MAX_HEADERS) {
                                 // TODO: verify against other peers
@@ -518,7 +526,6 @@ public class ConnectionManager {
                 return false;
             }
         }
-
 
 
         /**
@@ -540,7 +547,7 @@ public class ConnectionManager {
 
                     // we will break once we've got all the headers, having dispatched download tasks asynchronously.
                     for (PeerHandler p : peersSnapshot) {
-                        if (blockDownload(p))
+                        if (blockDownload(p, true))
                             return true;
                     }
                     return false;
@@ -591,6 +598,22 @@ public class ConnectionManager {
         }
 
 
+        private void downloadQueuedBlocks(PeerHandler peer) {
+            // distribute future blocks across peers, until all peers have a full queue or we run out of blocks.
+            BlockID b;
+            while ((b = futureBlockIDs.pollFirst()) != null) {
+                if (peer.requestBlock(b)) {
+                    blocksInFlightCounter.increment();
+                } else {
+                    break;
+                }
+            }
+            // the last block was never requested (unless it's null) so put it back on the queue
+            if (b != null)
+                futureBlockIDs.addFirst(b);
+        }
+
+
         @Subscribe
         public void onBlockMessage(BlockMessageEvent e) throws SQLException {
             log("Block message received", Level.FINE);
@@ -630,9 +653,6 @@ public class ConnectionManager {
                     return;
                 }
 
-                // get the parent block
-                Block parent = dataStore.getBlock(block.getPrevBlockHash());
-
                 List<ByteString> entryBytesList = message.getEntriesList();
                 List<Entry> entryList = new ArrayList<>();
                 for (ByteString string : entryBytesList) {
@@ -650,55 +670,60 @@ public class ConnectionManager {
                     return;
                 }
 
-                if (parent == null) {
-                    log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
-                    // keep block in memory and try to store it once its parent has been downloaded.
-                    final BlockID orphanBlockKey = new BlockID(block.getPrevBlockHash());
-                    orphanBlocks.put(orphanBlockKey, block);
-                    log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
+                // synchronize here because otherwise an orphan's parent may be inserted between the call to getBlock and the orphanBlocks.put operation.
+                synchronized (insertBlockMonitor) {
+                    // get the parent block
+                    Block parent = dataStore.getBlock(block.getPrevBlockHash());
+                    if (parent == null) {
+                        log("block is an orphan and therefore wasn't added to database; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                        // keep block in memory and try to store it once its parent has been downloaded.
+                        final BlockID orphanBlockKey = new BlockID(block.getPrevBlockHash());
+                        orphanBlocks.put(orphanBlockKey, block);
+                        log("there are now " + orphanBlocks.size() + " orphan blocks.", Level.FINE);
 
-                    // do some more block downloading if this block was broadcast to us
-                    if (!blockWasExpected) {
-                        es.execute(() -> {
-                            try {
-                                blocksInFlightCounter.onceZero(() -> {
-                                    // block may become unorphaned by the time we finish our previous block download
-                                    if (orphanBlocks.containsKey(orphanBlockKey)) {
-                                        log("initiating another block download because an orphan block was broadcast to us", Level.FINE);
-                                        blockDownload(peer);
-                                    } else {
-                                        log("aborted another block download because the block was unorphaned.", Level.FINE);
-                                    }
+                        // do some more block downloading if this block was broadcast to us
+                        if (!blockWasExpected) {
+                            es.execute(() -> {
+                                try {
+                                    blocksInFlightCounter.onceZero(() -> {
+                                        // block may become unorphaned by the time we finish our previous block download
+                                        if (orphanBlocks.containsKey(orphanBlockKey)) {
+                                            log("initiating another block download because an orphan block was broadcast to us", Level.FINE);
+                                            blockDownload(peer, false);
+                                        } else {
+                                            log("aborted another block download because the block was unorphaned.", Level.FINE);
+                                        }
 
-                                });
-                            } catch (InterruptedException ex) {
-                                log("unexpected interrupted exception while performing block download: " + ex.getMessage(), Level.SEVERE, ex);
-                            }
+                                    });
+                                } catch (InterruptedException ex) {
+                                    log("unexpected interrupted exception while performing block download: " + ex.getMessage(), Level.SEVERE, ex);
+                                }
 
-                        });
-                    }
-                } else {
-                    // verify it was mined with the right difficulty
-                    if (!Miner.checkBlockDifficulty(dataStore, block, parent, bus)) {
-                        log("block was rejected because the difficulty was too low, ID " + new BlockID(block.getBlockID()), Level.FINE);
-                        return;
-                    }
+                            });
+                        }
+                    } else {
+                        // verify it was mined with the right difficulty
+                        if (!Miner.checkBlockDifficulty(dataStore, block, parent, bus)) {
+                            log("block was rejected because the difficulty was too low, ID " + new BlockID(block.getBlockID()), Level.FINE);
+                            return;
+                        }
 
-                    InsertBlockResult result = dataStore.insertBlock(block);
-                    switch (result) {
-                        case SUCCESS:
-                            // parent exists so store this block
-                            log("block was successfully added to database", Level.FINE);
-                            bus.post(new NewBlockEvent(block));
-                            // may now be able to insert orphan blocks
-                            insertOrphans(block);
-                            break;
-                        case FAIL_ORPHAN:
-                            assert false;
-                            break;
-                        case FAIL_DUPLICATE:
-                            log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
-                            break;
+                        InsertBlockResult result = dataStore.insertBlock(block);
+                        switch (result) {
+                            case SUCCESS:
+                                // parent exists so store this block
+                                log("block was successfully added to database", Level.FINE);
+                                bus.post(new NewBlockEvent(block));
+                                // may now be able to insert orphan blocks
+                                insertOrphans(block);
+                                break;
+                            case FAIL_ORPHAN:
+                                assert false;
+                                break;
+                            case FAIL_DUPLICATE:
+                                log("block was rejected because it was a duplicate; ID " + new BlockID(block.getBlockID()), Level.FINE);
+                                break;
+                        }
                     }
                 }
             } catch (IOException ioe) {
@@ -775,6 +800,7 @@ public class ConnectionManager {
                 // verify it was mined with the right difficulty
                 if (!Miner.checkBlockDifficulty(dataStore, b, parentBlock, bus)) {
                     log("previously orphaned block was rejected because the difficulty was too low, ID " + new BlockID(b.getBlockID()), Level.FINE);
+                    log("previously orphaned block's parent has height " + parentBlock.getHeight(), Level.FINER);
                     return;
                 }
 
@@ -782,10 +808,10 @@ public class ConnectionManager {
                 InsertBlockResult r =  dataStore.insertBlock(b);
                 switch (r) {
                     case SUCCESS:
-                        log("managed to insert a block that was previously an orphan", Level.FINE);
+                        log("managed to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()), Level.FINE);
                         break;
                     case FAIL_DUPLICATE:
-                        log("tried to insert a block that was previously an orphan, but it's now a duplicate so all OK", Level.FINE);
+                        log("tried to insert a block with " + b.getEntriesList().size() + " entries that was previously an orphan, ID " + new BlockID(b.getBlockID()) + ", but it's now a duplicate so all OK", Level.FINE);
                         break;
                     case FAIL_ORPHAN:
                         assert false;

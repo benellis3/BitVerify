@@ -1,7 +1,6 @@
 package bitverify.network;
 
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -9,8 +8,17 @@ import java.util.Set;
  */
 public class PeersEvent {
     private Set<InetSocketAddress> socketAddressList;
-    public PeersEvent(Set<InetSocketAddress> list) {
+    private PeerHandler peer;
+
+    public PeersEvent(Set<InetSocketAddress> list, PeerHandler peer) {
         socketAddressList = list;
+        this.peer = peer;
     }
-    public Set<InetSocketAddress> getSocketAddresses() {return socketAddressList;}
+    public Set<InetSocketAddress> getSocketAddresses() {
+        return socketAddressList;
+    }
+
+    public PeerHandler getPeer() {
+        return peer;
+    }
 }

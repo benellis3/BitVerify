@@ -54,7 +54,9 @@ public class DatabaseStore implements DataStore {
 
         String latestBlockIDString = getProperty("latestBlockID");
         if (latestBlockIDString == null) {
-            setLatestBlock(Block.getGenesisBlock());
+            Block g = Block.getGenesisBlock();
+            g.setActive(true);
+            setLatestBlock(g);
         } else {
             byte[] id = Base64.getDecoder().decode(latestBlockIDString);
             latestBlock = getBlock(id);
@@ -147,7 +149,7 @@ public class DatabaseStore implements DataStore {
         return entryDao.query(entriesForBlockQuery);
     }
 
-    public List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException {
+    public synchronized List<Block> getNMostRecentBlocks(int n, Block fromBlock) throws SQLException {
         // Sorted with the recent block at (or near) the header of the block
         // n = 2 means return the most recent block and the one before
         CloseableIterator<Block> initialResults = blockDao.queryBuilder()
@@ -178,11 +180,11 @@ public class DatabaseStore implements DataStore {
         return output;
     }
 
-    public List<Block> getNMostRecentBlocks(int n) throws SQLException {
+    public synchronized List<Block> getNMostRecentBlocks(int n) throws SQLException {
         return getNMostRecentBlocks(n, latestBlock);
     }
 
-    public List<Block> getActiveBlocksAfter(byte[] idFrom, int limit) throws SQLException {
+    public synchronized List<Block> getActiveBlocksAfter(byte[] idFrom, int limit) throws SQLException {
         // try to retrieve the starting block from the database.
         Block startBlock = getBlock(idFrom);
         if (startBlock == null)
@@ -305,31 +307,33 @@ public class DatabaseStore implements DataStore {
                     setBlockEntriesConfirmed(block, false, false);
                 }
 
+                if (!blockIsNewLatest)
+                    setBlockEntriesConfirmed(b, false, true);
+
                 for (Block block : blocksToActivate) {
                     updateBlockActive(block, true);
                     block.setEntriesList(getEntriesForBlock(block.getBlockID()));
                     setBlockEntriesConfirmed(block, true, false);
                 }
-                // finally activate current block
-                if (blockIsNewLatest) {
+
+                if (blockIsNewLatest)
                     setBlockEntriesConfirmed(b, true, true);
-                    setLatestBlock(b);
-                } else {
-                    setBlockEntriesConfirmed(b, false, true);
-                }
 
                 // now insert block-entry mappings into link table
                 for (Entry e : b.getEntriesList())
                     blockEntryDao.create(new BlockEntry(b.getBlockID(), e.getEntryID()));
+
+                if (blockIsNewLatest)
+                    setLatestBlock(b);
 
                 // block was successfully inserted
                 return InsertBlockResult.SUCCESS;
 
             } catch (SQLException e) {
                 // catch duplicate block error
-                if (isDuplicateError(e))
-                    return InsertBlockResult.FAIL_DUPLICATE;
-                else
+                  if (isDuplicateError(e))
+//                    return InsertBlockResult.FAIL_DUPLICATE;
+//                else
                     throw e;
             }
         });
@@ -370,35 +374,35 @@ public class DatabaseStore implements DataStore {
         ub.update();
     }
 
-    public Block getBlock(byte[] blockID) throws SQLException {
+    public synchronized Block getBlock(byte[] blockID) throws SQLException {
         Block b = blockDao.queryBuilder().limit(1L).where().eq("blockID", blockID).queryForFirst();
         if (b != null)
             b.setEntriesList(getEntriesForBlock(blockID));
         return b;
     }
 
-    public long getEntriesCount() throws SQLException {
+    public synchronized long getEntriesCount() throws SQLException {
         return entryDao.countOf();
     }
 
-    public Entry getEntry(UUID id) throws SQLException {
+    public synchronized Entry getEntry(UUID id) throws SQLException {
         return entryDao.queryForId(id);
     }
 
-    public List<Entry> getEntries(byte[] docHash) throws SQLException {
+    public synchronized List<Entry> getEntries(byte[] docHash) throws SQLException {
         return entryDao.queryForEq("docHash", docHash);
     }
 
-    public List<Entry> getUnconfirmedEntries() throws SQLException {
+    public synchronized List<Entry> getUnconfirmedEntries() throws SQLException {
         return entryDao.queryForEq("confirmed", false);
     }
 
-    public DatabaseIterator<Entry> getConfirmedEntries() throws SQLException {
+    public synchronized DatabaseIterator<Entry> getConfirmedEntries() throws SQLException {
         return new DatabaseIterator<>(entryDao.queryBuilder().where().eq("confirmed", true).iterator());
     }
 
-    public DatabaseIterator<Entry> getAllEntries() throws SQLException {
-        return  new DatabaseIterator<>(entryDao.closeableIterator());
+    public synchronized DatabaseIterator<Entry> getAllEntries() throws SQLException {
+        return new DatabaseIterator<>(entryDao.closeableIterator());
     }
 
     public DatabaseIterator<Entry> searchEntries(String searchQuery) throws SQLException {
@@ -431,7 +435,11 @@ public class DatabaseStore implements DataStore {
     }
 
     private boolean isDuplicateError(SQLException e) {
-        return e.getCause() instanceof SQLException && ((SQLException) e.getCause()).getErrorCode() == DUPLICATE_ERROR_CODE;
+        if (e.getCause() instanceof SQLException) {
+            SQLException c = (SQLException) e.getCause();
+            return c.getErrorCode() == DUPLICATE_ERROR_CODE && !c.getMessage().contains("CONSTRAINT");
+        }
+        return false;
     }
 
 

@@ -1,13 +1,20 @@
 package bitverify.network;
 
 import bitverify.LogEvent;
+import bitverify.LogEventSource;
 import bitverify.block.Block;
+import bitverify.crypto.Asymmetric;
+import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
+import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
 import bitverify.entries.EntryTest;
 import bitverify.mining.Miner;
 import bitverify.network.proto.MessageProto;
 import bitverify.persistence.DataStore;
+import bitverify.persistence.DatabaseIterator;
 import bitverify.persistence.DatabaseStore;
+import bitverify.persistence.InsertBlockResult;
 import com.j256.ormlite.logger.LocalLog;
 import com.j256.ormlite.stmt.query.In;
 import com.j256.ormlite.support.ConnectionSource;
@@ -15,6 +22,7 @@ import com.squareup.otto.Bus;
 import com.squareup.otto.DeadEvent;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 import static org.junit.Assert.*;
@@ -73,7 +82,7 @@ public class NetworkTest {
         Thread.sleep(500);
         boolean success = false;
         Collection<PeerHandler> connPeers = conn.peers();
-        PeerHandler ph = new PeerHandler(null, null, null, null, LARGE_INITIAL_PORT + 2, null);
+        PeerHandler ph = new PeerHandler(null, null, null, null, LARGE_INITIAL_PORT + 2);
         try {
             ph.establishConnection(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + 1));
         } catch (NullPointerException e) {
@@ -204,17 +213,17 @@ public class NetworkTest {
         System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
 
         InetSocketAddress addr1 = new InetSocketAddress("localhost", LARGE_INITIAL_PORT);
-        MiniNode n1 = new MiniNode("jdbc:h2:mem:networkTest1", "Node1", LARGE_INITIAL_PORT, new ArrayList<>(), 200);
+        MiniNode n1 = new MiniNode("jdbc:h2:mem:networkTest1", "Node1", LARGE_INITIAL_PORT, new ArrayList<>());
         n1.startMiner();
         // let it mine for a bit
         Thread.sleep(20000);
-        // miner1.stopMining();
-        // System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
+        n1.miner.stopMining();
+        System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
 
         // now make another peer and see if they synchronise
         MiniNode n2 = new MiniNode("jdbc:h2:mem:networkTest2", "Node2", LARGE_INITIAL_PORT+1, new ArrayList<InetSocketAddress>() {{
             add(addr1);
-        }}, 1000);
+        }});
         // n2.startMiner();
 
         Thread.sleep(10000);
@@ -222,30 +231,157 @@ public class NetworkTest {
         assertEquals(n1.dataStore.getBlocksCount(), n2.dataStore.getBlocksCount());
     }
 
+    @Test
+    public void forkedNetworkTest() throws Exception {
+        // suppress datastore logging
+        System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
 
+        // machine 1 builds a blockchain while not connected to anyone else.
+        MiniNode nA = new MiniNode("jdbc:h2:mem:networkTestA", "nA", LARGE_INITIAL_PORT - 1, new ArrayList<>());
+        nA.startMiner();
+        // let it mine, while adding entries
+        Thread.sleep(5000);
+        while (nA.dataStore.getActiveBlocksCount() < 50) {
+            nA.addPredefinedEntry();
+            Thread.sleep(1000);
+        }
+
+        // Thread.sleep(2 * amountOfMining);
+
+        nA.miner.stopMining();
+        System.out.println("node A has " + nA.dataStore.getActiveBlocksCount() + " blocks on its active chain");
+        System.out.println("node A has " + nA.dataStore.getBlocksCount() + " blocks in total");
+
+        // now machines 2 build blockchains in sync with each other.
+        MiniNode[] n2 = new MiniNode[3];
+        List<InetSocketAddress> addressList = new ArrayList<>();
+        for (int i = 0; i < n2.length; i++) {
+            n2[i] = new MiniNode("jdbc:h2:mem:networkTest" + i, "n" + i, LARGE_INITIAL_PORT + i, new ArrayList<>(addressList));
+            n2[i].startMiner();
+            addressList.add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT + i));
+        }
+
+        // let them mine, while adding entries
+        Thread.sleep(5000);
+        while (n2[0].dataStore.getActiveBlocksCount() < 30) {
+            n2[ThreadLocalRandom.current().nextInt(3)].addPredefinedEntry();
+            Thread.sleep(1000);
+        }
+
+        //Thread.sleep(amountOfMining);
+
+        for (int i = 0; i < n2.length; i++) {
+            n2[i].miner.stopMining();
+        }
+        Thread.sleep(2000);
+
+        for (int i = 0; i < n2.length; i++) {
+            System.out.println("node " + i + " has " + n2[i].dataStore.getActiveBlocksCount() + " blocks on its active chain");
+            System.out.println("node " + i + " has " + n2[i].dataStore.getBlocksCount() + " blocks in total");
+        }
+
+        // now we connect a machine with the original datastore and try to sync everyone up.
+        MiniNode nB = new MiniNode("jdbc:h2:mem:networkTestA", "nB", LARGE_INITIAL_PORT + 10, new ArrayList<>(addressList));
+
+        // let block transfer happen
+        Thread.sleep(20000);
+
+        System.out.println("node B has " + nB.dataStore.getActiveBlocksCount() + " blocks on its active chain");
+        System.out.println("node B has " + nB.dataStore.getBlocksCount() + " blocks in total");
+        for (int i = 0; i < n2.length; i++) {
+            System.out.println("node " + i + " has " + n2[i].dataStore.getActiveBlocksCount() + " blocks on its active chain");
+            System.out.println("node " + i + " has " + n2[i].dataStore.getBlocksCount() + " blocks in total");
+        }
+
+        System.out.println(new SimpleDateFormat("HH:mm:ss.SSS").format(new Date()));
+        for (int i = 0; i < n2.length; i++) {
+            assertEquals(nB.dataStore.getActiveBlocksCount(), n2[i].dataStore.getActiveBlocksCount());
+            List<byte[]> chain1 = nB.dataStore.getActiveBlocksSample(20);
+            List<byte[]> chain2 = n2[i].dataStore.getActiveBlocksSample(20);
+            assertEquals(chain1.size(), chain2.size());
+            for (int j = 0; j < chain1.size(); j++) {
+                assertEquals(new BlockID(chain1.get(j)), new BlockID(chain2.get(j)));
+            }
+        }
+        System.out.println(new SimpleDateFormat("HH:mm:ss.SSS").format(new Date()));
+
+    }
+
+
+    @Test
+    public void storingEntriesTest() throws Exception {
+        // suppress datastore logging
+        // System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "ERROR");
+
+        // machine 1 builds a blockchain while not connected to anyone else.
+        MiniNode nA = new MiniNode("jdbc:h2:mem:networkTestA", "nA", LARGE_INITIAL_PORT, new ArrayList<>());
+        nA.startMiner();
+        // let it mine, while adding entries
+        Thread.sleep(5000);
+        while (nA.dataStore.getActiveBlocksCount() < 10) {
+            nA.addPredefinedEntry();
+            Thread.sleep(1000);
+        }
+
+        nA.miner.stopMining();
+        System.out.println("node A has " + nA.dataStore.getActiveBlocksCount() + " blocks on its active chain");
+        System.out.println("node A has " + nA.dataStore.getBlocksCount() + " blocks in total");
+
+        // now machine B syncs with this chain
+        MiniNode nB = new MiniNode("jdbc:h2:mem:networkTestB", "nB", LARGE_INITIAL_PORT + 10, new ArrayList<InetSocketAddress>() {{ add(new InetSocketAddress("localhost", LARGE_INITIAL_PORT)); }});
+
+        // let block transfer happen
+        Thread.sleep(10000);
+
+        System.out.println("node B has " + nB.dataStore.getActiveBlocksCount() + " blocks on its active chain");
+        System.out.println("node B has " + nB.dataStore.getBlocksCount() + " blocks in total");
+
+        assertEquals(nB.dataStore.getActiveBlocksCount(), nA.dataStore.getActiveBlocksCount());
+
+        try (DatabaseIterator<Block> chainA = nA.dataStore.getAllBlocks();
+             DatabaseIterator<Block> chainB = nB.dataStore.getAllBlocks()) {
+            while (chainA.moveNext() & chainB.moveNext()) {
+                // same block
+                assertEquals(chainA.current().getTimeStamp(), chainB.current().getTimeStamp());
+                // same number of entries in each block
+                assertEquals(chainA.current().getEntriesList().size(), chainB.current().getEntriesList().size());
+            }
+            // must be same length
+            assertEquals(null, chainA.current());
+            assertEquals(null, chainB.current());
+        }
+
+        System.out.println(new SimpleDateFormat("HH:mm:ss.SSS").format(new Date()));
+    }
+
+
+    /**
+     * A pint sized node for testing purposes.
+     */
     private class MiniNode {
         Miner miner;
         DataStore dataStore;
         Bus bus;
         ConnectionManager man;
+        Identity identity;
 
         private Thread t;
 
-        public MiniNode(String dsString, String nodeName, int port, List<InetSocketAddress> initialPeers, int minerDifficulty) throws IOException, SQLException {
+        public MiniNode(String dsString, String nodeName, int port, List<InetSocketAddress> initialPeers) throws IOException, SQLException {
+
             bus = new Bus(ThreadEnforcer.ANY);
             dataStore = new DatabaseStore(dsString);
 
             bus.register(new Object() {
+                SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss.SSS");
                 @Subscribe
                 public void onLogEvent(LogEvent l) {
                     if (l.getLevel().intValue() < Level.FINER.intValue()) return;
-                    SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
                     System.out.println(nodeName + ": " + d.format(new Date(l.getTimeStamp())) + ": log event from " + l.getSource().toString() + ", level " + l.getLevel() + ": " + l.getMessage());
                 }
 
                 @Subscribe
                 public void onDeadEvent(DeadEvent e) {
-                    SimpleDateFormat d = new SimpleDateFormat("HH:mm:ss");
                     System.out.println(nodeName + ": " + d.format(new Date()) + ": dead event: " + e.event.getClass().toString() + " from: " + e.source);
                 }
             });
@@ -256,19 +392,43 @@ public class NetworkTest {
                 @Subscribe
                 public void onBlockFoundEvent(Miner.BlockFoundEvent e) throws SQLException {
                     final Block block = e.getBlock();
-                    dataStore.insertBlock(block);
                     man.broadcastBlock(block);
                 }
 
             });
 
-            miner = new Miner(bus, dataStore, 2, minerDifficulty, 2);
+            bus.post(new LogEvent("Generating new key identity...", LogEventSource.CRYPTO, Level.INFO));
+            AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
+            identity = new Identity("default", keyPair);
+
+            miner = new Miner(bus, dataStore, 2, 250, 2);
             t = new Thread(miner);
         }
 
         void startMiner() {
             t.start();
         }
+
+        private void addPredefinedEntry() {
+
+            byte[] hash = Hash.hashString("inimitation of some file asdasd");
+            String fileName = "The Bible......";
+            String fileDownload = "somewhere for sure";
+            String fileDescription = "welllllllll";
+            String fileGeo = "Israel... or stuff";
+
+            Entry entry;
+            try {
+                entry = new Entry(identity.getKeyPair(), hash, fileDownload, fileName,
+                        fileDescription, fileGeo, System.currentTimeMillis(), new String[0]);
+                dataStore.insertEntry(entry);
+                bus.post(new NewEntryEvent(entry));
+            } catch (KeyDecodingException | IOException | SQLException e) {
+                System.out.println("Oops. Error generating the predefined entry...");
+                return;
+            }
+        }
+
     }
 }
 

@@ -47,16 +47,18 @@ public class HeadersFuture extends ProtocolFuture<List<Block>> {
                 .build();
 
         // if peer is shut down, return null straight away
-        if (peer.send(m)) {
-            // register for replies once we've sent the request
-            bus.register(this);
-        } else {
+        bus.register(this);
+        if (!peer.send(m)) {
+            bus.unregister(this);
             resultLatch.countDown();
         }
     }
 
     @Subscribe
     public void onHeadersMessage(HeadersMessageEvent e) {
+        if (e.getPeer() != peer)
+            return;
+
         // deregister now we've got our response
         bus.unregister(this);
 

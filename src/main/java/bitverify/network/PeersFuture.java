@@ -30,20 +30,23 @@ public class PeersFuture extends ProtocolFuture<Set<InetSocketAddress>> {
                 .build();
 
         // if peer is shut down, return null straight away
-        if (peer.send(message)) {
-            // register for replies once we've sent the request
-            bus.register(this);
-        } else {
+        System.out.println("Registering peers future " + this);
+        bus.register(this);
+        if (!peer.send(message)) {
+            System.out.println("unregistering peers future " + this);
+            bus.unregister(this);
             resultLatch.countDown();
         }
     }
 
     @Subscribe
     public void onPeersEvent(PeersEvent pe) {
-        // deregister now we've got our response
-        bus.unregister(this);
+        if (pe.getPeer() != peer)
+            return;
         result = pe.getSocketAddresses();
         // notify that we got a response
         resultLatch.countDown();
+        // deregister now we've got our response
+        bus.unregister(this);
     }
 }
