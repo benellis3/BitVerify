@@ -206,8 +206,10 @@ public class GUI extends Application {
 	        	hashTab.setGraphic(getTabIconView("/hash_icon.png"));
 	        	
 	        	Tab nodeTab = getNodesTab();
+	        	nodeTab.setGraphic(getTabIconView("/nodes.png"));
 	        	
 	        	Tab blockTab = getBlockBreakdownTab();
+	        	blockTab.setGraphic(getTabIconView("/block.png"));
 	        	
 	        	tabs.getTabs().addAll(minerTab, addEntryTab, searchTab, hashTab, networkTab, nodeTab, blockTab);
 	       
