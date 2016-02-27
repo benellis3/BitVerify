@@ -847,10 +847,9 @@ public class GUI extends Application {
 		reloadButton.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
 		    	accordion.getPanes().clear();
-		    	DatabaseIterator<Block> iterator = mNode.getBlockList();
-		    	if (iterator != null) {
-		    		for (int i = 0; i < MAX_BLOCKS_AT_ONCE; i++) {
-		    			try {
+		    	try (DatabaseIterator<Block> iterator = mNode.getBlockList()){
+			    	if (iterator != null) {
+			    		for (int i = 0; i < MAX_BLOCKS_AT_ONCE; i++) {
 							if (iterator.moveNext()) {
 								Block block = iterator.current();
 								// Create a table view to display the data
@@ -870,14 +869,16 @@ public class GUI extends Application {
 				    	    	tableView.setItems(data);
 				    	    	TitledPane tPane = new TitledPane(block.toString(), tableView);
 				    	    	accordion.getPanes().add(tPane);
+							} else {
+								//no more blocks
+								break;
 							}
-						} catch (SQLException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-		    			
-		    		}
-		    	}
+			    		}
+			    	}
+		    	} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 		    }
 		});
 		reloadButton.fire();
