@@ -29,24 +29,21 @@ public class Entry implements Comparable<Entry> {
 	@DatabaseField(id = true)
 	private UUID entryID = UUID.randomUUID();
 
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
-	private byte[] blockID;
-
 	// we should store hashes and keys as byte arrays.
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] entryHashSigned;
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] uploaderID;
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] receiverID = new byte[0];
 
 	@DatabaseField
 	private long entryTimeStamp;
 
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] metadataBytes = new byte[0];
 
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] encryptedSymmetricKey = new byte[0];
 
 	// Used by database to remember whether an entry is part of the active blockchain.
@@ -54,7 +51,7 @@ public class Entry implements Comparable<Entry> {
 	private boolean confirmed;
 	
 	// --> metadata
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY(32)")
 	private byte[] docHash = null;
 
 	private static final int DOC_LINK_LENGTH = 2048;
@@ -365,9 +362,6 @@ public class Entry implements Comparable<Entry> {
 		return receiverID;
 	}
 
-	public void setBlockID(byte[] blockID) {
-		this.blockID = blockID;
-	}
 
 	public void setConfirmed(boolean confirmed) {
 		this.confirmed = confirmed;

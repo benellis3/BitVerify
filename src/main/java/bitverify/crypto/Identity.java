@@ -27,7 +27,7 @@ public class Identity {
 	@DatabaseField(width = DESCRIPTION_LENGTH)
 	private String description;
 
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] publicKey;
 
 	private byte[] decryptedPrivateKey = null; //do not persist to DB
@@ -35,7 +35,7 @@ public class Identity {
 	@DatabaseField
 	private boolean needsEncryption = false; //whether it needs encryption with master pw
 
-	@DatabaseField(dataType = DataType.BYTE_ARRAY)
+	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
 	private byte[] privateKey = null; //in encrypted form IF needsEcryption is true
 		//same as decryptedPrivateKey otherwise
 	

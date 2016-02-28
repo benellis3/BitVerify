@@ -35,9 +35,9 @@ public class Block {
 	public static final long GENESIS_TIMESTAMP = 1455745984018l;
 	
     // Block header
-    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY(32)")
     private byte[] prevBlockHash;
-    @DatabaseField(dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY(32)")
     private byte[] entriesHash;
     @DatabaseField
     private long timeStamp;
@@ -47,7 +47,7 @@ public class Block {
     private int nonce = 0;
 
     // for benefit of database
-    @DatabaseField(dataType = DataType.BYTE_ARRAY, uniqueIndex = true)
+    @DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY(32)", uniqueIndex = true)
     private byte[] blockID;
     @DatabaseField
     private long height;

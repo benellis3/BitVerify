@@ -502,7 +502,7 @@ public class Node {
 	private void setupDatabase() {
 		informUserOfProgress("Setting up database...");
 		try {
-			mDatabase = new DatabaseStore("jdbc:h2:file:bitverify.db");
+			mDatabase = new DatabaseStore("jdbc:h2:file:bitverify");
 		} catch (SQLException e) {
 			System.out.println("Error setting up database...");
 			e.printStackTrace();
