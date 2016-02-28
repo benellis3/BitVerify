@@ -241,7 +241,7 @@ public class NetworkTest {
         nA.startMiner();
         // let it mine, while adding entries
         Thread.sleep(5000);
-        while (nA.dataStore.getActiveBlocksCount() < 2) {
+        while (nA.dataStore.getActiveBlocksCount() < 20) {
             nA.addPredefinedEntry();
             Thread.sleep(1000);
         }
@@ -420,7 +420,7 @@ public class NetworkTest {
             Entry entry;
             try {
                 entry = new Entry(identity.getKeyPair(), hash, fileDownload, fileName,
-                        fileDescription, fileGeo, System.currentTimeMillis(), new String[0]);
+                        fileDescription, fileGeo, System.currentTimeMillis());
                 dataStore.insertEntry(entry);
                 bus.post(new NewEntryEvent(entry));
             } catch (KeyDecodingException | IOException | SQLException e) {

@@ -452,6 +452,7 @@ public class ConnectionManager {
 
         private void broadcastEntriesOnceBlockDownloadComplete() throws InterruptedException {
             blocksInFlightCounter.onceZero(() -> {
+                log("Now broadcasting unconfirmed entries", Level.FINE);
                 try {
                     for (Entry e : dataStore.getUnconfirmedEntries())
                         broadcastEntry(e);
@@ -464,6 +465,7 @@ public class ConnectionManager {
         private void sendEntriesOnceBlockDownloadComplete(PeerHandler peer) throws InterruptedException {
             blocksInFlightCounter.onceZero(() -> {
                 try {
+                    log("Now sending unconfirmed entries to " + peer.getPeerAddress(), Level.FINE);
                     for (Entry e : dataStore.getUnconfirmedEntries()) {
                         EntryMessage entryMessage = EntryMessage.newBuilder()
                                 .setEntryBytes(ByteString.copyFrom(e.serialize()))
