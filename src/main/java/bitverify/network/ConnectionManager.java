@@ -677,6 +677,8 @@ public class ConnectionManager {
                     // can download another block from peer (providing there are more queued up)
                     if (!downloadAnotherBlock(peer))
                         blocksInFlightCounter.decrement(); // only if we failed to download another.
+
+                    log("total blocks in flight: " + blocksInFlightCounter.get(), Level.FINE);
                 }
 
                 // check we don't already have it in our store

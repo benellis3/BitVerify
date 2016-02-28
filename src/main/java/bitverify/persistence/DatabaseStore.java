@@ -301,20 +301,34 @@ public class DatabaseStore implements DataStore {
             // deactivate first, in case an entry will get reactivated.
             for (Block block : blocksToDeactivate) {
                 updateBlockActive(block, false);
-                setBlockEntriesConfirmed(block, false, false);
+                setBlockEntriesConfirmed(block, false);
             }
 
-            if (!blockIsNewLatest)
-                setBlockEntriesConfirmed(b, false, true);
+            if (!blockIsNewLatest) {
+                // inserting an inactive block: insert entries as unconfirmed where necessary but don't update them, in case we made them confirmed elsewhere
+                for (Entry e : b.getEntriesList()) {
+                    if (!entryExists(e)) {
+                        e.setConfirmed(false);
+                        insertEntry(e);
+                    }
+                }
+            }
 
             for (Block block : blocksToActivate) {
                 updateBlockActive(block, true);
-                setBlockEntriesConfirmed(block, true, false);
+                setBlockEntriesConfirmed(block, true);
             }
 
-            if (blockIsNewLatest)
-                setBlockEntriesConfirmed(b, true, true);
-
+            if (blockIsNewLatest) {
+                // inserting an active block: insert or update entries as confirmed
+                for (Entry e : b.getEntriesList()) {
+                    e.setConfirmed(true);
+                    if (entryExists(e))
+                        entryDao.update(e);
+                    else
+                        entryDao.create(e);
+                }
+            }
 
             // now insert block-entry mappings into link table
             for (Entry e : b.getEntriesList())
@@ -341,21 +355,12 @@ public class DatabaseStore implements DataStore {
      * Not an atomic operation so should call this from a transaction.
      * @param block the block whose entries will be affected
      * @param confirmed whether the entries are now confirmed or unconfirmed
-     * @param insert whether to inset entries from the block if they're not already present
      * @throws SQLException
      */
-    private void setBlockEntriesConfirmed(Block block, boolean confirmed, boolean insert) throws SQLException {
-        // create/update entries
-        if (insert) {
-            for (Entry e : block.getEntriesList()) {
-                e.setConfirmed(confirmed);
-                entryDao.createOrUpdate(e);
-            }
-        } else {
-            for (Entry e : block.getEntriesList()) {
-                e.setConfirmed(confirmed);
-                entryDao.update(e);
-            }
+    private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
+        for (Entry e : block.getEntriesList()) {
+            e.setConfirmed(confirmed);
+            entryDao.update(e);
         }
     }
 
@@ -426,6 +431,10 @@ public class DatabaseStore implements DataStore {
             else
                 throw e;
         }
+    }
+
+    private boolean entryExists(Entry entry) throws SQLException {
+        return entryDao.idExists(entry.getEntryID());
     }
 
     private boolean isDuplicateError(SQLException e) {

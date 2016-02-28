@@ -62,4 +62,8 @@ public class BlocksInFlightCounter {
             blocksInFlight = newCount;
         }
     }
+
+    public int get() {
+        return blocksInFlight;
+    }
 }
