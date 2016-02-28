@@ -71,7 +71,7 @@ public class Entry implements Comparable<Entry> {
 	private String docGeoLocation = "";
 	
 	@DatabaseField
-	private long docTimeStamp = Long.MIN_VALUE;
+	private long docTimeStamp = 0;
 	
 	private boolean decryptHasBeenCalled = false;
 	
@@ -352,7 +352,7 @@ public class Entry implements Comparable<Entry> {
 	}
 	
 	public String getEntryTimeStampString() {
-		return getEntryTimeStamp() == Long.MIN_VALUE ? "" : new Date(getEntryTimeStamp()).toString();
+		return new Date(getEntryTimeStamp()).toString();
 	}
 	
 	public byte[] getUploaderID(){
