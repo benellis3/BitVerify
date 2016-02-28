@@ -98,6 +98,11 @@ public class GUI extends Application {
 		launch();
 	}
 	
+	@Override 
+	public void stop(){
+	    System.exit(0);
+	}
+	
 	@Override
 	public void start(Stage stage) throws Exception {
 		
