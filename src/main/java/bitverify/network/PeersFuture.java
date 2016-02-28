@@ -30,10 +30,8 @@ public class PeersFuture extends ProtocolFuture<Set<InetSocketAddress>> {
                 .build();
 
         // if peer is shut down, return null straight away
-        System.out.println("Registering peers future " + this);
         bus.register(this);
         if (!peer.send(message)) {
-            System.out.println("unregistering peers future " + this);
             bus.unregister(this);
             resultLatch.countDown();
         }

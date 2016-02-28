@@ -216,7 +216,7 @@ public class NetworkTest {
         MiniNode n1 = new MiniNode("jdbc:h2:mem:networkTest1", "Node1", LARGE_INITIAL_PORT, new ArrayList<>());
         n1.startMiner();
         // let it mine for a bit
-        Thread.sleep(20000);
+        Thread.sleep(2000);
         n1.miner.stopMining();
         System.out.println("==================================================== STOPPED MINING ON NODE 1 ====================================================");
 
@@ -241,7 +241,7 @@ public class NetworkTest {
         nA.startMiner();
         // let it mine, while adding entries
         Thread.sleep(5000);
-        while (nA.dataStore.getActiveBlocksCount() < 50) {
+        while (nA.dataStore.getActiveBlocksCount() < 2) {
             nA.addPredefinedEntry();
             Thread.sleep(1000);
         }

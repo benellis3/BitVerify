@@ -25,6 +25,7 @@ public class BlocksInFlightCounter {
     public synchronized void onceZero(Runnable r) throws InterruptedException {
         while (blocksInFlight > 0)
             this.wait();
+        r.run();
     }
 
     /**
