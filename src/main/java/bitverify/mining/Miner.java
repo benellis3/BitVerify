@@ -5,6 +5,7 @@ import java.lang.String;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -238,16 +239,28 @@ public class Miner implements Runnable{
 				result = Hex.toHexString(blockMining.hashHeader());
 				//Successful mine
 				if (mineSuccess(result, blockMining.getTarget())){
-					Block successfulBlock = blockMining;
-					eventBus.post(new LogEvent("Successful block mine",LogEventSource.MINING,Level.INFO));
-					eventBus.post(new LogEvent("Block Hash:		"+result,LogEventSource.MINING,Level.INFO));
-					eventBus.post(new LogEvent("Block id:	  	"+ Base64.getEncoder().encodeToString(successfulBlock.getBlockID()),LogEventSource.MINING,Level.INFO));
-					//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
-					dataStore.insertBlock(successfulBlock);
-					//Pass successful block to application logic for broadcasting to the network
-					eventBus.post(new BlockFoundEvent(successfulBlock));
-	
-					newMiningBlock();
+					//Check subchain vailidity, before fully accepting the mined block
+					//This ensures that honest workers don't corrupt their chain with e.g. bad timestamps
+					int subchainLength = Block.TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS;
+					List<Block> subchain = dataStore.getNMostRecentBlocks(subchainLength);
+					Collections.reverse(subchain); //we want the "oldest" block to be at index 0
+					subchain.add(blockMining);
+					boolean subchainIsValid = Block.verifyChain(subchain, null);
+					
+					if (subchainIsValid){
+						Block successfulBlock = blockMining;
+						eventBus.post(new LogEvent("Successful block mine",LogEventSource.MINING,Level.INFO));
+						eventBus.post(new LogEvent("Block Hash:		"+result,LogEventSource.MINING,Level.INFO));
+						eventBus.post(new LogEvent("Block id:	  	"+ Base64.getEncoder().encodeToString(successfulBlock.getBlockID()),LogEventSource.MINING,Level.INFO));
+						//Add the successful block to the blockchain (the database will ensure the entries in it are no longer unconfirmed)
+						dataStore.insertBlock(successfulBlock);
+						//Pass successful block to application logic for broadcasting to the network
+						eventBus.post(new BlockFoundEvent(successfulBlock));
+		
+						newMiningBlock();
+					} else {
+						eventBus.post(new LogEvent("Block was almost mined - but subchain validity test FAILED",LogEventSource.MINING,Level.INFO));
+					}
 				}
 				//Proof of mining
 				else if (mineSuccess(result, currentMiningProofTarget)){

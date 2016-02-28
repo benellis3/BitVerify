@@ -30,7 +30,7 @@ import com.squareup.otto.Bus;
  */
 public class Block {
 	
-	private static final int TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS = 11;
+	public static final int TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS = 11;
 	private static final long TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE = 10 * 60 * 1000; //we allow blocks to have a timestamp couple minutes into the future
 	public static final long GENESIS_TIMESTAMP = 1455745984018l;
 	
@@ -174,17 +174,17 @@ public class Block {
      * @throws Exception Method is expecting a list of Entries to verify, so the list should have size > 0.
      */
     public static boolean verifyChain(List<Block> blockList, Bus bus){
-        bus.post(new LogEvent("verifying chain of headers", LogEventSource.BLOCK, Level.FINER));
+        if (bus!=null) bus.post(new LogEvent("verifying chain of headers", LogEventSource.BLOCK, Level.FINER));
         int FIRST = 0;
         int listLen = blockList.size();
         if (blockList.isEmpty()) {
             throw new IllegalArgumentException();
         } else if (listLen == 1) {
-            bus.post(new LogEvent("chain only had one block, verifying hash meets difficulty", LogEventSource.BLOCK, Level.FINER));
+        	if (bus!=null) bus.post(new LogEvent("chain only had one block, verifying hash meets difficulty", LogEventSource.BLOCK, Level.FINER));
             Block onlyBlock = blockList.get(FIRST);
             return Miner.blockHashMeetDifficulty(onlyBlock);
         } else {
-            bus.post(new LogEvent("chain has " + blockList.size() + " blocks", LogEventSource.BLOCK, Level.FINER));
+        	if (bus!=null) bus.post(new LogEvent("chain has " + blockList.size() + " blocks", LogEventSource.BLOCK, Level.FINER));
             Block prevBlock = blockList.get(0);
             Block currentBlock;
             long currentBlockTime;
@@ -209,8 +209,8 @@ public class Block {
                 matchingHash = Arrays.equals(prevBlockHash, currentBlockPrevHash);
                 validNonce = Miner.blockHashMeetDifficulty(currentBlock);
                 
-                //time invariant 0: older than genesis block
-                timeInvar0 = (currentBlockTime > GENESIS_TIMESTAMP);
+                //time invariant 0: not older than genesis block
+                timeInvar0 = (currentBlockTime >= GENESIS_TIMESTAMP);
                 
                 //time invariant 1: currentBlockTime > median of prev TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS block times
                 if (i>=11){ //only check if there are enough previous blocks
@@ -227,30 +227,31 @@ public class Block {
                 
                 //time invariant 2: future times are not allowed
                 timeInvar2 = (currentBlockTime < currentSysTime + TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE);
-
-                if (!matchingHash)
-                    bus.post(new LogEvent("chain validation failed: child-parent hashes didn't match", LogEventSource.BLOCK, Level.FINER));
-                if (!validNonce)
-                    bus.post(new LogEvent("chain validation failed: block hash did not meet its difficulty", LogEventSource.BLOCK, Level.FINER));
-                if (!timeInvar0) {
-                    bus.post(new LogEvent("chain validation failed: time invariant 0 test failed", LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("genesis block timestamp is " + new Date(GENESIS_TIMESTAMP), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
-                }
-                if (!timeInvar1) {
-                    bus.post(new LogEvent("chain validation failed: time invariant 1 test failed", LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("median of prev "+TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS+" timestamps was "
-                    		+ new Date(medianTime), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("next block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
-                }
-                if (!timeInvar2) {
-                    bus.post(new LogEvent("chain validation failed: time invariant 2 test failed", LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("current system time plus allowance buffer was" +
-                    		new Date(currentSysTime + TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE), LogEventSource.BLOCK, Level.FINER));
-                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
+                if (bus!=null) {
+	                if (!matchingHash)
+	                    bus.post(new LogEvent("chain validation failed: child-parent hashes didn't match", LogEventSource.BLOCK, Level.FINER));
+	                if (!validNonce)
+	                    bus.post(new LogEvent("chain validation failed: block hash did not meet its difficulty", LogEventSource.BLOCK, Level.FINER));
+	                if (!timeInvar0) {
+	                    bus.post(new LogEvent("chain validation failed: time invariant 0 test failed", LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("genesis block timestamp is " + new Date(GENESIS_TIMESTAMP), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
+	                }
+	                if (!timeInvar1) {
+	                    bus.post(new LogEvent("chain validation failed: time invariant 1 test failed", LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("median of prev "+TIME_INVAR_1_MEDIAN_OF_THIS_MANY_PREV_BLOCKS+" timestamps was "
+	                    		+ new Date(medianTime), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("next block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
+	                }
+	                if (!timeInvar2) {
+	                    bus.post(new LogEvent("chain validation failed: time invariant 2 test failed", LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("block timestamp was " + new Date(currentBlockTime), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("current system time plus allowance buffer was" +
+	                    		new Date(currentSysTime + TIME_INVAR_2_TIME_BUFFER_INTO_THE_FUTURE), LogEventSource.BLOCK, Level.FINER));
+	                    bus.post(new LogEvent("time invariant should be positive: " + (currentBlockTime - medianTime), LogEventSource.BLOCK, Level.FINER));
+	                }
                 }
                 if (!matchingHash || !validNonce || !timeInvar0 || !timeInvar1 || !timeInvar2) {
                     return false;
