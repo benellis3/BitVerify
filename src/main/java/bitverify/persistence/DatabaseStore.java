@@ -14,7 +14,6 @@ import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.*;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import org.h2.engine.Database;
 
 
 import java.sql.SQLException;
@@ -322,9 +321,8 @@ public class DatabaseStore implements DataStore {
             if (blockIsNewLatest) {
                 // inserting an active block: insert or update entries as confirmed
                 for (Entry e : b.getEntriesList()) {
-                    e.setConfirmed(true);
                     if (entryExists(e))
-                        entryDao.update(e);
+                        updateEntryConfirmed(e, true);
                     else
                         entryDao.create(e);
                 }
@@ -359,12 +357,20 @@ public class DatabaseStore implements DataStore {
      */
     private void setBlockEntriesConfirmed(Block block, boolean confirmed) throws SQLException {
         for (Entry e : block.getEntriesList()) {
-            e.setConfirmed(confirmed);
-            entryDao.update(e);
+            updateEntryConfirmed(e, confirmed);
         }
     }
 
+    private void updateEntryConfirmed(Entry entry, boolean confirmed) throws SQLException {
+        entry.setConfirmed(confirmed);
+        UpdateBuilder<Entry, UUID> ub = entryDao.updateBuilder();
+        ub.updateColumnValue("confirmed", confirmed);
+        ub.where().eq("entryID", entry.getEntryID());
+        ub.update();
+    }
+
     private void updateBlockActive(Block block, boolean active) throws SQLException {
+        block.setActive(active);
         UpdateBuilder<Block, Void> ub = blockDao.updateBuilder();
         ub.updateColumnValue("active", active);
         ub.where().eq("blockID", block.getBlockID());
