@@ -6,9 +6,11 @@ public class ArgumentHandler {
 	
 	public static void HandleArgs(String [] args) {
 		if (args.length == 0) {
-			Node n = new Node(Node.StartType.CLI);
+			GUI.StartGUI();
 		} else if (args[0].equalsIgnoreCase("--gui")) {
 			GUI.StartGUI();
+		} else if (args[0].equalsIgnoreCase("--cli")) {
+			Node n = new Node(Node.StartType.CLI);
 		}
 	
 	}
