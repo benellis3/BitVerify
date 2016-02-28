@@ -622,7 +622,7 @@ public class GUI extends Application {
     	
     	// Create a table view to display the data
     	ObservableList<Entry> data = FXCollections.observableArrayList();
-    	TableView<Entry> tableView = new TableView<Entry>();
+    	TableView<Entry> tableView = getEntryTableView();
     	
     	// Restrict selection to one cell
     	tableView.getSelectionModel().setCellSelectionEnabled(true);
@@ -646,45 +646,6 @@ public class GUI extends Application {
             	}
             }
         });
-    	
-    	// Create all our columns
-    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
-    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
-    	timeStampColumn.setText("TimeStamp");
-    	timeStampColumn.setPrefWidth(175);
-    	timeStampColumn.setCellValueFactory(
-    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
-    	
-    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
-    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
-    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
-    	
-    	// These columns are byte arrays, so we have to do them a little differently
-    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
-    	receiverColumn.setText("Receiver");
-    	receiverColumn.setPrefWidth(75);
-    	receiverColumn.setCellValueFactory(
-    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
-    	
-    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
-    	uploaderColumn.setText("Uploader");
-    	uploaderColumn.setPrefWidth(75);
-    	uploaderColumn.setCellValueFactory(
-    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
-    	
-    	TableColumn<Entry, String> hashColumn = new TableColumn<Entry, String>();
-    	hashColumn.setText("Hash");
-    	hashColumn.setPrefWidth(75);
-    	hashColumn.setCellValueFactory(
-    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getDocHash()))));
-   
-    	// Back to normal columns now
-    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
-    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
-    	
-    	// Order of columns
-    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, confirmedColumn);
     	
     	tableView.setItems(data);
     	
@@ -795,6 +756,11 @@ public class GUI extends Application {
 		TextField docText = new TextField();
 		docText.setPrefWidth(400);
 		
+		
+		TableView<Entry> tableView = getEntryTableView();
+		ObservableList<Entry> data = FXCollections.observableArrayList();
+		tableView.setItems(data);
+		
 		Button chooseFileBtn = new Button("Choose File");
 		chooseFileBtn.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
@@ -804,7 +770,7 @@ public class GUI extends Application {
 				// Update the docText field with the desired file
 				if (selectedFile != null) {
 					docText.setText(selectedFile.getAbsolutePath());
-					updateHashText(selectedFile, hashText);
+					updateHashTextAndTable(selectedFile, hashText, data);
 				}
 				
 		    }
@@ -818,13 +784,13 @@ public class GUI extends Application {
                 if (ke.getCode().equals(KeyCode.ENTER))
                 {
                     File file = new File(docText.getText());
-                    updateHashText(file, hashText);
+                    updateHashTextAndTable(file, hashText, data);
                 }
             }
         });
 		
 		docHBox.getChildren().addAll(docLabel, docText, chooseFileBtn);
-		vLay.getChildren().addAll(docHBox, hashHBox);
+		vLay.getChildren().addAll(docHBox, hashHBox, tableView);
 		documentTab.setContent(vLay);
 		return documentTab;
 	}
@@ -927,11 +893,17 @@ public class GUI extends Application {
 		return breakdownTab;
 	}
 	
-	private void updateHashText(File selectedFile, Text hashText) {
+	private void updateHashTextAndTable(File selectedFile, Text hashText, ObservableList<Entry> data) {
 		try {
 			FileInputStream inputStream = new FileInputStream(selectedFile);
 			byte [] hash = Hash.hashStream(inputStream);
 			hashText.setText("Hash: " + Base64.toBase64String(hash));
+
+			if (mNode != null) {
+				List<Entry> entries = mNode.getEntrySearchByHash(hash);
+				data.setAll(entries);
+			}
+			
 			inputStream.close();
 		} catch (IOException e1) {
 			hashText.setText(String.format("File '%s' does not exist", selectedFile.getAbsolutePath()));
@@ -986,5 +958,50 @@ public class GUI extends Application {
 	}
 	
 	
+	
+	private TableView<Entry> getEntryTableView() {
+		TableView<Entry> tableView = new TableView<Entry>();
+		
+	   	// Create all our columns
+    	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
+    	TableColumn<Entry, String> timeStampColumn = new TableColumn<Entry, String>();
+    	timeStampColumn.setText("TimeStamp");
+    	timeStampColumn.setPrefWidth(175);
+    	timeStampColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(cellData.getValue().getEntryTimeStampString()));
+    	
+    	TableColumn<Entry, String> nameColumn = getTableColumn("Name", "docName");
+    	TableColumn<Entry, String> descriptionColumn = getTableColumn("Description", "docDescription");
+    	TableColumn<Entry, String> downloadColumn = getTableColumn("Link", "docLink");
+    	
+    	// These columns are byte arrays, so we have to do them a little differently
+    	TableColumn<Entry, String> receiverColumn = new TableColumn<Entry, String>();
+    	receiverColumn.setText("Receiver");
+    	receiverColumn.setPrefWidth(75);
+    	receiverColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getReceiverID()))));
+    	
+    	TableColumn<Entry, String> uploaderColumn = new TableColumn<Entry, String>();
+    	uploaderColumn.setText("Uploader");
+    	uploaderColumn.setPrefWidth(75);
+    	uploaderColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getUploaderID()))));
+    	
+    	TableColumn<Entry, String> hashColumn = new TableColumn<Entry, String>();
+    	hashColumn.setText("Hash");
+    	hashColumn.setPrefWidth(75);
+    	hashColumn.setCellValueFactory(
+    		      cellData -> new ReadOnlyStringWrapper(Base64.toBase64String((cellData.getValue().getDocHash()))));
+   
+    	// Back to normal columns now
+    	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
+    	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
+    	
+    	// Order of columns
+    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
+    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, confirmedColumn);
+    	
+    	return tableView;
+	}
 	
 }

@@ -588,6 +588,14 @@ public class Node {
     	}
     }
     
+    public List<Entry> getEntrySearchByHash(byte [] hash) {
+    	try {
+			return mDatabase.getEntries(hash);
+		} catch (SQLException e) {
+			return new ArrayList<Entry>();
+		}
+    }
+    
 
     public Bus getEventBus() {
     	return mEventBus;
