@@ -308,9 +308,12 @@ public class PeerHandler {
                 entry = Entry.deserialize(bytes);
                 // check the validity of the entry
                 if (entry.testEntryHashSignature()) {
+                    log("received valid entry " + entry.getEntryID() + " from peer " + peerAddress, Level.FINE);
                     dataStore.insertEntry(entry);
                     // raise a NewEntryEvent on the event bus
                     bus.post(new NewEntryEvent(entry));
+                } else {
+                    log("received invalid entry " + entry.getEntryID() + " from peer " + peerAddress, Level.FINE);
                 }
             } catch (IOException e) {
                 log("Corrupt entry received and rejected", Level.INFO, e);

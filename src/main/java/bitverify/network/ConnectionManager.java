@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.ByteString;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
+import sun.text.resources.cldr.bn.FormatData_bn_IN;
 
 
 /**
@@ -454,8 +455,10 @@ public class ConnectionManager {
             blocksInFlightCounter.onceZero(() -> {
                 log("Now broadcasting unconfirmed entries", Level.FINE);
                 try {
-                    for (Entry e : dataStore.getUnconfirmedEntries())
+                    for (Entry e : dataStore.getUnconfirmedEntries()) {
+                        log("broadcasting entry " + e.getEntryID(), Level.FINE);
                         broadcastEntry(e);
+                    }
                 } catch (SQLException e) {
                     log("Database exception occurred while performing unconfirmed entry broadcast: " + e.getMessage(), Level.SEVERE, e);
                 }
@@ -467,6 +470,7 @@ public class ConnectionManager {
                 try {
                     log("Now sending unconfirmed entries to " + peer.getPeerAddress(), Level.FINE);
                     for (Entry e : dataStore.getUnconfirmedEntries()) {
+                        log("sending entry " + e.getEntryID() + " to peer " + peer.getPeerAddress(), Level.FINE);
                         EntryMessage entryMessage = EntryMessage.newBuilder()
                                 .setEntryBytes(ByteString.copyFrom(e.serialize()))
                                 .build();
