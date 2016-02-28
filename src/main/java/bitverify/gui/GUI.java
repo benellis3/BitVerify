@@ -47,17 +47,23 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -100,6 +106,9 @@ public class GUI extends Application {
 	
 	@Override 
 	public void stop(){
+		if (mNode != null)
+			mNode.exitProgram();
+		
 	    System.exit(0);
 	}
 	
@@ -190,6 +199,8 @@ public class GUI extends Application {
 	        	HBox hbox = new HBox();
 	        	hbox.setPadding(new Insets(15));
 	        	
+	        	Scene scene = new Scene(hbox, 800, 600);
+	        	
 	        	TabPane tabs = new TabPane();
 	        	tabs.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 	        	tabs.setSide(Side.TOP);
@@ -201,7 +212,7 @@ public class GUI extends Application {
 	        	Tab addEntryTab = getAddEntryTab();
 	        	addEntryTab.setGraphic(getTabIconView("/entry_icon.png"));
 	        	
-	        	Tab searchTab = getSearchTab();
+	        	Tab searchTab = getSearchTab(scene);
 	        	searchTab.setGraphic(getTabIconView("/search_icon.png"));
 	        	
 	        	Tab networkTab = getNetworkTab();
@@ -222,7 +233,6 @@ public class GUI extends Application {
 	        	hbox.setAlignment(Pos.CENTER);
 	        	
 	        	HBox.setHgrow(tabs, Priority.ALWAYS);
-	        	Scene scene = new Scene(hbox, 800, 600);
 	        	Timer timer = new Timer();
 	        	timer.schedule(new TimerTask() {
 
@@ -330,7 +340,6 @@ public class GUI extends Application {
 		
 		return minerTab;
 	}
-	
 	
 	private Tab getNodesTab() {
 		Tab nodesTab = new Tab();
@@ -499,16 +508,13 @@ public class GUI extends Application {
 		// Get the description of the document
 		TextField descriptionText = addFieldToGrid(grid, 3, "Description:", TextFieldWidth);
 		
-		// Get the description of the document
+		// Get the receiver id of the document
 		TextField receiverText = addFieldToGrid(grid, 4, "Receiver ID:", TextFieldWidth);
 		
-		// Get the description of the document
+		// Get the geolocation of the document
 		TextField geoText = addFieldToGrid(grid, 5, "Geolocation:", TextFieldWidth);
 		
-		// Get the description of the document
-		TextField tagsText = addFieldToGrid(grid, 6, "Tags:", TextFieldWidth);
-		
-		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText, tagsText);
+		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText);
 		
 		// This will hold any errors in input
 		Text errorText = new Text("");
@@ -548,10 +554,9 @@ public class GUI extends Application {
 				String description = descriptionText.getText();
 		    	String receiverID = receiverText.getText();
 		    	String geoLoc = geoText.getText();
-		    	String tags = tagsText.getText();
 		    	
 		    	try {
-					mNode.addEntry(hash, download, name, receiverID, description, geoLoc, tags);
+					mNode.addEntry(hash, download, name, receiverID, description, geoLoc);
 					errorText.setFill(Color.GREEN);
 					errorText.setText("Added file succesfully.");
 					
@@ -607,7 +612,7 @@ public class GUI extends Application {
 		return text;
 	}
 	
-	private Tab getSearchTab() {
+	private Tab getSearchTab(Scene scene) {
     	Tab searchTab = new Tab();
     	searchTab.setText("Search Entries");
     	
@@ -618,6 +623,29 @@ public class GUI extends Application {
     	// Create a table view to display the data
     	ObservableList<Entry> data = FXCollections.observableArrayList();
     	TableView<Entry> tableView = new TableView<Entry>();
+    	
+    	// Restrict selection to one cell
+    	tableView.getSelectionModel().setCellSelectionEnabled(true);
+        tableView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        
+        // Listen for control+c event
+        scene.getAccelerators().put(new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_ANY), new Runnable() {
+            @Override
+            public void run() {
+            	// Get the position of all selected rows
+            	ObservableList<TablePosition> positionList = tableView.getSelectionModel().getSelectedCells();
+            	if (positionList.size() > 0) {
+            		TablePosition pos = positionList.get(0);
+            		Object cell = (Object) tableView.getColumns().get(pos.getColumn()).getCellData(pos.getRow());
+            		
+            		// Add the selected cell text to the clipboard
+            		final Clipboard clipboard = Clipboard.getSystemClipboard();
+                    final ClipboardContent content = new ClipboardContent();
+                    content.putString(cell.toString());
+                    clipboard.setContent(content);
+            	}
+            }
+        });
     	
     	// Create all our columns
     	//TableColumn<Entry, String> timeStampColumn = getTableColumn("Time", "entryTimeStamp");
@@ -652,12 +680,11 @@ public class GUI extends Application {
    
     	// Back to normal columns now
     	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
-    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
     	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
     	
     	// Order of columns
     	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
+    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, confirmedColumn);
     	
     	tableView.setItems(data);
     	
@@ -845,7 +872,6 @@ public class GUI extends Application {
    
     	// Back to normal columns now
     	TableColumn<Entry, String> geoColumn = getTableColumn("Location", "docGeoLocation");
-    	TableColumn<Entry, String> tagsColumn = getTableColumn("Tags", "docTags");
     	TableColumn<Entry, String> confirmedColumn = getTableColumn("Confirmed", "confirmed");
 		
 		Accordion accordion = new Accordion();
@@ -863,7 +889,7 @@ public class GUI extends Application {
 				    	    
 				    	    	// Order of columns
 				    	    	tableView.getColumns().setAll(timeStampColumn, nameColumn, descriptionColumn, 
-				    	    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, tagsColumn, confirmedColumn);
+				    	    			downloadColumn, receiverColumn, uploaderColumn, geoColumn, hashColumn, confirmedColumn);
 				    	    	
 				    	    	List<Entry> entries = block.getEntriesList();
 				    	    	if (entries == null) {
@@ -872,10 +898,16 @@ public class GUI extends Application {
 				    	    	
 				    	    	data.addAll(entries);
 				    	    	tableView.setItems(data);
-				    	    	TitledPane tPane = new TitledPane(block.toString(), tableView);
+				    	    	String titledString = String.format("%s - %s", 
+				    	    			new Date(block.getTimeStamp()).toString(),
+				    	    			Base64.toBase64String(block.getBlockID()));
+				    	    			
+				    	    	TitledPane tPane = new TitledPane(titledString, tableView);
+				    	    	
 				    	    	accordion.getPanes().add(tPane);
 							} else {
 								//no more blocks
+								iterator.close();
 								break;
 							}
 			    		}
