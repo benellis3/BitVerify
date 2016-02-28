@@ -323,8 +323,10 @@ public class DatabaseStore implements DataStore {
                 for (Entry e : b.getEntriesList()) {
                     if (entryExists(e))
                         updateEntryConfirmed(e, true);
-                    else
+                    else {
+                        e.setConfirmed(true);
                         entryDao.create(e);
+                    }
                 }
             }
 

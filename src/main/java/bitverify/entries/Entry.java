@@ -27,7 +27,7 @@ import bitverify.crypto.Symmetric;
 public class Entry implements Comparable<Entry> {
 
 	@DatabaseField(id = true)
-	private UUID entryID = UUID.randomUUID();
+	private UUID entryID;
 
 	// we should store hashes and keys as byte arrays.
 	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY")
@@ -80,6 +80,7 @@ public class Entry implements Comparable<Entry> {
 	private void _constructEntryCore(AsymmetricCipherKeyPair uploaderKeyPair,
 			byte[] docHash, String docLink, String docName, String docDescription,
 			String docGeoLocation, long docTimeStamp) throws KeyDecodingException{
+		entryID = UUID.randomUUID();
 		entryTimeStamp = System.currentTimeMillis();
 		this.uploaderID = Asymmetric.keyToByteKey( uploaderKeyPair.getPublic() );
 		setMetadataFields(docHash, docLink, docName, docDescription,
