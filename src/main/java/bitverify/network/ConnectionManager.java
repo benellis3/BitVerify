@@ -187,8 +187,14 @@ public class ConnectionManager {
                     log("Unexpected exception occurred while connecting to initial peer", Level.WARNING, e);
                 }
             }
-            // once peers are connected, do block download from everyone
-            es.execute(() -> blockProtocol.initiateBlockDownload());
+            // once peers are connected, do block download from everyone, then send everyone your unconfirmed entries
+            es.execute(() -> {
+                try {
+                    blockProtocol.initiateBlockDownload();
+                } catch (InterruptedException e) {
+                    log("InterruptedException while performing block download: " + e.getMessage(), Level.SEVERE, e);
+                }
+            });
         });
     }
 
@@ -264,7 +270,7 @@ public class ConnectionManager {
      * @param e The entry which must be broadcast
      * @throws IOException in the case that serialization fails
      */
-    public void broadcastEntry(Entry e) throws IOException {
+    public void broadcastEntry(Entry e) {
         EntryMessage entryMessage = EntryMessage.newBuilder()
                 .setEntryBytes(ByteString.copyFrom(e.serialize()))
                 .build();
@@ -431,13 +437,47 @@ public class ConnectionManager {
          * @param distribute whether to distribute get block requests to all peers, or just to this one.
          * @return
          */
-        private boolean blockDownloadSynchronized(PeerHandler peer, boolean distribute) {
+        private void blockDownloadSynchronized(PeerHandler peer, boolean distribute) {
             try {
-                return blocksInFlightCounter.onceZero(() -> blockDownload(peer, distribute));
-            } catch (Exception e) {
-                log("unexpected exception while performing block download: " + e.getMessage(), Level.SEVERE, e);
-                return false;
+                blocksInFlightCounter.onceZero((Runnable)() -> blockDownload(peer, distribute));
+                // send unconfirmed entries when done
+                if (distribute)
+                    broadcastEntriesOnceBlockDownloadComplete();
+                else
+                    sendEntriesOnceBlockDownloadComplete(peer);
+            } catch (InterruptedException e) {
+                log("InterruptedException while performing block download: " + e.getMessage(), Level.SEVERE, e);
             }
+        }
+
+        private void broadcastEntriesOnceBlockDownloadComplete() throws InterruptedException {
+            blocksInFlightCounter.onceZero(() -> {
+                try {
+                    for (Entry e : dataStore.getUnconfirmedEntries())
+                        broadcastEntry(e);
+                } catch (SQLException e) {
+                    log("Database exception occurred while performing unconfirmed entry broadcast: " + e.getMessage(), Level.SEVERE, e);
+                }
+            });
+        }
+
+        private void sendEntriesOnceBlockDownloadComplete(PeerHandler peer) throws InterruptedException {
+            blocksInFlightCounter.onceZero(() -> {
+                try {
+                    for (Entry e : dataStore.getUnconfirmedEntries()) {
+                        EntryMessage entryMessage = EntryMessage.newBuilder()
+                                .setEntryBytes(ByteString.copyFrom(e.serialize()))
+                                .build();
+                        Message message = Message.newBuilder()
+                                .setType(Message.Type.ENTRY)
+                                .setEntry(entryMessage)
+                                .build();
+                        peer.send(message);
+                    }
+                } catch (SQLException e) {
+                    log("Database exception occurred while performing unconfirmed entry broadcast: " + e.getMessage(), Level.SEVERE, e);
+                }
+            });
         }
 
         /**
@@ -532,30 +572,26 @@ public class ConnectionManager {
          * Performs the initial block download process. Best to call this on a separate thread as it will block.
          * @return true if we successfully got a chain of headers, false otherwise.
          */
-        private boolean initiateBlockDownload() {
+        private void initiateBlockDownload() throws InterruptedException {
             // only do this once at any one time.
-            try {
-                return blocksInFlightCounter.onceZero(() -> {
-                    log("Initiating block download", Level.FINE);
+            blocksInFlightCounter.onceZero(() -> {
+                log("Initiating block download", Level.FINE);
 
-                    // First obtain block headers from some particular peer - send a GetBlockHeaders message
-                    // then validate this sequence of headers upon receiving a BlockHeaders message
+                // First obtain block headers from some particular peer - send a GetBlockHeaders message
+                // then validate this sequence of headers upon receiving a BlockHeaders message
 
-                    // take snapshot of peers
-                    List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
-                    shufflePeers(peersSnapshot);
+                // take snapshot of peers
+                List<PeerHandler> peersSnapshot = new ArrayList<>(peers.values());
+                shufflePeers(peersSnapshot);
 
-                    // we will break once we've got all the headers, having dispatched download tasks asynchronously.
-                    for (PeerHandler p : peersSnapshot) {
-                        if (blockDownload(p, true))
-                            return true;
-                    }
-                    return false;
-                });
-            } catch (Exception e) {
-                log("unexpected exception while performing block download: " + e.getMessage(), Level.SEVERE, e);
-                return false;
-            }
+                // we will break once we've got all the headers, having dispatched download tasks asynchronously.
+                for (PeerHandler p : peersSnapshot) {
+                    if (blockDownload(p, true))
+                        return;
+                }
+            });
+            // broadcast unconfirmed entries when done
+            broadcastEntriesOnceBlockDownloadComplete();
         }
 
         /**

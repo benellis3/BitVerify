@@ -303,7 +303,7 @@ public class PeerHandler {
 
         private void handleEntryMessage(EntryMessage message) throws SQLException {
             byte[] bytes = message.getEntryBytes().toByteArray();
-            Entry entry = null;
+            Entry entry;
             try {
                 entry = Entry.deserialize(bytes);
                 // check the validity of the entry
