@@ -105,30 +105,30 @@ public class Node {
 	}
 	
 	private void userCLISetup() {
-		// Print out the command options for the user
-		System.out.println("----------");
-		System.out.println("CLI MENU");
-		for (int i = 0; i < mOptions.length; i++) {
-			System.out.printf("(%d)%s\n", i, mOptions[i]);
-		}
-		System.out.println("----------");
-		
-		// Get the user input and run command if valid
-		System.out.println("Enter number to run command:");
-		String uInput = mScanner.nextLine();
 		boolean shouldContinue = true;
-		try {
-			int inputNum = Integer.parseInt(uInput);
-			shouldContinue = handleUserInput(inputNum);
-		} catch (NumberFormatException e) {
-			System.out.printf("'%s' is not a valid command. Enter a number instead.\n", uInput);
-		} catch (ArrayIndexOutOfBoundsException e2) {
-			System.out.printf("'%s' is not a valid number. Enter a number between %d-%d.\n", uInput, 1, mOptions.length);
+		while (shouldContinue) {
+			// Print out the command options for the user
+			System.out.println("----------");
+			System.out.println("CLI MENU");
+			for (int i = 0; i < mOptions.length; i++) {
+				System.out.printf("(%d)%s\n", i, mOptions[i]);
+			}
+			System.out.println("----------");
+
+			// Get the user input and run command if valid
+			System.out.println("Enter number to run command:");
+			String uInput = mScanner.nextLine();
+
+			try {
+				int inputNum = Integer.parseInt(uInput);
+				shouldContinue = handleUserInput(inputNum);
+			} catch (NumberFormatException e) {
+				System.out.printf("'%s' is not a valid command. Enter a number instead.\n", uInput);
+			} catch (ArrayIndexOutOfBoundsException e2) {
+				System.out.printf("'%s' is not a valid number. Enter a number between %d-%d.\n", uInput, 1, mOptions.length);
+			}
+
 		}
-		
-		// Redisplay options to user after command has finished.
-		if (shouldContinue)
-			userCLISetup();
 	}
 	
 	private boolean handleUserInput(int commandNum) {
