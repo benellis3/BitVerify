@@ -230,7 +230,7 @@ public class ConnectionManager {
                 ph.shutdown();
             }
         } catch (SocketTimeoutException e) {
-            log("Could not connect to peer within time limit" + e.getMessage(), Level.INFO, e);
+            log("Could not connect to peer within time limit " + e.getMessage(), Level.INFO, e);
         }
         catch (IOException e) {
             log("An error occurred while creating an outgoing socket to a new peer: " + e.getMessage(), Level.INFO, e);
@@ -671,6 +671,7 @@ public class ConnectionManager {
 
                 // see if we requested this block from this peer
                 boolean blockWasExpected = peer.getBlocksInFlight().remove(new BlockID(block.getBlockID()));
+                boolean shouldDecrementBlocksInFlight = false;
                 if (blockWasExpected) {
                     log("there are now " + peer.getBlocksInFlight().size() + " blocks in flight from peer " + peer.getPeerAddress(), Level.FINER);
                     log("timer restarted - in flight block received from peer " + peer.getPeerAddress(), Level.FINE);
@@ -678,11 +679,8 @@ public class ConnectionManager {
                     peer.getBlockTimer().stop();
                     peer.getBlockTimer().start();
 
-                    // can download another block from peer (providing there are more queued up)
-                    if (!downloadAnotherBlock(peer))
-                        blocksInFlightCounter.decrement(); // only if we failed to download another.
-
-                    log("total blocks in flight: " + blocksInFlightCounter.get(), Level.FINE);
+                    // only if we failed to download another.
+                    shouldDecrementBlocksInFlight = !downloadAnotherBlock(peer);
                 }
 
                 // check we don't already have it in our store
@@ -778,6 +776,11 @@ public class ConnectionManager {
 
                     }
                 }
+                if (shouldDecrementBlocksInFlight)
+                    blocksInFlightCounter.decrement();
+
+                log("total blocks in flight: " + blocksInFlightCounter.get(), Level.FINE);
+
             } catch (IOException ioe) {
                 // error in the serialised block or entries received, so discard the block.
                 log("block was rejected because of an error deserializing it: " + ioe, Level.FINE);
