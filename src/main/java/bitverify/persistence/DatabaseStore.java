@@ -512,6 +512,11 @@ public class DatabaseStore implements DataStore {
 
     }
 
+    @Override
+    public synchronized void updateEntry(Entry entry) throws SQLException {
+        entryDao.update(entry);
+    }
+
     private DatabaseIterator<Block> getActiveBlocks() throws SQLException {
         return new DatabaseIterator<>(blockDao.queryBuilder()
                 .orderBy("height", false)

@@ -165,4 +165,6 @@ public interface DataStore {
     void insertIdentity(Identity identity) throws SQLException;
 
     List<byte[]> getActiveBlocksSample(int maxBlockIDs) throws SQLException;
+
+    void updateEntry(Entry entry) throws SQLException;
 }

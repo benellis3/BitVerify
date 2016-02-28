@@ -13,18 +13,14 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.logging.Level;
 
+import bitverify.crypto.*;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-
-import bitverify.crypto.Asymmetric;
-import bitverify.crypto.Hash;
-import bitverify.crypto.Identity;
 
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.squareup.otto.ThreadEnforcer;
 
 import bitverify.block.Block;
-import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
 import bitverify.gui.GUI;
 import bitverify.mining.Miner;
@@ -34,6 +30,7 @@ import bitverify.network.NewEntryEvent;
 import bitverify.persistence.DataStore;
 import bitverify.persistence.DatabaseIterator;
 import bitverify.persistence.DatabaseStore;
+import org.bouncycastle.crypto.InvalidCipherTextException;
 
 public class Node {
 	private String[] mOptions = {
@@ -545,6 +542,19 @@ public class Node {
     	//send to network
 		mConnectionManager.broadcastBlock(e.getBlock());
     }
+
+	@Subscribe
+	public void onNewEntry(NewEntryEvent e) throws SQLException, KeyDecodingException, IOException, NotMatchingKeyException, InvalidCipherTextException {
+		List<Identity> myIdentities = mDatabase.getIdentities();
+		Entry entry = e.getNewEntry();
+		for (Identity i : myIdentities) {
+			if (entry.isThisEntryJustForMe(i)) {
+				entry.decrypt(i.getKeyPair());
+				mDatabase.updateEntry(entry);
+				break;
+			}
+		}
+	}
 
     @Subscribe
     public void onLogEvent(LogEvent o) {
