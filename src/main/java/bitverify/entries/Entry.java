@@ -52,26 +52,26 @@ public class Entry implements Comparable<Entry> {
 	
 	// --> metadata
 	@DatabaseField(dataType = DataType.BYTE_ARRAY, columnDefinition = "VARBINARY(32)")
-	private byte[] docHash = null;
+	private byte[] docHash = new byte[0];
 
 	private static final int DOC_LINK_LENGTH = 2048;
 	@DatabaseField(width = DOC_LINK_LENGTH)
-	private String docLink = null; //e.g. magnet link
+	private String docLink = ""; //e.g. magnet link
 
 	private static final int DOC_NAME_LENGTH = 255;
 	@DatabaseField(columnDefinition = "VARCHAR_IGNORECASE("+DOC_NAME_LENGTH+")")
-	private String docName = null;
+	private String docName = "";
 
 	private static final int DOC_DESCRIPTION_LENGTH = 2048;
 	@DatabaseField(columnDefinition = "VARCHAR_IGNORECASE("+DOC_DESCRIPTION_LENGTH+")")
-	private String docDescription = null;
+	private String docDescription = "";
 
 	private static final int DOC_LOCATION_LENGTH = 255;
 	@DatabaseField(width = DOC_LOCATION_LENGTH)	
-	private String docGeoLocation = null;
+	private String docGeoLocation = "";
 	
 	@DatabaseField
-	private long docTimeStamp = 0;
+	private long docTimeStamp = Long.MIN_VALUE;
 	
 	private boolean decryptHasBeenCalled = false;
 	
@@ -352,7 +352,7 @@ public class Entry implements Comparable<Entry> {
 	}
 	
 	public String getEntryTimeStampString() {
-		return new Date(getEntryTimeStamp()).toString();
+		return getEntryTimeStamp() == Long.MIN_VALUE ? "" : new Date(getEntryTimeStamp()).toString();
 	}
 	
 	public byte[] getUploaderID(){
