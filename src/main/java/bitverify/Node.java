@@ -226,12 +226,12 @@ public class Node {
 	}
 	
 	private void quickAddPredefinedEntry() {
-		byte[] hash = Hash.hashString("inimitation of some file asdasd");
-		String fileName = "The Bible......";
-		String fileDownload = "somewhere for sure";
-		String fileDescription = "welllllllll";
+		byte[] hash = Base64.getDecoder().decode("LwwOujrMsbB26le3uZ3aa/XN025Pp+Xd/jdFJVTSE3M=");
+		String fileName = "cl-spring-370.jpg";
+		String fileDownload = "https://www.cl.cam.ac.uk/images/cl-spring-370.jpg";
+		String fileDescription = "pic of Cambridge Computer Lab";
 		String receiverID = "";
-		String fileGeo = "Israel... or stuff";
+		String fileGeo = "Cambridge, UK";
 		
 		try {
 			addEntry(hash, fileDownload, fileName, receiverID, fileDescription, fileGeo);
