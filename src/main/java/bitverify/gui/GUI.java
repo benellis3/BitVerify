@@ -874,6 +874,7 @@ public class GUI extends Application {
 			inputStream.close();
 		} catch (IOException e1) {
 			hashText.setText(String.format("File '%s' does not exist", selectedFile.getAbsolutePath()));
+			data.clear();
 		}
 	}
 	
