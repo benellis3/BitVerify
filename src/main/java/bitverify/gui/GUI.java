@@ -95,6 +95,7 @@ public class GUI extends Application {
 	private ObservableList<String> nodeList;
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
+	private DatabaseIterator<Block> mBlockIterator;
 	private Bus mEventBus;
 	private Button searchButton;
 	
@@ -808,22 +809,33 @@ public class GUI extends Application {
 		breakdownTab.setText("Blocks");
 		
 		VBox vLay = new VBox();
+		vLay.setPadding(new Insets(15));
+		vLay.setSpacing(15);
 		
 		HBox hLay = new HBox();
 		hLay.setAlignment(Pos.CENTER_RIGHT);
+		hLay.setSpacing(5);
+		hLay.setPadding(new Insets(10));
 		Button reloadButton = new Button("Reload");
+		Button loadButton = new Button("Load More");
 		
 		Accordion accordion = new Accordion();
+		ObservableList<Entry> data = FXCollections.observableArrayList();
+		
 		reloadButton.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
 		    	accordion.getPanes().clear();
-		    	try (DatabaseIterator<Block> iterator = mNode.getBlockList()){
-			    	if (iterator != null) {
+		    	try {
+		    		if (mBlockIterator != null) {
+		    			mBlockIterator.close();
+		    		}
+		    		
+		    		mBlockIterator = mNode.getBlockList();
+			    	if (mBlockIterator != null) {
 			    		for (int i = 0; i < MAX_BLOCKS_AT_ONCE; i++) {
-							if (iterator.moveNext()) {
-								Block block = iterator.current();
+							if (mBlockIterator.moveNext()) {
+								Block block = mBlockIterator.current();
 								// Create a table view to display the data
-				    	    	ObservableList<Entry> data = FXCollections.observableArrayList();
 				    	    	TableView<Entry> tableView = getEntryTableView();
 				    	    	
 				    	    	List<Entry> entries = block.getEntriesList();
@@ -831,10 +843,11 @@ public class GUI extends Application {
 				    	    		entries = new LinkedList<Entry>();
 				    	    	}
 				    	    	
-				    	    	data.addAll(entries);
+				    	    	data.setAll(entries);
 				    	    	tableView.setItems(data);
-				    	    	String titledString = String.format("%s - %s", 
+				    	    	String titledString = String.format("%s - %d - %s", 
 				    	    			new Date(block.getTimeStamp()).toString(),
+				    	    			entries.size(),
 				    	    			Base64.toBase64String(block.getBlockID()));
 				    	    			
 				    	    	TitledPane tPane = new TitledPane(titledString, tableView);
@@ -842,25 +855,64 @@ public class GUI extends Application {
 				    	    	accordion.getPanes().add(tPane);
 							} else {
 								//no more blocks
-								iterator.close();
+								mBlockIterator.close();
+								mBlockIterator = null;
 								break;
 							}
 			    		}
 			    	}
 		    	} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 		    }
 		});
 		reloadButton.fire();
 		
+		loadButton.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	if (mBlockIterator != null) {
+		    		for (int i = 0; i < MAX_BLOCKS_AT_ONCE; i++) {
+						try {
+							if (mBlockIterator.moveNext()) {
+								Block block = mBlockIterator.current();
+								// Create a table view to display the data
+								TableView<Entry> tableView = getEntryTableView();
+								
+								List<Entry> entries = block.getEntriesList();
+								if (entries == null) {
+									entries = new LinkedList<Entry>();
+								}
+								
+								data.addAll(entries);
+								tableView.setItems(data);
+								String titledString = String.format("%s - %d - %s", 
+										new Date(block.getTimeStamp()).toString(),
+										entries.size(),
+										Base64.toBase64String(block.getBlockID()));
+										
+								TitledPane tPane = new TitledPane(titledString, tableView);
+								
+								accordion.getPanes().add(tPane);
+							} else {
+								//no more blocks
+								mBlockIterator.close();
+								mBlockIterator = null;
+								break;
+							}
+						} catch (SQLException e1) {
+							e1.printStackTrace();
+						}
+		    		}
+		    	}
+		    }
+		});
+		
 		// Let the accordion be scrollable
 		ScrollPane scroll = new ScrollPane();
 		scroll.prefWidth(accordion.getWidth());
 		scroll.setContent(accordion);
 		
-		hLay.getChildren().add(reloadButton);
+		hLay.getChildren().addAll(reloadButton, loadButton);
 		vLay.getChildren().addAll(scroll, hLay);
 		breakdownTab.setContent(vLay);
 		return breakdownTab;
