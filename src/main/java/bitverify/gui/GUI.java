@@ -820,7 +820,7 @@ public class GUI extends Application {
 		Button loadButton = new Button("Load More");
 		
 		Accordion accordion = new Accordion();
-		ObservableList<Entry> data = FXCollections.observableArrayList();
+		
 		
 		reloadButton.setOnAction(new EventHandler<ActionEvent>() {
 		    @Override public void handle(ActionEvent e) {
@@ -837,7 +837,7 @@ public class GUI extends Application {
 								Block block = mBlockIterator.current();
 								// Create a table view to display the data
 				    	    	TableView<Entry> tableView = getEntryTableView();
-				    	    	
+				    	    	ObservableList<Entry> data = FXCollections.observableArrayList();
 				    	    	List<Entry> entries = block.getEntriesList();
 				    	    	if (entries == null) {
 				    	    		entries = new LinkedList<Entry>();
@@ -877,7 +877,7 @@ public class GUI extends Application {
 								Block block = mBlockIterator.current();
 								// Create a table view to display the data
 								TableView<Entry> tableView = getEntryTableView();
-								
+								ObservableList<Entry> data = FXCollections.observableArrayList();
 								List<Entry> entries = block.getEntriesList();
 								if (entries == null) {
 									entries = new LinkedList<Entry>();
