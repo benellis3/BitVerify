@@ -91,6 +91,7 @@ public class GUI extends Application {
 	private Text numEntryText;
 	private Text numBlocksText;
 	private ObservableList<String> minerLog = FXCollections.observableArrayList();
+	private ObservableList<String> nodeList;
 	private ObservableList<String> networkLog;
 	private DatabaseIterator<Entry> mIterator;
 	private Bus mEventBus;
@@ -367,7 +368,7 @@ public class GUI extends Application {
         nodesView.setMouseTransparent( false );
         nodesView.setFocusTraversable( false );
         
-        ObservableList<String> nodeList = FXCollections.observableArrayList();
+        nodeList = FXCollections.observableArrayList();
         
         reloadBtn.setOnAction(new EventHandler<ActionEvent>(){
             @Override public void handle(ActionEvent e) {
@@ -893,6 +894,9 @@ public class GUI extends Application {
                 numPeersText.setText(strNumPeers);
                 numEntryText.setText(strNumEntry);
                 numBlocksText.setText(strNumBlock);
+                if (nodeList != null) {
+                	nodeList.setAll(mNode.getPeerListAsStrings());
+                }
             }
          });
 	    
