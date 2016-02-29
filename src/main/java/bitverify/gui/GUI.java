@@ -833,8 +833,9 @@ public class GUI extends Application {
 				    	    	
 				    	    	data.addAll(entries);
 				    	    	tableView.setItems(data);
-				    	    	String titledString = String.format("%s - %s", 
+				    	    	String titledString = String.format("%s - nEntries: %d - %s", 
 				    	    			new Date(block.getTimeStamp()).toString(),
+				    	    			block.getEntriesList().size(),
 				    	    			Base64.toBase64String(block.getBlockID()));
 				    	    			
 				    	    	TitledPane tPane = new TitledPane(titledString, tableView);
