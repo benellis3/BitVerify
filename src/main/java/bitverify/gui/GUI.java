@@ -523,7 +523,7 @@ public class GUI extends Application {
 		// Get the geolocation of the document
 		TextField geoText = addFieldToGrid(grid, 6, "Geolocation:", TextFieldWidth);
 		
-		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText, senderText);
+		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText);
 		
 		// This will hold any errors in input
 		Text errorText = new Text("");
