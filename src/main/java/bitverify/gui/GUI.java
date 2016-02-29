@@ -885,8 +885,9 @@ public class GUI extends Application {
 								
 								data.addAll(entries);
 								tableView.setItems(data);
-								String titledString = String.format("%s - %d - %s", 
-										new Date(block.getTimeStamp()).toString(),
+								String titledString = String.format("%s - height: %d - nEntries: %d - ID: %s",
+				    	    			new Date(block.getTimeStamp()).toString(),
+										block.getHeight(),
 										entries.size(),
 										Base64.toBase64String(block.getBlockID()));
 										
