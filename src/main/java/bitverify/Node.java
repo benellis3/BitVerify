@@ -241,6 +241,10 @@ public class Node {
 		} 
 	}
 	
+	public Identity getCurrentIdentity() {
+		return mIdentity;
+	}
+	
 	@Deprecated
 	public void addEntry(byte [] hash, String fileDownload, String fileName, 
 			String receiverID, String fileDescription, String fileGeo, 
