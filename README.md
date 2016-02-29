@@ -23,6 +23,9 @@ On Linux, run
 You can of course also use your IDE with a Gradle extension.
 
 ### Instructions to run the jar/application
+
+_(Requirements: Java 8)_
+
 From a command line, use (e.g.)
 ```
 java -jar bitverify-0.1.0.jar
