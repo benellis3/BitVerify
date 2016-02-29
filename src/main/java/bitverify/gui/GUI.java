@@ -5,6 +5,7 @@ import bitverify.LogEventSource;
 import bitverify.Node;
 import bitverify.block.Block;
 import bitverify.crypto.Hash;
+import bitverify.crypto.Identity;
 import bitverify.crypto.KeyDecodingException;
 import bitverify.entries.Entry;
 import bitverify.persistence.DatabaseIterator;
@@ -513,8 +514,14 @@ public class GUI extends Application {
 		// Get the receiver id of the document
 		TextField receiverText = addFieldToGrid(grid, 4, "Receiver ID:", TextFieldWidth);
 		
+		// Get the sender id of the document
+		TextField senderText = addFieldToGrid(grid, 5, "Sender ID:", TextFieldWidth);
+		Identity identity = mNode.getCurrentIdentity();
+		senderText.setText(Base64.toBase64String(identity.getPublicKey()));
+		senderText.setDisable(true);
+		
 		// Get the geolocation of the document
-		TextField geoText = addFieldToGrid(grid, 5, "Geolocation:", TextFieldWidth);
+		TextField geoText = addFieldToGrid(grid, 6, "Geolocation:", TextFieldWidth);
 		
 		Collections.addAll(fields, docText, nameText, downloadText, descriptionText, receiverText, geoText);
 		
@@ -546,7 +553,6 @@ public class GUI extends Application {
 					ft.setFromValue(1.0);
 				    ft.setToValue(0.0);
 				    ft.play();
-					
 					return;
 				}
 				
