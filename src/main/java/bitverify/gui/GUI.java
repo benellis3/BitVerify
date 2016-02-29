@@ -845,9 +845,11 @@ public class GUI extends Application {
 				    	    	
 				    	    	data.setAll(entries);
 				    	    	tableView.setItems(data);
-				    	    	String titledString = String.format("%s - height: %d - nEntries: %d - ID: %s",				    	    			new Date(block.getTimeStamp()).toString(),
-										block.getHeight(),										entries.size(),				    	    			Base64.toBase64String(block.getBlockID()));
-				    	    			
+				    	    	String titledString = String.format("%s - height: %d - nEntries: %d - ID: %s",
+				    	    			new Date(block.getTimeStamp()).toString(),
+										block.getHeight(),
+										entries.size(),
+										Base64.toBase64String(block.getBlockID()));
 				    	    	TitledPane tPane = new TitledPane(titledString, tableView);
 				    	    	
 				    	    	accordion.getPanes().add(tPane);
