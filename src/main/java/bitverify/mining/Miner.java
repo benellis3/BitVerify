@@ -95,9 +95,6 @@ public class Miner implements Runnable{
 		//Set up the event bus
 		this.eventBus = eventBus;
 		eventBus.register(this);
-		
-		//Add unconfirmed entries from the database to the block for mining
-		newMiningBlock();
 	}
 	
 	/**
@@ -112,14 +109,7 @@ public class Miner implements Runnable{
      * @throws IOException
      */
 	public Miner(Bus eventBus, DataStore dataStore, int adjustTargetFrequency, int idealMiningTime, int miningProofDifficultyScale) throws SQLException, IOException{
-		this.dataStore = dataStore;
-		
-		//Set up the event bus
-		this.eventBus = eventBus;
-		eventBus.register(this);
-
-		//Add unconfirmed entries from the database to the block for mining
-		newMiningBlock();
+		this(eventBus, dataStore);
 
 		Miner.adjustTargetFrequency = adjustTargetFrequency;
 		Miner.idealMiningTime = idealMiningTime;
@@ -233,6 +223,16 @@ public class Miner implements Runnable{
 		String result;
 		
 		mining = true;
+		
+		try {
+			//every time the miner is started, start mining on a new block
+			//this also checks for unconfirmed entries to be placed in the block
+			newMiningBlock();
+		} catch (IOException e){
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
 		while (mining){
 			try{
