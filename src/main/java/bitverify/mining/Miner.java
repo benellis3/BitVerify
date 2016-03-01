@@ -256,11 +256,12 @@ public class Miner implements Runnable{
 						dataStore.insertBlock(successfulBlock);
 						//Pass successful block to application logic for broadcasting to the network
 						eventBus.post(new BlockFoundEvent(successfulBlock));
-		
-						newMiningBlock();
 					} else {
 						eventBus.post(new LogEvent("Block was almost mined - but subchain validity test FAILED",LogEventSource.MINING,Level.INFO));
+						eventBus.post(new LogEvent("Are you trying to cheat the system?",LogEventSource.MINING,Level.INFO));
+						eventBus.post(new LogEvent("Recreating MiningBlock... maybe this solves the inconsistency",LogEventSource.MINING,Level.INFO));
 					}
+					newMiningBlock();
 				}
 				//Proof of mining
 				else if (mineSuccess(result, currentMiningProofTarget)){
@@ -320,7 +321,7 @@ public class Miner implements Runnable{
     @Subscribe
     public void onNewEntryEvent(NewEntryEvent e) throws IOException, SQLException {
     	//Add entry from pool to block we are mining (by creating a new block)
-    	eventBus.post(new LogEvent("About to mine new entry",LogEventSource.MINING,Level.INFO));
+    	eventBus.post(new LogEvent("Miner detected new entry in unconfirmed pool",LogEventSource.MINING,Level.INFO));
     	newMiningBlock();
     }
     
