@@ -347,7 +347,7 @@ public class GUI extends Application {
 	
 	private Tab getNodesTab() {
 		Tab nodesTab = new Tab();
-		nodesTab.setText("Nodes");
+		nodesTab.setText("Peers");
         
         HBox networkBox = new HBox();
         networkBox.setPadding(new Insets(5));
@@ -363,7 +363,7 @@ public class GUI extends Application {
 
         numEntryText = new Text("Number of Entries: " + mNode.getEntryCount());
         
-        networkBox.getChildren().addAll(new Text("Acitve Nodes:"));
+        networkBox.getChildren().addAll(new Text("Active Peers:"));
         
         ListView<String> nodesView = new ListView<String>();
         nodesView.setPrefHeight(400);
