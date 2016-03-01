@@ -468,7 +468,7 @@ public class Node {
 		try {
 			List<Identity> identities = mDatabase.getIdentities();
 			if (identities.size() == 0) {
-				System.out.println("Generating new key identity...");
+				informUserOfProgress("Generating new key identity...");
 				AsymmetricCipherKeyPair keyPair = Asymmetric.generateNewKeyPair();
 				mIdentity = new Identity("default", keyPair);
 				mDatabase.insertIdentity(mIdentity);
@@ -542,7 +542,6 @@ public class Node {
     @Subscribe
     public void onBlockFoundEvent(BlockFoundEvent e) {
     	Block block = e.getBlock();
-    	System.out.println(block);
     	//send to network
 		mConnectionManager.broadcastBlock(e.getBlock());
     }

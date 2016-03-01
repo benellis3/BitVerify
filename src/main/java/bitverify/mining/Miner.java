@@ -60,13 +60,13 @@ public class Miner implements Runnable{
 	
 	//The maximum factor that the target may grow or shrink by on each target recalculation
 	private static int growthFactorLimit = 4;
-	//We recalculate the mining difficulty adjustTargetFrequency + 1 blocks (so it is the time to mine adjustTargetFrequency blocks)
-	private static int adjustTargetFrequency = 3;	//For actual system use rather than demoing it might be 1008
-	//The amount of time, in milliseconds, we want adjustTargetFrequency + 2 blocks to take to mine
+	//We recalculate the mining difficulty every (adjustTargetFrequency+1) blocks
+	private static int adjustTargetFrequency = 5;	//For actual system use rather than demoing it might be 1008
+	//The amount of time, in milliseconds, we want (adjustTargetFrequency+2) blocks to take to mine
 	//(+2 due to removing gaps between periods, we use +1 for the first period to avoid using the genesis timestamp)
-	private static long idealMiningTime = 30000;	//For actual system use rather than demoing it might be 604800000
+	private static long idealMiningTime = (adjustTargetFrequency+2)*20_000;	//For actual system use rather than demoing it might be 604800000
 	//this means
-	//we want 3 blocks to be mined every 30 seconds/a block every 10 seconds
+	//we want 7 blocks to be mined every 140 seconds, so 1 block every 20 seconds
 	
 	//Proof of mining (we multiply the success target by the scale)
 	private static int miningProofDifficultyScale = 0x2;	//For actual system use rather than demoing it might be 0x800;
@@ -443,7 +443,7 @@ public class Miner implements Runnable{
 			long difference = mostRecentTime - nAgoTime;
 			
 			eventBus.post(new LogEvent("Calculating new target",LogEventSource.MINING,Level.INFO));
-			eventBus.post(new LogEvent("Previous "+(adjustTargetFrequency+(1-excludingDueToGenesis))+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
+			eventBus.post(new LogEvent("Previous "+(adjustTargetFrequency+(2-excludingDueToGenesis))+" blocks took "+difference+" milliseconds to mine",LogEventSource.MINING,Level.INFO));
 			eventBus.post(new LogEvent("We want it to take "+idealMiningTime+" milliseconds",LogEventSource.MINING,Level.INFO));
 		
 			if (printTarget) printTarget = false;
